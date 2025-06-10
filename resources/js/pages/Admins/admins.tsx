@@ -14,6 +14,8 @@ import { Plus, Trash2, Lock, Unlock, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import AddNewAdmin from '@/components/Admin/add-new-admin';
+import { Admin } from '@/types';
+import { getFullName } from '@/lib/utils';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -22,19 +24,6 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-interface Admin {
-    id: number;
-    first_name: string;
-    last_name: string;
-    middle_name: string | null;
-    suffix: string | null;
-    gender: string;
-    position: string;
-    department: string;
-    email: string;
-    is_active: boolean;
-    created_at: string;
-}
 
 
 interface Props {
@@ -81,16 +70,6 @@ export default function Admins({ admins, auth }: Props) {
     const handleViewAdmin = (admin: Admin) => {
         setSelectedAdmin(admin);
         setIsViewDialogOpen(true);
-    };
-
-    const getFullName = (admin: Admin) => {
-        const parts = [
-            admin.first_name,
-            admin.middle_name,
-            admin.last_name,
-            admin.suffix
-        ].filter(Boolean);
-        return parts.join(' ');
     };
 
     return (

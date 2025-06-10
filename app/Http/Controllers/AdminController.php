@@ -12,10 +12,18 @@ class AdminController extends Controller
 {
     public function index()
         {
-            $admins = User::where('role', 'admin')->get();
+        $admins = User::where('role', 'admin')->get();
 
         return Inertia::render('Admins/admins', [
             'admins' => $admins
+        ]);
+    }
+
+    public function user(){
+        $users = User::where('role', 'user')->get();
+
+        return Inertia::render('Admins/user', [
+            'users' => $users
         ]);
     }
 

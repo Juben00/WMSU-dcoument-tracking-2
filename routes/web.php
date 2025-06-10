@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -10,7 +12,11 @@ Route::get('/', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
+        if (Auth::user()->role === 'superadmin') {
+            return redirect()->route('admins.index');
+        } else {
+            return redirect()->route('users.index');
+        }
     })->name('dashboard');
 
     Route::get('admins', function () {
@@ -22,6 +28,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/admins', [AdminController::class, 'store'])->name('admins.store');
     Route::patch('/admins/{admin}/toggle-status', [AdminController::class, 'toggleStatus'])->name('admins.toggle-status');
     Route::delete('/admins/{admin}', [AdminController::class, 'destroy'])->name('admins.destroy');
+
+    // User Management Routes
+    Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::get('/documents', [UserController::class, 'documents'])->name('users.documents');
+    Route::get('/profile', [UserController::class, 'profile'])->name('users.profile');
+
+
+    // User Document Profile Routes
+    Route::get('/documents/create', [UserController::class, 'createDocument'])->name('users.createDocument');
+    Route::post('/users/documents', [UserController::class, 'storeDocument'])->name('users.documents.store');
+    Route::get('/users/documents/{document}', [UserController::class, 'showDocument'])->name('users.documents.show');
+    Route::get('/users/documents/{document}/edit', [UserController::class, 'editDocument'])->name('users.documents.edit');
+    Route::put('/users/documents/{document}', [UserController::class, 'updateDocument'])->name('users.documents.update');
+    Route::delete('/users/documents/{document}', [UserController::class, 'destroyDocument'])->name('users.documents.destroy');
+
 });
 
 require __DIR__.'/settings.php';

@@ -48,3 +48,17 @@ export interface User {
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
 }
+
+export interface Admin {
+    id: number;
+    first_name: string;
+    last_name: string;
+    middle_name: string | null;
+    suffix: string | null;
+    gender: string;
+    position: string;
+    department: string;
+    email: string;
+    is_active: boolean;
+    created_at: string;
+}

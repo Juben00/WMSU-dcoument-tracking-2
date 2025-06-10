@@ -47,13 +47,15 @@ class User extends Authenticatable
      *
      * @return array<string, string>
      */
-    protected function casts(): array
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'is_admin' => 'boolean',
+        'is_active' => 'boolean',
+    ];
+
+    public function documents()
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'is_admin' => 'boolean',
-            'is_active' => 'boolean',
-        ];
+        return $this->hasMany(Document::class);
     }
 }
