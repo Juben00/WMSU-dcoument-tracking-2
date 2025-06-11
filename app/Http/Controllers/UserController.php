@@ -17,7 +17,7 @@ class UserController extends Controller
         {
         $users = User::where('role', 'user')->get();
 
-        return Inertia::render('Users/Home', [
+        return Inertia::render('Admins/user', [
             'users' => $users
         ]);
     }

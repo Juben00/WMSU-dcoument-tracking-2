@@ -88,12 +88,12 @@ export default function Admins({ admins, offices, auth }: Props) {
             <Head title="Admin Management" />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 overflow-x-auto">
                 <div className="flex justify-between items-center">
-                    <h1 className="text-2xl font-semibold">Admin Management</h1>
+                    <h1 className="text-2xl font-semibold">User Management</h1>
                     <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                         <DialogTrigger asChild>
                             <Button>
                                 <Plus className="mr-2 h-4 w-4" />
-                                Create Admin
+                                Create User
                             </Button>
                         </DialogTrigger>
                         <AddNewAdmin setIsCreateDialogOpen={setIsCreateDialogOpen} offices={offices} />

@@ -19,7 +19,7 @@ const mainNavItems: NavItem[] = [
         icon: Building,
     },
     {
-        title: 'Admins',
+        title: 'Users',
         href: '/admins',
         icon: Users2,
     },

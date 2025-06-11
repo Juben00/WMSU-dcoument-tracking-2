@@ -30,6 +30,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/admins/{admin}', [AdminController::class, 'update'])->name('admins.update');
     Route::patch('/admins/{admin}/toggle-status', [AdminController::class, 'toggleStatus'])->name('admins.toggle-status');
     Route::delete('/admins/{admin}', [AdminController::class, 'destroy'])->name('admins.destroy');
+    Route::get('/users', [AdminController::class, 'user'])->name('users.index');
 
     // Office Management Routes
     Route::get('/offices', [OfficeController::class, 'index'])->name('offices.index');

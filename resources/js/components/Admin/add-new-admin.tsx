@@ -34,7 +34,7 @@ interface FormData {
     suffix: string | null;
     gender: string;
     position: string;
-    office_id: string;
+    office_id: string | null;
     avatar: File | null;
     email: string;
     role: string;
@@ -50,7 +50,7 @@ const AddNewAdmin = ({ setIsCreateDialogOpen, offices }: { setIsCreateDialogOpen
         suffix: null,
         gender: '',
         position: '',
-        office_id: '',
+        office_id: null,
         avatar: null,
         email: '',
         role: 'admin',
@@ -170,8 +170,8 @@ const AddNewAdmin = ({ setIsCreateDialogOpen, offices }: { setIsCreateDialogOpen
                 <div className="space-y-2">
                     <Label htmlFor="office">Office</Label>
                     <Select
-                        value={data.office_id}
-                        onValueChange={value => setData('office_id', value)}
+                        value={data.office_id || ''}
+                        onValueChange={value => setData('office_id', value || null)}
                         required
                     >
                         <SelectTrigger>
@@ -183,6 +183,7 @@ const AddNewAdmin = ({ setIsCreateDialogOpen, offices }: { setIsCreateDialogOpen
                                     {office.name}
                                 </SelectItem>
                             ))}
+                            <SelectItem value=" ">None</SelectItem>
                         </SelectContent>
                     </Select>
                     {errors.office_id && (

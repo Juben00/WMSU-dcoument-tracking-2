@@ -39,13 +39,14 @@ export interface User {
     suffix: string | null;
     gender: string;
     position: string;
-    department: string;
+    office: Office | null;
     role: string;
     avatar?: string;
     email: string;
     email_verified_at: string | null;
     created_at: string;
     updated_at: string;
+    is_active: boolean;
     [key: string]: unknown; // This allows for additional properties...
 }
 

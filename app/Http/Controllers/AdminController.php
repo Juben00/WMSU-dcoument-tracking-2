@@ -40,7 +40,7 @@ class AdminController extends Controller
             'suffix' => ['nullable', 'string', 'max:255'],
             'gender' => ['required', 'string', 'in:Male,Female'],
             'position' => ['required', 'string', 'max:255'],
-            'office_id' => ['required', 'exists:offices,id'],
+            'office_id' => ['nullable', 'exists:offices,id'],
             'role' => ['required', 'string', 'in:admin,user'],
             'avatar' => ['nullable', 'image', 'max:2048'], // 2MB max
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
