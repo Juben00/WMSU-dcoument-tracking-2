@@ -62,3 +62,12 @@ export interface Admin {
     is_active: boolean;
     created_at: string;
 }
+
+export interface Office {
+    id: number;
+    name: string;
+    description: string | null;
+    created_at: string;
+    updated_at: string;
+    [key: string]: unknown;
+}

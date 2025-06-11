@@ -22,7 +22,7 @@ const Navbar = () => {
                         <Link href="/dashboard" className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-red-700 transition-colors duration-200">Dashboard</Link>
                         <Link href="/documents" className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-red-700 transition-colors duration-200">Documents</Link>
                         <Link href="/profile" className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-red-700 transition-colors duration-200">Profile</Link>
-                        <Link href="/logout" className="px-4 py-2 text-sm font-medium text-white bg-red-700 rounded-md hover:bg-red-800 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">Logout</Link>
+                        <Link href="/logout" method="post" className="px-4 py-2 text-sm font-medium text-white bg-red-700 rounded-md hover:bg-red-800 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">Logout</Link>
                     </div>
 
                     {/* Mobile menu button */}

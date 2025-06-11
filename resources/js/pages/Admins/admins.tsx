@@ -25,7 +25,6 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 
-
 interface Props {
     admins: Admin[];
     auth: {

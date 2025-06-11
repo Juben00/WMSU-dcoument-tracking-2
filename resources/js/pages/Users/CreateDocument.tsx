@@ -1,21 +1,27 @@
 import React, { useState } from 'react';
 import Navbar from '@/components/User/navbar';
 import { useForm } from '@inertiajs/react';
+import { User } from '@/types';
 
-interface FormData {
+type FormData = {
+    for: string;
+    thru: string;
+    from: string;
     title: string;
-    description: string;
     documentType: string;
+    description: string;
     file: File | null;
-    [key: string]: string | File | null;
 }
 
 const CreateDocument = () => {
     const { data, setData, post, processing, errors } = useForm<FormData>({
+        for: '',
+        thru: '',
+        from: '',
         title: '',
-        description: '',
         documentType: '',
-        file: null
+        description: '',
+        file: null,
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -34,13 +40,13 @@ const CreateDocument = () => {
                 <div className="bg-white rounded-lg shadow-md p-6">
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
-                            <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                                Document Title
+                            <label htmlFor="for" className="block text-sm font-medium text-gray-700">
+                                For
                             </label>
                             <input
                                 type="text"
-                                name="title"
-                                id="title"
+                                name="for"
+                                id="for"
                                 required
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
                                 value={data.title}
