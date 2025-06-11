@@ -6,6 +6,8 @@ use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Database\Seeders\OfficeSeeder;
+use Database\Seeders\UserSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -14,20 +16,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'first_name' => 'Test',
-            'last_name' => 'User',
-            'middle_name' => 'Middle',
-            'suffix' => 'Suffix',
-            'gender' => 'Male',
-            'position' => 'Position',
-            'department' => 'Department',
-            'role' => 'superadmin',
-            'avatar' => 'https://ui-avatars.com/api/?name=Test+User',
-            'email' => 'test@example.com',
-            'password' => Hash::make('superadmin'),
+        $this->call([
+            OfficeSeeder::class,
+            UserSeeder::class,
         ]);
+
+
     }
 }

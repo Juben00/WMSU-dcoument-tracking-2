@@ -27,6 +27,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Admin Management Routes
     Route::get('/admins', [AdminController::class, 'index'])->name('admins.index');
     Route::post('/admins', [AdminController::class, 'store'])->name('admins.store');
+    Route::put('/admins/{admin}', [AdminController::class, 'update'])->name('admins.update');
     Route::patch('/admins/{admin}/toggle-status', [AdminController::class, 'toggleStatus'])->name('admins.toggle-status');
     Route::delete('/admins/{admin}', [AdminController::class, 'destroy'])->name('admins.destroy');
 

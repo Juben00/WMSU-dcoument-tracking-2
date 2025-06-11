@@ -5,6 +5,7 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use App\Models\Office;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
@@ -30,7 +31,7 @@ class UserFactory extends Factory
             'suffix' => $this->faker->suffix(),
             'gender' => $this->faker->randomElement(['Male', 'Female']),
             'position' => $this->faker->jobTitle(),
-            'department' => $this->faker->company(),
+            'office_id' => $this->faker->randomElement(Office::pluck('id')),
             'role' => $this->faker->randomElement(['superadmin', 'admin', 'user']),
             'avatar' => $this->faker->imageUrl(),
             'email' => $this->faker->unique()->safeEmail(),

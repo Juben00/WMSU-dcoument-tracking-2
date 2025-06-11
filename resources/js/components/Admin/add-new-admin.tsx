@@ -20,6 +20,12 @@ import { Plus, Trash2, Lock, Unlock, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
+interface Office {
+    id: number;
+    name: string;
+    description: string;
+}
+
 interface FormData {
     [key: string]: string | null | File;
     first_name: string;
@@ -28,7 +34,7 @@ interface FormData {
     suffix: string | null;
     gender: string;
     position: string;
-    department: string;
+    office_id: string;
     avatar: File | null;
     email: string;
     role: string;
@@ -36,7 +42,7 @@ interface FormData {
     password_confirmation: string;
 }
 
-const AddNewAdmin = ({ setIsCreateDialogOpen }: { setIsCreateDialogOpen: (isOpen: boolean) => void }) => {
+const AddNewAdmin = ({ setIsCreateDialogOpen, offices }: { setIsCreateDialogOpen: (isOpen: boolean) => void, offices: Office[] }) => {
     const { data, setData, post, processing, errors, reset } = useForm<FormData>({
         first_name: '',
         last_name: '',
@@ -44,7 +50,7 @@ const AddNewAdmin = ({ setIsCreateDialogOpen }: { setIsCreateDialogOpen: (isOpen
         suffix: null,
         gender: '',
         position: '',
-        department: '',
+        office_id: '',
         avatar: null,
         email: '',
         role: 'admin',
@@ -81,8 +87,12 @@ const AddNewAdmin = ({ setIsCreateDialogOpen }: { setIsCreateDialogOpen: (isOpen
                             id="first_name"
                             value={data.first_name}
                             onChange={e => setData('first_name', e.target.value)}
+                            placeholder='Enter first name'
                             required
                         />
+                        {errors.first_name && (
+                            <p className="text-sm text-red-500">{errors.first_name}</p>
+                        )}
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="last_name">Last Name</Label>
@@ -90,8 +100,12 @@ const AddNewAdmin = ({ setIsCreateDialogOpen }: { setIsCreateDialogOpen: (isOpen
                             id="last_name"
                             value={data.last_name}
                             onChange={e => setData('last_name', e.target.value)}
+                            placeholder='Enter last name'
                             required
                         />
+                        {errors.last_name && (
+                            <p className="text-sm text-red-500">{errors.last_name}</p>
+                        )}
                     </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -101,7 +115,11 @@ const AddNewAdmin = ({ setIsCreateDialogOpen }: { setIsCreateDialogOpen: (isOpen
                             id="middle_name"
                             value={data.middle_name || ''}
                             onChange={e => setData('middle_name', e.target.value || null)}
+                            placeholder='Enter middle name'
                         />
+                        {errors.middle_name && (
+                            <p className="text-sm text-red-500">{errors.middle_name}</p>
+                        )}
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="suffix">Suffix</Label>
@@ -109,7 +127,11 @@ const AddNewAdmin = ({ setIsCreateDialogOpen }: { setIsCreateDialogOpen: (isOpen
                             id="suffix"
                             value={data.suffix || ''}
                             onChange={e => setData('suffix', e.target.value || null)}
+                            placeholder='Enter suffix if any'
                         />
+                        {errors.suffix && (
+                            <p className="text-sm text-red-500">{errors.suffix}</p>
+                        )}
                     </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -128,6 +150,9 @@ const AddNewAdmin = ({ setIsCreateDialogOpen }: { setIsCreateDialogOpen: (isOpen
                                 <SelectItem value="Female">Female</SelectItem>
                             </SelectContent>
                         </Select>
+                        {errors.gender && (
+                            <p className="text-sm text-red-500">{errors.gender}</p>
+                        )}
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="avatar">Avatar</Label>
@@ -143,13 +168,26 @@ const AddNewAdmin = ({ setIsCreateDialogOpen }: { setIsCreateDialogOpen: (isOpen
                     </div>
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="department">Department</Label>
-                    <Input
-                        id="department"
-                        value={data.department}
-                        onChange={e => setData('department', e.target.value)}
+                    <Label htmlFor="office">Office</Label>
+                    <Select
+                        value={data.office_id}
+                        onValueChange={value => setData('office_id', value)}
                         required
-                    />
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select office" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {offices.map((office) => (
+                                <SelectItem key={office.id} value={office.id.toString()}>
+                                    {office.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    {errors.office_id && (
+                        <p className="text-sm text-red-500">{errors.office_id}</p>
+                    )}
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="position">Position</Label>
@@ -157,8 +195,12 @@ const AddNewAdmin = ({ setIsCreateDialogOpen }: { setIsCreateDialogOpen: (isOpen
                         id="position"
                         value={data.position}
                         onChange={e => setData('position', e.target.value)}
+                        placeholder='Enter position'
                         required
                     />
+                    {errors.position && (
+                        <p className="text-sm text-red-500">{errors.position}</p>
+                    )}
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
@@ -167,8 +209,12 @@ const AddNewAdmin = ({ setIsCreateDialogOpen }: { setIsCreateDialogOpen: (isOpen
                         type="email"
                         value={data.email}
                         onChange={e => setData('email', e.target.value)}
+                        placeholder='Enter email'
                         required
                     />
+                    {errors.email && (
+                        <p className="text-sm text-red-500">{errors.email}</p>
+                    )}
                 </div>
                 <div className="flex justify-end gap-2">
                     <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>

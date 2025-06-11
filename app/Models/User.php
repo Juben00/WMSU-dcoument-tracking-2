@@ -24,7 +24,7 @@ class User extends Authenticatable
         'suffix',
         'gender',
         'position',
-        'department',
+        'office_id',
         'role',
         'avatar',
         'email',
@@ -57,5 +57,10 @@ class User extends Authenticatable
     public function documents()
     {
         return $this->hasMany(Document::class);
+    }
+
+    public function office()
+    {
+        return $this->belongsTo(Office::class);
     }
 }

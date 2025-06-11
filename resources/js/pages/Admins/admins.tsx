@@ -10,10 +10,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState } from 'react';
 import { useForm } from '@inertiajs/react';
-import { Plus, Trash2, Lock, Unlock, Eye } from 'lucide-react';
+import { Plus, Trash2, Lock, Unlock, Eye, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import AddNewAdmin from '@/components/Admin/add-new-admin';
+import EditAdmin from '@/components/Admin/edit-admin';
 import { Admin } from '@/types';
 import { getFullName } from '@/lib/utils';
 
@@ -27,6 +28,11 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 interface Props {
     admins: Admin[];
+    offices: {
+        id: number;
+        name: string;
+        description: string;
+    }[];
     auth: {
         user: {
             id: number;
@@ -34,10 +40,11 @@ interface Props {
     };
 }
 
-export default function Admins({ admins, auth }: Props) {
+export default function Admins({ admins, offices, auth }: Props) {
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
     const handleToggleStatus = (admin: Admin) => {
         const action = admin.is_active ? 'deactivate' : 'activate';
@@ -71,6 +78,11 @@ export default function Admins({ admins, auth }: Props) {
         setIsViewDialogOpen(true);
     };
 
+    const handleEditAdmin = (admin: Admin) => {
+        setSelectedAdmin(admin);
+        setIsEditDialogOpen(true);
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Admin Management" />
@@ -84,7 +96,7 @@ export default function Admins({ admins, auth }: Props) {
                                 Create Admin
                             </Button>
                         </DialogTrigger>
-                        <AddNewAdmin setIsCreateDialogOpen={setIsCreateDialogOpen} />
+                        <AddNewAdmin setIsCreateDialogOpen={setIsCreateDialogOpen} offices={offices} />
                     </Dialog>
                 </div>
 
@@ -94,7 +106,7 @@ export default function Admins({ admins, auth }: Props) {
                             <TableRow>
                                 <TableHead>Name</TableHead>
                                 <TableHead>Position</TableHead>
-                                <TableHead>Department</TableHead>
+                                <TableHead>Office</TableHead>
                                 <TableHead>Email</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>Created At</TableHead>
@@ -106,7 +118,7 @@ export default function Admins({ admins, auth }: Props) {
                                 <TableRow key={admin.id}>
                                     <TableCell>{getFullName(admin)}</TableCell>
                                     <TableCell>{admin.position}</TableCell>
-                                    <TableCell>{admin.department}</TableCell>
+                                    <TableCell>{admin.office?.name || 'N/A'}</TableCell>
                                     <TableCell>{admin.email}</TableCell>
                                     <TableCell>
                                         <span className={`px-2 py-1 rounded-full text-xs ${admin.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
@@ -123,6 +135,15 @@ export default function Admins({ admins, auth }: Props) {
                                                 title="View Admin Details"
                                             >
                                                 <Eye className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => handleEditAdmin(admin)}
+                                                title="Edit Admin"
+                                                disabled={admin.id === auth.user.id}
+                                            >
+                                                <Pencil className="h-4 w-4" />
                                             </Button>
                                             <Button
                                                 variant="ghost"
@@ -197,8 +218,8 @@ export default function Admins({ admins, auth }: Props) {
                                     </div>
                                 </div>
                                 <div>
-                                    <Label>Department</Label>
-                                    <p className="text-sm">{selectedAdmin.department}</p>
+                                    <Label>Office</Label>
+                                    <p className="text-sm">{selectedAdmin.office?.name || 'N/A'}</p>
                                 </div>
                                 <div>
                                     <Label>Position</Label>
@@ -213,6 +234,22 @@ export default function Admins({ admins, auth }: Props) {
                                     <p className="text-sm">{format(new Date(selectedAdmin.created_at), 'MMMM d, yyyy h:mm a')}</p>
                                 </div>
                             </div>
+                        )}
+                    </DialogContent>
+                </Dialog>
+
+                {/* Edit Admin Dialog */}
+                <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Edit Admin</DialogTitle>
+                        </DialogHeader>
+                        {selectedAdmin && (
+                            <EditAdmin
+                                admin={selectedAdmin}
+                                offices={offices}
+                                setIsEditDialogOpen={setIsEditDialogOpen}
+                            />
                         )}
                     </DialogContent>
                 </Dialog>

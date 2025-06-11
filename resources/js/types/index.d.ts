@@ -57,10 +57,11 @@ export interface Admin {
     suffix: string | null;
     gender: string;
     position: string;
-    department: string;
+    office: Office | null;
     email: string;
     is_active: boolean;
     created_at: string;
+    avatar: string | null;
 }
 
 export interface Office {

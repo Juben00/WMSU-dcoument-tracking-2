@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\Office;
 
 class OfficeSeeder extends Seeder
 {
@@ -12,6 +13,9 @@ class OfficeSeeder extends Seeder
      */
     public function run(): void
     {
-        //
+        Office::create([
+            'name' => 'Office 1',
+            'description' => 'Office 1 description',
+        ]);
     }
 }

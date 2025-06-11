@@ -31,7 +31,7 @@ class UserController extends Controller
             'suffix' => ['nullable', 'string', 'max:255'],
             'gender' => ['required', 'string', 'in:Male,Female'],
             'position' => ['required', 'string', 'max:255'],
-            'department' => ['required', 'string', 'max:255'],
+            'offices' => ['nullable', 'string', 'max:255'],
             'role' => ['required', 'string', 'in:admin,user'],
             'avatar' => ['nullable', 'image', 'max:2048'], // 2MB max
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
@@ -50,7 +50,7 @@ class UserController extends Controller
             'suffix' => $request->suffix,
             'gender' => $request->gender,
             'position' => $request->position,
-            'department' => $request->department,
+            'offices' => $request->offices,
             'role' => $request->role,
             'avatar' => $avatarPath,
             'email' => $request->email,
