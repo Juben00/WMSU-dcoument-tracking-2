@@ -15,12 +15,12 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Offices',
-        href: '/offices',
+        href: '/Admin/offices',
         icon: Building,
     },
     {
         title: 'Users',
-        href: '/admins',
+        href: '/Admin/users',
         icon: Users2,
     },
 

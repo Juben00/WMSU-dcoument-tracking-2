@@ -20,26 +20,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
         }
     })->name('dashboard');
 
-    Route::get('admins', function () {
-        return Inertia::render('Admins/admins');
-    })->name('admins');
+    // Admin and Office Management Routes - Superadmin Only
+        // Admin Management Routes
+    Route::middleware('role:superadmin')->group(function () {
 
-    // Admin Management Routes
-    Route::get('/admins', [AdminController::class, 'index'])->name('admins.index');
-    Route::post('/admins', [AdminController::class, 'store'])->name('admins.store');
-    Route::put('/admins/{admin}', [AdminController::class, 'update'])->name('admins.update');
-    Route::patch('/admins/{admin}/toggle-status', [AdminController::class, 'toggleStatus'])->name('admins.toggle-status');
-    Route::delete('/admins/{admin}', [AdminController::class, 'destroy'])->name('admins.destroy');
-    Route::get('/users', [AdminController::class, 'user'])->name('users.index');
+        Route::get('/Admin/users', [AdminController::class, 'index'])->name('admins.index');
+        Route::post('/Admin/users', [AdminController::class, 'store'])->name('admins.store');
+        Route::put('/Admin/users/{admin}', [AdminController::class, 'update'])->name('admins.update');
+        Route::patch('/Admin/users/{admin}/toggle-status', [AdminController::class, 'toggleStatus'])->name('admins.toggle-status');
+        Route::delete('/Admin/users/{admin}', [AdminController::class, 'destroy'])->name('admins.destroy');
 
-    // Office Management Routes
-    Route::get('/offices', [OfficeController::class, 'index'])->name('offices.index');
-    Route::get('/offices/create', [OfficeController::class, 'create'])->name('offices.create');
-    Route::post('/offices', [OfficeController::class, 'store'])->name('offices.store');
-    Route::get('/offices/{office}', [OfficeController::class, 'show'])->name('offices.show');
-    Route::get('/offices/{office}/edit', [OfficeController::class, 'edit'])->name('offices.edit');
-    Route::put('/offices/{office}', [OfficeController::class, 'update'])->name('offices.update');
-    Route::delete('/offices/{office}', [OfficeController::class, 'destroy'])->name('offices.destroy');
+        // Office Management Routes
+        Route::get('/Admin/offices', [OfficeController::class, 'index'])->name('offices.index');
+        Route::get('/Admin/offices/create', [OfficeController::class, 'create'])->name('offices.create');
+        Route::post('/Admin/offices', [OfficeController::class, 'store'])->name('offices.store');
+        Route::get('/Admin/offices/{office}', [OfficeController::class, 'show'])->name('offices.show');
+        Route::get('/Admin/offices/{office}/edit', [OfficeController::class, 'edit'])->name('offices.edit');
+        Route::put('/Admin/offices/{office}', [OfficeController::class, 'update'])->name('offices.update');
+        Route::delete('/Admin/offices/{office}', [OfficeController::class, 'destroy'])->name('offices.destroy');
+    });
 
     // User Management Routes
     // Route::get('/users', [UserController::class, 'index'])->name('users.index');
@@ -54,7 +53,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Route::get('/users/documents/{document}/edit', [UserController::class, 'editDocument'])->name('users.documents.edit');
     // Route::put('/users/documents/{document}', [UserController::class, 'updateDocument'])->name('users.documents.update');
     // Route::delete('/users/documents/{document}', [UserController::class, 'destroyDocument'])->name('users.documents.destroy');
-
 });
 
 require __DIR__.'/settings.php';

@@ -23,14 +23,6 @@ class AdminController extends Controller
         ]);
     }
 
-    public function user(){
-        $users = User::where('role', 'user')->get();
-
-        return Inertia::render('Admins/user', [
-            'users' => $users
-        ]);
-    }
-
     public function store(Request $request)
     {
         $request->validate([

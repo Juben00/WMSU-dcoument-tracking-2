@@ -19,6 +19,7 @@ const Navbar = () => {
 
                     {/* Desktop Menu */}
                     <div className="hidden md:flex space-x-2 items-center">
+                        <Link href="/offices" className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-red-700 transition-colors duration-200">Offices</Link>
                         <Link href="/dashboard" className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-red-700 transition-colors duration-200">Dashboard</Link>
                         <Link href="/documents" className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-red-700 transition-colors duration-200">Documents</Link>
                         <Link href="/profile" className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-red-700 transition-colors duration-200">Profile</Link>
