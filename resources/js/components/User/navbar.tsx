@@ -1,9 +1,55 @@
 import React, { useState } from 'react';
 import { Link } from '@inertiajs/react';
 import WmsuLogo from '../WmsuLogo';
+import { NavMain } from '../nav-main';
+import { usePage } from '@inertiajs/react';
+import { PageProps as InertiaPageProps } from '@inertiajs/core';
+
+interface AuthUser {
+    role?: string;
+}
+
+interface PageProps extends InertiaPageProps {
+    auth: {
+        user?: AuthUser;
+    };
+}
 
 const Navbar = () => {
     const [menuOpen, setMenuOpen] = useState(false);
+
+    const { auth } = usePage<PageProps>().props;
+    const role = auth?.user?.role || 'user';
+
+    const NavItems = [
+        {
+            label: 'Dashboard',
+            href: '/dashboard',
+        },
+        {
+            label: 'Documents',
+            href: '/documents',
+        },
+        {
+            label: 'Profile',
+            href: '/profile',
+        },
+        {
+            label: 'Logout',
+            href: '/logout',
+            method: 'post',
+        },
+    ];
+
+    const AdminNavItems = [
+        {
+            label: 'Offices',
+            href: '/offices',
+        },
+        ...NavItems,
+    ];
+
+    const currentNavItems = role === 'admin' ? AdminNavItems : NavItems;
 
     return (
         <nav className="shadow-md bg-white">
@@ -11,19 +57,27 @@ const Navbar = () => {
                 <div className="flex items-center justify-between h-16">
                     {/* Logo and Title */}
                     <div className="flex items-center">
-                        <a href="/dashboard" className="flex items-center hover:opacity-80 transition-opacity">
+                        <Link href="/dashboard" className="flex items-center hover:opacity-80 transition-opacity">
                             <WmsuLogo className="h-10 w-10 mr-3" />
                             <span className="font-bold text-xl tracking-wide text-gray-800">WMSU DMTS</span>
-                        </a>
+                        </Link>
                     </div>
 
                     {/* Desktop Menu */}
                     <div className="hidden md:flex space-x-2 items-center">
-                        <Link href="/offices" className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-red-700 transition-colors duration-200">Offices</Link>
-                        <Link href="/dashboard" className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-red-700 transition-colors duration-200">Dashboard</Link>
-                        <Link href="/documents" className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-red-700 transition-colors duration-200">Documents</Link>
-                        <Link href="/profile" className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-red-700 transition-colors duration-200">Profile</Link>
-                        <Link href="/logout" method="post" className="px-4 py-2 text-sm font-medium text-white bg-red-700 rounded-md hover:bg-red-800 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">Logout</Link>
+                        {currentNavItems.map((item, index) => (
+                            <Link
+                                key={index}
+                                href={item.href}
+                                method={item.method as any}
+                                className={`px-3 py-2 rounded-md text-sm font-medium ${item.label === 'Logout'
+                                    ? 'text-white bg-red-700 hover:bg-red-800'
+                                    : 'text-gray-600 hover:bg-red-50 hover:text-red-700'
+                                    } transition-colors duration-200`}
+                            >
+                                {item.label}
+                            </Link>
+                        ))}
                     </div>
 
                     {/* Mobile menu button */}
@@ -54,11 +108,19 @@ const Navbar = () => {
                     } overflow-hidden`}
             >
                 <div className="px-2 pt-2 pb-3 space-y-1 bg-white shadow-lg">
-                    <a href="/dashboard" className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-red-50 hover:text-red-700 transition-colors duration-200">Dashboard</a>
-                    <a href="/documents" className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-red-50 hover:text-red-700 transition-colors duration-200">Documents</a>
-                    <a href="/tracking" className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-red-50 hover:text-red-700 transition-colors duration-200">Tracking</a>
-                    <a href="/profile" className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-red-50 hover:text-red-700 transition-colors duration-200">Profile</a>
-                    <a href="/logout" className="block px-3 py-2 rounded-md text-base font-medium text-white bg-red-700 hover:bg-red-800 transition-colors duration-200">Logout</a>
+                    {currentNavItems.map((item, index) => (
+                        <Link
+                            key={index}
+                            href={item.href}
+                            method={item.method as any}
+                            className={`block px-3 py-2 rounded-md text-base font-medium ${item.label === 'Logout'
+                                ? 'text-white bg-red-700 hover:bg-red-800'
+                                : 'text-gray-600 hover:bg-red-50 hover:text-red-700'
+                                } transition-colors duration-200`}
+                        >
+                            {item.label}
+                        </Link>
+                    ))}
                 </div>
             </div>
         </nav>

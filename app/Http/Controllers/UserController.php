@@ -22,6 +22,17 @@ class UserController extends Controller
         ]);
     }
 
+    public function offices()
+    {
+        $users = User::whereIn('role', ['user', 'receiver'])->with('office')->get();
+        return Inertia::render('Users/Offices', [
+            'auth' => [
+                'user' => Auth::user()
+            ],
+            'users' => $users
+        ]);
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -31,16 +42,22 @@ class UserController extends Controller
             'suffix' => ['nullable', 'string', 'max:255'],
             'gender' => ['required', 'string', 'in:Male,Female'],
             'position' => ['required', 'string', 'max:255'],
-            'offices' => ['nullable', 'string', 'max:255'],
-            'role' => ['required', 'string', 'in:admin,user'],
-            'avatar' => ['nullable', 'image', 'max:2048'], // 2MB max
+            'role' => ['required', 'string', 'in:receiver,user'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $avatarPath = null;
-        if ($request->hasFile('avatar')) {
-            $avatarPath = $request->file('avatar')->store('avatars', 'public');
+        // Check if trying to create a receiver and if one already exists for this office
+        if ($request->role === 'receiver') {
+            $existingReceiver = User::where('office_id', Auth::user()->office_id)
+                ->where('role', 'receiver')
+                ->first();
+
+            if ($existingReceiver) {
+                return back()->withErrors([
+                    'role' => 'A receiver already exists for this office.'
+                ]);
+            }
         }
 
         $user = User::create([
@@ -50,14 +67,13 @@ class UserController extends Controller
             'suffix' => $request->suffix,
             'gender' => $request->gender,
             'position' => $request->position,
-            'offices' => $request->offices,
+            'office_id' => Auth::user()->office_id,
             'role' => $request->role,
-            'avatar' => $avatarPath,
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
 
-        return redirect()->route('admins.index');
+        return redirect()->route('users.offices');
     }
 
     public function toggleStatus(User $admin)
@@ -69,11 +85,10 @@ class UserController extends Controller
         return redirect()->route('admins.index');
     }
 
-    public function destroy(User $admin)
+    public function destroy(User $user)
     {
-        $admin->delete();
-
-        return redirect()->route('admins.index');
+        $user->delete();
+        return redirect()->route('users.offices');
     }
 
     // Document Profile Methods
@@ -170,5 +185,46 @@ class UserController extends Controller
         // $document->delete();
 
         // return redirect()->route('users.documents')->with('success', 'Document deleted successfully.');
+    }
+
+    public function update(Request $request, User $user)
+    {
+        $request->validate([
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'middle_name' => ['nullable', 'string', 'max:255'],
+            'suffix' => ['nullable', 'string', 'max:255'],
+            'gender' => ['required', 'string', 'in:Male,Female'],
+            'position' => ['required', 'string', 'max:255'],
+            'role' => ['required', 'string', 'in:receiver,user'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
+        ]);
+
+        // Check if trying to update to receiver role and if one already exists for this office
+        if ($request->role === 'receiver' && $user->role !== 'receiver') {
+            $existingReceiver = User::where('office_id', Auth::user()->office_id)
+                ->where('role', 'receiver')
+                ->where('id', '!=', $user->id)
+                ->first();
+
+            if ($existingReceiver) {
+                return back()->withErrors([
+                    'role' => 'A receiver already exists for this office.'
+                ]);
+            }
+        }
+
+        $user->update([
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
+            'middle_name' => $request->middle_name,
+            'suffix' => $request->suffix,
+            'gender' => $request->gender,
+            'position' => $request->position,
+            'role' => $request->role,
+            'email' => $request->email,
+        ]);
+
+        return redirect()->route('users.offices');
     }
 }

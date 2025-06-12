@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import InputError from '../input-error';
 
 interface Props {
     setIsCreateDialogOpen: (value: boolean) => void;
@@ -40,7 +41,7 @@ export default function AddNewOffice({ setIsCreateDialogOpen }: Props) {
                     placeholder="Enter office name"
                     required
                 />
-                {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
+                <InputError message={errors.name} />
             </div>
 
             <div className="space-y-2">
@@ -52,7 +53,7 @@ export default function AddNewOffice({ setIsCreateDialogOpen }: Props) {
                     placeholder="Enter office description"
                     required
                 />
-                {errors.description && <p className="text-sm text-red-500">{errors.description}</p>}
+                <InputError message={errors.description} />
             </div>
 
             <div className="flex justify-end gap-2">

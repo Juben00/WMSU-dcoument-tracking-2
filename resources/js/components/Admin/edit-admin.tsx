@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Admin } from '@/types';
 import { toast } from 'sonner';
+import InputError from '../input-error';
 
 interface EditAdminProps {
     admin: Admin;
@@ -52,7 +53,7 @@ export default function EditAdmin({ admin, offices, setIsEditDialogOpen }: EditA
                         onChange={e => setData('first_name', e.target.value)}
                         required
                     />
-                    {errors.first_name && <p className="text-sm text-red-500">{errors.first_name}</p>}
+                    <InputError message={errors.first_name} />
                 </div>
                 <div>
                     <Label htmlFor="last_name">Last Name</Label>
@@ -62,7 +63,7 @@ export default function EditAdmin({ admin, offices, setIsEditDialogOpen }: EditA
                         onChange={e => setData('last_name', e.target.value)}
                         required
                     />
-                    {errors.last_name && <p className="text-sm text-red-500">{errors.last_name}</p>}
+                    <InputError message={errors.last_name} />
                 </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -73,6 +74,7 @@ export default function EditAdmin({ admin, offices, setIsEditDialogOpen }: EditA
                         value={data.middle_name}
                         onChange={e => setData('middle_name', e.target.value)}
                     />
+                    <InputError message={errors.middle_name} />
                 </div>
                 <div>
                     <Label htmlFor="suffix">Suffix</Label>
@@ -81,6 +83,7 @@ export default function EditAdmin({ admin, offices, setIsEditDialogOpen }: EditA
                         value={data.suffix}
                         onChange={e => setData('suffix', e.target.value)}
                     />
+                    <InputError message={errors.suffix} />
                 </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -98,7 +101,7 @@ export default function EditAdmin({ admin, offices, setIsEditDialogOpen }: EditA
                             <SelectItem value="Female">Female</SelectItem>
                         </SelectContent>
                     </Select>
-                    {errors.gender && <p className="text-sm text-red-500">{errors.gender}</p>}
+                    <InputError message={errors.gender} />
                 </div>
                 <div>
                     <Label htmlFor="office_id">Office</Label>
@@ -117,7 +120,7 @@ export default function EditAdmin({ admin, offices, setIsEditDialogOpen }: EditA
                             ))}
                         </SelectContent>
                     </Select>
-                    {errors.office_id && <p className="text-sm text-red-500">{errors.office_id}</p>}
+                    <InputError message={errors.office_id} />
                 </div>
             </div>
             <div>
@@ -128,7 +131,7 @@ export default function EditAdmin({ admin, offices, setIsEditDialogOpen }: EditA
                     onChange={e => setData('position', e.target.value)}
                     required
                 />
-                {errors.position && <p className="text-sm text-red-500">{errors.position}</p>}
+                <InputError message={errors.position} />
             </div>
             <div>
                 <Label htmlFor="email">Email</Label>
@@ -139,7 +142,7 @@ export default function EditAdmin({ admin, offices, setIsEditDialogOpen }: EditA
                     onChange={e => setData('email', e.target.value)}
                     required
                 />
-                {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
+                <InputError message={errors.email} />
             </div>
             <div className="flex justify-end gap-2">
                 <Button

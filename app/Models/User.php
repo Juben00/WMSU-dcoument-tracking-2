@@ -56,7 +56,7 @@ class User extends Authenticatable
 
     public function documents()
     {
-        return $this->hasMany(Document::class);
+        return $this->hasMany(Document::class, 'owner_id');
     }
 
     public function office()

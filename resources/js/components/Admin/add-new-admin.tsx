@@ -19,6 +19,7 @@ import { useForm } from '@inertiajs/react';
 import { Plus, Trash2, Lock, Unlock, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import InputError from '../input-error';
 
 interface Office {
     id: number;
@@ -90,9 +91,7 @@ const AddNewAdmin = ({ setIsCreateDialogOpen, offices }: { setIsCreateDialogOpen
                             placeholder='Enter first name'
                             required
                         />
-                        {errors.first_name && (
-                            <p className="text-sm text-red-500">{errors.first_name}</p>
-                        )}
+                        <InputError message={errors.first_name} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="last_name">Last Name</Label>
@@ -103,9 +102,7 @@ const AddNewAdmin = ({ setIsCreateDialogOpen, offices }: { setIsCreateDialogOpen
                             placeholder='Enter last name'
                             required
                         />
-                        {errors.last_name && (
-                            <p className="text-sm text-red-500">{errors.last_name}</p>
-                        )}
+                        <InputError message={errors.last_name} />
                     </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -117,9 +114,7 @@ const AddNewAdmin = ({ setIsCreateDialogOpen, offices }: { setIsCreateDialogOpen
                             onChange={e => setData('middle_name', e.target.value || null)}
                             placeholder='Enter middle name'
                         />
-                        {errors.middle_name && (
-                            <p className="text-sm text-red-500">{errors.middle_name}</p>
-                        )}
+                        <InputError message={errors.middle_name} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="suffix">Suffix</Label>
@@ -129,9 +124,7 @@ const AddNewAdmin = ({ setIsCreateDialogOpen, offices }: { setIsCreateDialogOpen
                             onChange={e => setData('suffix', e.target.value || null)}
                             placeholder='Enter suffix if any'
                         />
-                        {errors.suffix && (
-                            <p className="text-sm text-red-500">{errors.suffix}</p>
-                        )}
+                        <InputError message={errors.suffix} />
                     </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -150,9 +143,7 @@ const AddNewAdmin = ({ setIsCreateDialogOpen, offices }: { setIsCreateDialogOpen
                                 <SelectItem value="Female">Female</SelectItem>
                             </SelectContent>
                         </Select>
-                        {errors.gender && (
-                            <p className="text-sm text-red-500">{errors.gender}</p>
-                        )}
+                        <InputError message={errors.gender} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="avatar">Avatar</Label>
@@ -162,9 +153,7 @@ const AddNewAdmin = ({ setIsCreateDialogOpen, offices }: { setIsCreateDialogOpen
                             accept="image/*"
                             onChange={e => setData('avatar', e.target.files?.[0] || null)}
                         />
-                        {errors.avatar && (
-                            <p className="text-sm text-red-500">{errors.avatar}</p>
-                        )}
+                        <InputError message={errors.avatar} />
                     </div>
                 </div>
                 <div className="space-y-2">
@@ -186,9 +175,7 @@ const AddNewAdmin = ({ setIsCreateDialogOpen, offices }: { setIsCreateDialogOpen
                             <SelectItem value=" ">None</SelectItem>
                         </SelectContent>
                     </Select>
-                    {errors.office_id && (
-                        <p className="text-sm text-red-500">{errors.office_id}</p>
-                    )}
+                    <InputError message={errors.office_id} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="position">Position</Label>
@@ -199,9 +186,7 @@ const AddNewAdmin = ({ setIsCreateDialogOpen, offices }: { setIsCreateDialogOpen
                         placeholder='Enter position'
                         required
                     />
-                    {errors.position && (
-                        <p className="text-sm text-red-500">{errors.position}</p>
-                    )}
+                    <InputError message={errors.position} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
@@ -213,9 +198,7 @@ const AddNewAdmin = ({ setIsCreateDialogOpen, offices }: { setIsCreateDialogOpen
                         placeholder='Enter email'
                         required
                     />
-                    {errors.email && (
-                        <p className="text-sm text-red-500">{errors.email}</p>
-                    )}
+                    <InputError message={errors.email} />
                 </div>
                 <div className="flex justify-end gap-2">
                     <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
