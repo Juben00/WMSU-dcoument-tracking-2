@@ -96,7 +96,17 @@ class UserController extends Controller
     // Document Profile Methods
     public function documents()
     {
-        $documents = Auth::user()->documents;
+        // Get documents where user is the owner
+        $ownedDocuments = Auth::user()->documents;
+
+        // Get documents where user is a recipient
+        $receivedDocuments = Document::whereHas('recipients', function($query) {
+            $query->where('user_id', Auth::id());
+        })->get();
+
+        // Merge the collections
+        $documents = $ownedDocuments->concat($receivedDocuments);
+
         return Inertia::render('Users/Documents', [
             'documents' => $documents,
             'auth' => [

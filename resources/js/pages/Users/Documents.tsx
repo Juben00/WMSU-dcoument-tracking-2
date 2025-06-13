@@ -24,7 +24,7 @@ const Documents = ({ documents, auth }: Props) => {
     const [activeTab, setActiveTab] = useState('drafts');
 
     const drafts = documents.filter(doc => doc.status === 'draft');
-    const received = documents.filter(doc => doc.status !== 'draft' && doc.owner_id !== auth.user.id);
+    const received = documents.filter(doc => doc.owner_id !== auth.user.id);
     const sent = documents.filter(doc => doc.status !== 'draft' && doc.owner_id === auth.user.id);
 
     const getStatusColor = (status: string) => {
