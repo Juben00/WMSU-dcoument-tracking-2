@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -54,9 +55,9 @@ class User extends Authenticatable
         'is_active' => 'boolean',
     ];
 
-    public function documents()
+    public function documents(): HasMany
     {
-        return $this->hasMany(Document::class, 'owner_id');
+        return $this->hasMany(\App\Models\Document::class, 'owner_id');
     }
 
     public function office()

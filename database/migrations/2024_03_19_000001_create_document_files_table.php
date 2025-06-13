@@ -11,12 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('documents', function (Blueprint $table) {
+        Schema::create('document_files', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('owner_id')->constrained('users')->onDelete('cascade');
-            $table->string('title');
-            $table->enum('status', ['draft', 'pending', 'in_review', 'approved', 'rejected', 'returned']);
-            $table->text('description')->nullable();
+            $table->foreignId('document_id')->constrained()->onDelete('cascade');
+            $table->string('file_path');
+            $table->string('original_filename');
+            $table->string('mime_type');
+            $table->integer('file_size');
             $table->timestamps();
         });
     }
@@ -26,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('documents');
+        Schema::dropIfExists('document_files');
     }
 };

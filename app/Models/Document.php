@@ -6,15 +6,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-
+use App\Models\DocumentFile;
 class Document extends Model
 {
     use HasFactory;
 
+    protected $table = 'documents';
+
     protected $fillable = [
         'owner_id',
         'title',
-        'file_path',
         'status',
         'description'
     ];
@@ -32,5 +33,10 @@ class Document extends Model
     public function revisions(): HasMany
     {
         return $this->hasMany(DocumentRevision::class);
+    }
+
+    public function files(): HasMany
+    {
+        return $this->hasMany(DocumentFile::class);
     }
 }

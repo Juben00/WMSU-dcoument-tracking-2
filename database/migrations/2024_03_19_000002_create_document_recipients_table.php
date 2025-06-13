@@ -11,13 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('document_revisions', function (Blueprint $table) {
+        Schema::create('document_recipients', function (Blueprint $table) {
             $table->id();
             $table->foreignId('document_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('file_path');
+            $table->foreignId('forwarded_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->string('status')->default('pending'); // pending, approved, rejected, returned, forwarded
             $table->text('comments')->nullable();
-            $table->integer('version')->default(1);
+            $table->integer('sequence');
+            $table->boolean('is_active')->default(true);
+            $table->boolean('is_final_approver')->default(false);
+            $table->timestamp('responded_at')->nullable();
             $table->timestamps();
         });
     }
@@ -27,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('document_revisions');
+        Schema::dropIfExists('document_recipients');
     }
 };

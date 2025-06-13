@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Document;
+use App\Models\DocumentRecipient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Office;
 
 class UserController extends Controller
 {
@@ -96,7 +98,10 @@ class UserController extends Controller
     {
         $documents = Auth::user()->documents;
         return Inertia::render('Users/Documents', [
-            'documents' => $documents
+            'documents' => $documents,
+            'auth' => [
+                'user' => Auth::user()
+            ]
         ]);
     }
 
@@ -109,7 +114,31 @@ class UserController extends Controller
 
     public function createDocument()
     {
-        return Inertia::render('Users/CreateDocument');
+        $offices = Office::with(['users' => function($query) {
+            $query->whereIn('role', ['receiver', 'admin'])->where('id', '!=', Auth::user()->id)
+                  ->orderBy('role', 'desc'); // This will put receivers first
+        }])->get();
+
+        // Transform the data to include the contact person for each office
+        $officesWithContact = $offices->map(function($office) {
+            $contactPerson = $office->users->first();
+            return [
+                'id' => $office->id,
+                'name' => $office->name,
+                'contact_person' => $contactPerson ? [
+                    'id' => $contactPerson->id,
+                    'name' => $contactPerson->first_name . ' ' . $contactPerson->last_name,
+                    'role' => $contactPerson->role
+                ] : null
+            ];
+        });
+
+        return Inertia::render('Users/CreateDocument', [
+            'auth' => [
+                'user' => Auth::user()
+            ],
+            'offices' => $officesWithContact
+        ]);
     }
 
     public function storeDocument(Request $request)
@@ -117,20 +146,42 @@ class UserController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'file' => 'required|file|max:10240', // 10MB max
-            'type' => 'required|string|in:personal,academic,professional',
-            'status' => 'required|string|in:draft,published,archived'
+            'files' => 'required|array',
+            'files.*' => 'required|file|max:10240', // 10MB max per file
+            'status' => 'required|string|in:draft,pending',
+            'recipient_id' => 'required_if:status,pending|exists:users,id'
         ]);
 
-        $filePath = $request->file('file')->store('documents', 'public');
+        // Create the document
+        $document = Document::create([
+            'owner_id' => Auth::id(),
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'status' => $validated['status']
+        ]);
 
-        // Auth::user()->documents()->create([
-        //     'title' => $validated['title'],
-        //     'description' => $validated['description'],
-        //     'file_path' => $filePath,
-        //     'type' => $validated['type'],
-        //     'status' => $validated['status']
-        // ]);
+        // Handle multiple file uploads
+        foreach ($request->file('files') as $file) {
+            $filePath = $file->store('documents', 'public');
+
+            $document->files()->create([
+                'file_path' => $filePath,
+                'original_filename' => $file->getClientOriginalName(),
+                'mime_type' => $file->getMimeType(),
+                'file_size' => $file->getSize()
+            ]);
+        }
+
+        // If document is being submitted (not draft), create the initial recipient
+        if ($validated['status'] === 'pending' && isset($validated['recipient_id'])) {
+            DocumentRecipient::create([
+                'document_id' => $document->id,
+                'user_id' => $validated['recipient_id'],
+                'status' => 'pending',
+                'sequence' => 1,
+                'is_active' => true
+            ]);
+        }
 
         return redirect()->route('users.documents')->with('success', 'Document uploaded successfully.');
     }

@@ -6,6 +6,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\OfficeController;
+use App\Http\Controllers\DocumentController;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -51,12 +52,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
     // // User Document Profile Routes
-    // Route::get('/documents/create', [UserController::class, 'createDocument'])->name('users.createDocument');
-    // Route::post('/users/documents', [UserController::class, 'storeDocument'])->name('users.documents.store');
-    // Route::get('/users/documents/{document}', [UserController::class, 'showDocument'])->name('users.documents.show');
-    // Route::get('/users/documents/{document}/edit', [UserController::class, 'editDocument'])->name('users.documents.edit');
-    // Route::put('/users/documents/{document}', [UserController::class, 'updateDocument'])->name('users.documents.update');
-    // Route::delete('/users/documents/{document}', [UserController::class, 'destroyDocument'])->name('users.documents.destroy');
+    Route::get('/documents/create', [UserController::class, 'createDocument'])->name('users.createDocument');
+    Route::post('/users/documents', [UserController::class, 'storeDocument'])->name('users.documents.store');
+    Route::get('/users/documents/{document}', [UserController::class, 'showDocument'])->name('users.documents.show');
+    Route::get('/users/documents/{document}/edit', [UserController::class, 'editDocument'])->name('users.documents.edit');
+    Route::put('/users/documents/{document}', [UserController::class, 'updateDocument'])->name('users.documents.update');
+    Route::delete('/users/documents/{document}', [UserController::class, 'destroyDocument'])->name('users.documents.destroy');
+
+    // Document routes
+    Route::get('/documents/{document}', [DocumentController::class, 'viewDocument'])->name('documents.view');
+    Route::get('/documents/{document}/files/{file}', [DocumentController::class, 'downloadDocument'])->name('documents.download');
 });
 
 require __DIR__.'/settings.php';
