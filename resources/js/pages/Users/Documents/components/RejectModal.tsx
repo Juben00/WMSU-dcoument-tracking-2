@@ -3,23 +3,70 @@ import { Dialog } from '@headlessui/react';
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from '@inertiajs/react';
 import { toast } from 'sonner';
+import { usePage } from '@inertiajs/react';
 
 interface RejectModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onReject: (comments: string, file: File | null) => void;
-    processing: boolean;
+    documentId: number;
 }
 
-const RejectModal: React.FC<RejectModalProps> = ({ isOpen, onClose, onReject, processing }) => {
+interface FormData {
+    status: string;
+    comments: string;
+    attachment_file: File | null;
+    forward_to_id: number | null;
+    is_final_approver: boolean;
+    [key: string]: any;
+}
+
+interface PageProps {
+    auth: {
+        user: {
+            role: string;
+        };
+    };
+    [key: string]: any;
+}
+
+const RejectModal: React.FC<RejectModalProps> = ({ isOpen, onClose, documentId }) => {
     const [comments, setComments] = useState('');
     const [rejectFile, setRejectFile] = useState<File | null>(null);
+    const { auth } = usePage<PageProps>().props;
+
+    const { post, processing, setData, data } = useForm<FormData>({
+        status: 'rejected',
+        comments: '',
+        attachment_file: null,
+        forward_to_id: null,
+        is_final_approver: auth.user.role === 'admin'
+    });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onReject(comments, rejectFile);
-        setComments('');
-        setRejectFile(null);
+        setData({
+            status: 'rejected',
+            comments: comments,
+            attachment_file: rejectFile,
+            forward_to_id: null,
+            is_final_approver: auth.user.role === 'admin'
+        });
+
+        post(route('documents.respond', documentId), {
+            onSuccess: () => {
+                onClose();
+                setComments('');
+                setRejectFile(null);
+                toast.success('Document rejected successfully');
+            },
+            onError: (errors: any) => {
+                if (errors.message) {
+                    toast.error(errors.message);
+                } else {
+                    toast.error('An error occurred while rejecting the document');
+                }
+            }
+        });
     };
 
     return (
@@ -41,7 +88,10 @@ const RejectModal: React.FC<RejectModalProps> = ({ isOpen, onClose, onReject, pr
                             <label className="block text-sm font-medium text-gray-700">Comments</label>
                             <Textarea
                                 value={comments}
-                                onChange={(e) => setComments(e.target.value)}
+                                onChange={(e) => {
+                                    setComments(e.target.value);
+                                    setData('comments', e.target.value);
+                                }}
                                 className="mt-1"
                                 rows={3}
                                 placeholder="Please provide a reason for rejection..."
@@ -52,7 +102,11 @@ const RejectModal: React.FC<RejectModalProps> = ({ isOpen, onClose, onReject, pr
                             <label className="block text-sm font-medium text-gray-700">Attachment (Optional)</label>
                             <input
                                 type="file"
-                                onChange={(e) => setRejectFile(e.target.files?.[0] || null)}
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0] || null;
+                                    setRejectFile(file);
+                                    setData('attachment_file', file);
+                                }}
                                 className="mt-1 block w-full text-sm text-gray-500
                                     file:mr-4 file:py-2 file:px-4
                                     file:rounded-md file:border-0

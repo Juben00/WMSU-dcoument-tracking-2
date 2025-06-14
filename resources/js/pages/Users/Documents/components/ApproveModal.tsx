@@ -3,6 +3,7 @@ import { Dialog } from '@headlessui/react';
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from '@inertiajs/react';
 import { toast } from 'sonner';
+import { usePage } from '@inertiajs/react';
 
 interface ApproveModalProps {
     isOpen: boolean;
@@ -10,15 +11,35 @@ interface ApproveModalProps {
     documentId: number;
 }
 
+interface FormData {
+    status: string;
+    comments: string;
+    attachment_file: File | null;
+    forward_to_id: number | null;
+    is_final_approver: boolean;
+    [key: string]: any;
+}
+
+interface PageProps {
+    auth: {
+        user: {
+            role: string;
+        };
+    };
+    [key: string]: any;
+}
+
 const ApproveModal: React.FC<ApproveModalProps> = ({ isOpen, onClose, documentId }) => {
     const [comments, setComments] = useState('');
     const [approveFile, setApproveFile] = useState<File | null>(null);
+    const { auth } = usePage<PageProps>().props;
 
-    const { post, processing, setData, data } = useForm({
+    const { post, processing, setData, data } = useForm<FormData>({
         status: 'approved',
         comments: '',
-        attachment_file: null as File | null,
-        forward_to_id: null as number | null,
+        attachment_file: null,
+        forward_to_id: null,
+        is_final_approver: auth.user.role === 'admin'
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -27,7 +48,8 @@ const ApproveModal: React.FC<ApproveModalProps> = ({ isOpen, onClose, documentId
             status: 'approved',
             comments: comments,
             attachment_file: approveFile,
-            forward_to_id: null
+            forward_to_id: null,
+            is_final_approver: auth.user.role === 'admin'
         });
 
         post(route('documents.respond', documentId), {

@@ -94,17 +94,6 @@ const ViewDocument = ({ document, auth, offices }: Props) => {
         setIsApproveModalOpen(false);
     };
 
-    const handleReject = (comments: string, file: File | null) => {
-        setData({
-            status: 'rejected',
-            comments: comments,
-            revision_file: file,
-            forward_to_id: null
-        });
-        post(`/documents/${document.id}/respond`);
-        setIsRejectModalOpen(false);
-    };
-
     const handleForward = (officeId: number, comments: string) => {
         post(`/documents/${document.id}/forward`, {
             forward_to_id: officeId,
@@ -290,8 +279,7 @@ const ViewDocument = ({ document, auth, offices }: Props) => {
             <RejectModal
                 isOpen={isRejectModalOpen}
                 onClose={() => setIsRejectModalOpen(false)}
-                onReject={handleReject}
-                processing={processing}
+                documentId={document.id}
             />
 
             <ForwardModal

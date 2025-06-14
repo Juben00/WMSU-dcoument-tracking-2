@@ -93,7 +93,8 @@ class DocumentController extends Controller
         $request->validate([
             'status' => 'required|in:approved,rejected,returned',
             'comments' => 'required|string',
-            'attachment_file' => 'nullable|file|max:10240'
+            'attachment_file' => 'nullable|file|max:10240',
+            'is_final_approver' => 'boolean'
         ]);
 
         $recipient = DocumentRecipient::where('document_id', $document->id)
@@ -128,6 +129,8 @@ class DocumentController extends Controller
             case 'approved':
                 if ($recipient->is_final_approver) {
                     $document->update(['status' => 'approved']);
+                } else {
+                    $document->update(['status' => 'in_review']);
                 }
                 break;
             case 'rejected':
