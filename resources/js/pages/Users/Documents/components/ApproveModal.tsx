@@ -39,7 +39,7 @@ const ApproveModal: React.FC<ApproveModalProps> = ({ isOpen, onClose, documentId
         comments: '',
         attachment_file: null,
         forward_to_id: null,
-        is_final_approver: auth.user.role === 'admin'
+        is_final_approver: auth.user.role === 'admin' ? true : false
     });
 
     const handleSubmit = (e: React.FormEvent) => {

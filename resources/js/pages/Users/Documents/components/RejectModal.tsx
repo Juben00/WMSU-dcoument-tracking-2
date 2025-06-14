@@ -49,7 +49,7 @@ const RejectModal: React.FC<RejectModalProps> = ({ isOpen, onClose, documentId }
             comments: comments,
             attachment_file: rejectFile,
             forward_to_id: null,
-            is_final_approver: auth.user.role === 'admin'
+            is_final_approver: auth.user.role === 'admin' ? true : false
         });
 
         post(route('documents.respond', documentId), {

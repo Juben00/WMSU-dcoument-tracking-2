@@ -121,15 +121,26 @@ class DocumentController extends Controller
             'status' => $request->status,
             'comments' => $request->comments,
             'responded_at' => now(),
-            'is_active' => false
+            'is_active' => false,
+            'is_final_approver' => $request->is_final_approver
         ]);
 
         // Update document status based on response
         switch ($request->status) {
             case 'approved':
-                if ($recipient->is_final_approver) {
+                if ($request->is_final_approver) {
+                    Log::info('Document approved by final approver', [
+                        'document_id' => $document->id,
+                        'user_id' => Auth::id(),
+                        'user_role' => Auth::user()->role
+                    ]);
                     $document->update(['status' => 'approved']);
                 } else {
+                    Log::info('Document approved by non-final approver', [
+                        'document_id' => $document->id,
+                        'user_id' => Auth::id(),
+                        'user_role' => Auth::user()->role
+                    ]);
                     $document->update(['status' => 'in_review']);
                 }
                 break;
