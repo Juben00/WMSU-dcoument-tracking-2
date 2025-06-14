@@ -23,7 +23,7 @@ class ProfileUpdateRequest extends FormRequest
             'suffix' => ['nullable', 'string', 'max:255'],
             'gender' => ['required', 'string', 'in:Male,Female'],
             'position' => ['required', 'string', 'max:255'],
-            'department' => ['required', 'string', 'max:255'],
+            'department' => ['nullable', 'string', 'max:255'],
             'email' => [
                 'required',
                 'string',

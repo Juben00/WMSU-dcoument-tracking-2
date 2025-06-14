@@ -12,6 +12,8 @@ use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Office;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 class UserController extends Controller
 {
@@ -117,9 +119,51 @@ class UserController extends Controller
 
     public function profile()
     {
+        $user = User::with('office')->find(Auth::id());
         return Inertia::render('Users/Profile', [
-            'user' => Auth::user()
+            'user' => $user
         ]);
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $validated = $request->validate([
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'middle_name' => ['nullable', 'string', 'max:255'],
+            'suffix' => ['nullable', 'string', 'max:255'],
+            'gender' => ['required', 'string', 'in:Male,Female'],
+            'position' => ['required', 'string', 'max:255'],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                Rule::unique('users')->ignore(Auth::id()),
+            ],
+        ]);
+
+        $user = User::find(Auth::id());
+        $user->fill($validated);
+        $user->save();
+
+        return redirect()->route('users.profile')->with('flash', [
+            'success' => 'Profile updated successfully.'
+        ]);
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'current_password'],
+            'password' => ['required', 'confirmed', Password::defaults()],
+        ]);
+
+        $user = User::find(Auth::id());
+        $user->password = Hash::make($validated['password']);
+        $user->save();
+
+        return back()->with('success', 'Password updated successfully.');
     }
 
     public function createDocument()
