@@ -24,9 +24,5 @@ Route::middleware([
         return view('dashboard');
     })->name('dashboard');
 
-    // Document routes
-    Route::post('/documents/{document}/send', [DocumentController::class, 'sendToRecipients']);
-    Route::post('/documents/{document}/forward', [DocumentController::class, 'forwardDocument']);
-    Route::post('/documents/{document}/respond', [DocumentController::class, 'respondToDocument']);
-    Route::get('/documents/{document}/chain', [DocumentController::class, 'getDocumentChain']);
+
 });

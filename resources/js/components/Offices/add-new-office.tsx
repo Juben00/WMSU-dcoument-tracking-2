@@ -51,7 +51,6 @@ export default function AddNewOffice({ setIsCreateDialogOpen }: Props) {
                     value={data.description}
                     onChange={(e) => setData('description', e.target.value)}
                     placeholder="Enter office description"
-                    required
                 />
                 <InputError message={errors.description} />
             </div>

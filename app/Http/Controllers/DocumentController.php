@@ -93,7 +93,7 @@ class DocumentController extends Controller
         $request->validate([
             'status' => 'required|in:approved,rejected,returned',
             'comments' => 'required|string',
-            'revision_file' => 'required_if:status,returned|file|max:10240'
+            'attachment_file' => 'nullable|file|max:10240'
         ]);
 
         $recipient = DocumentRecipient::where('document_id', $document->id)
@@ -101,22 +101,21 @@ class DocumentController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
-        if ($request->status === 'returned') {
-            // Handle file upload for revision
-            $filePath = $request->file('revision_file')->store('document-revisions');
+        // Handle file upload if provided
+        if ($request->hasFile('attachment_file')) {
+            $filePath = $request->file('attachment_file')->store('document-attachments');
 
-            // Create a new revision
-            DocumentRevision::create([
+            // Create a new document file record
+            DocumentFile::create([
                 'document_id' => $document->id,
-                'user_id' => Auth::id(),
                 'file_path' => $filePath,
-                'comments' => $request->comments,
-                'version' => DocumentRevision::where('document_id', $document->id)->count() + 1
+                'original_filename' => $request->file('attachment_file')->getClientOriginalName(),
+                'mime_type' => $request->file('attachment_file')->getMimeType(),
+                'file_size' => $request->file('attachment_file')->getSize()
             ]);
-
-            $document->update(['status' => 'returned']);
         }
 
+        // Update recipient status
         $recipient->update([
             'status' => $request->status,
             'comments' => $request->comments,
@@ -124,17 +123,22 @@ class DocumentController extends Controller
             'is_active' => false
         ]);
 
-        if ($request->status === 'rejected') {
-            $document->update(['status' => 'rejected']);
-        } elseif ($request->status === 'approved') {
-            if ($recipient->is_final_approver) {
-                $document->update(['status' => 'approved']);
-            }
+        // Update document status based on response
+        switch ($request->status) {
+            case 'approved':
+                if ($recipient->is_final_approver) {
+                    $document->update(['status' => 'approved']);
+                }
+                break;
+            case 'rejected':
+                $document->update(['status' => 'rejected']);
+                break;
+            case 'returned':
+                $document->update(['status' => 'returned']);
+                break;
         }
 
-        return response()->json([
-            'message' => 'Response recorded successfully'
-        ]);
+        return back()->with('success', 'Response recorded successfully');
     }
 
     public function getDocumentChain(Document $document)

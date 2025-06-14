@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Navbar from '@/components/User/navbar';
-import { Link } from '@inertiajs/react';
+import { Link, useForm } from '@inertiajs/react';
+import ApproveModal from './components/ApproveModal';
+import RejectModal from './components/RejectModal';
+import ForwardModal from './components/ForwardModal';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 interface DocumentFile {
     id: number;
-    file_path: string;
     original_filename: string;
-    mime_type: string;
     file_size: number;
 }
 
@@ -18,23 +21,32 @@ interface DocumentRecipient {
         last_name: string;
     };
     status: string;
-    comments: string | null;
-    responded_at: string | null;
+    comments?: string;
+    responded_at?: string;
 }
 
 interface Document {
     id: number;
     title: string;
-    description: string | null;
+    description?: string;
     status: string;
     created_at: string;
     owner: {
-        id: number;
         first_name: string;
         last_name: string;
     };
     files: DocumentFile[];
     recipients: DocumentRecipient[];
+}
+
+interface Office {
+    id: number;
+    name: string;
+    contact_person: {
+        id: number;
+        name: string;
+        role: string;
+    } | null;
 }
 
 interface Props {
@@ -44,9 +56,68 @@ interface Props {
             id: number;
         };
     };
+    offices?: Array<{
+        id: number;
+        name: string;
+        contact_person: {
+            id: number;
+            name: string;
+            role: string;
+        } | null;
+    }>;
 }
 
-const ViewDocument = ({ document, auth }: Props) => {
+const ViewDocument = ({ document, auth, offices }: Props) => {
+    const [isForwardModalOpen, setIsForwardModalOpen] = useState(false);
+    const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+    const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
+    const [selectedOffice, setSelectedOffice] = useState<string>('');
+    const [comments, setComments] = useState('');
+    const [revisionFile, setRevisionFile] = useState<File | null>(null);
+    const [approveFile, setApproveFile] = useState<File | null>(null);
+
+    const { post, processing, setData } = useForm({
+        status: '',
+        comments: '',
+        revision_file: null as File | null,
+        forward_to_id: null as number | null,
+    });
+
+    const handleApprove = (comments: string, file: File | null) => {
+        setData({
+            status: 'approved',
+            comments: comments,
+            revision_file: null,
+            forward_to_id: null
+        });
+        post(`/documents/${document.id}/respond`);
+        setIsApproveModalOpen(false);
+    };
+
+    const handleReject = (comments: string, file: File | null) => {
+        setData({
+            status: 'rejected',
+            comments: comments,
+            revision_file: file,
+            forward_to_id: null
+        });
+        post(`/documents/${document.id}/respond`);
+        setIsRejectModalOpen(false);
+    };
+
+    const handleForward = (officeId: number, comments: string) => {
+        post(`/documents/${document.id}/forward`, {
+            forward_to_id: officeId,
+            comments,
+        } as any);
+        setIsForwardModalOpen(false);
+    };
+
+    // Check if current user is an active recipient
+    const currentRecipient = document.recipients.find(
+        (r: DocumentRecipient) => r.user.id === auth.user.id && r.status === 'pending'
+    );
+
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'approved':
@@ -150,6 +221,33 @@ const ViewDocument = ({ document, auth }: Props) => {
                             </div>
                         </div>
 
+                        {/* Document Actions */}
+                        {currentRecipient && (
+                            <div className="mt-8 border-t pt-6">
+                                <h2 className="text-lg font-semibold text-gray-900 mb-4">Document Actions</h2>
+                                <div className="flex space-x-4">
+                                    <button
+                                        onClick={() => setIsApproveModalOpen(true)}
+                                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                                    >
+                                        Approve
+                                    </button>
+                                    <button
+                                        onClick={() => setIsRejectModalOpen(true)}
+                                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                                    >
+                                        Reject
+                                    </button>
+                                    <button
+                                        onClick={() => setIsForwardModalOpen(true)}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                                    >
+                                        Forward
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
                         {document.recipients.length > 0 && (
                             <div className="mt-8">
                                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Approval Chain</h2>
@@ -182,6 +280,27 @@ const ViewDocument = ({ document, auth }: Props) => {
                     </div>
                 </div>
             </div>
+
+            <ApproveModal
+                isOpen={isApproveModalOpen}
+                onClose={() => setIsApproveModalOpen(false)}
+                documentId={document.id}
+            />
+
+            <RejectModal
+                isOpen={isRejectModalOpen}
+                onClose={() => setIsRejectModalOpen(false)}
+                onReject={handleReject}
+                processing={processing}
+            />
+
+            <ForwardModal
+                isOpen={isForwardModalOpen}
+                onClose={() => setIsForwardModalOpen(false)}
+                onForward={handleForward}
+                processing={processing}
+                offices={offices}
+            />
         </>
     );
 };

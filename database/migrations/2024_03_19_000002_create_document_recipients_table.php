@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('document_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('forwarded_by')->nullable()->constrained('users')->onDelete('set null');
-            $table->string('status')->default('pending'); // pending, approved, rejected, returned, forwarded
+            $table->enum('status', ['pending', 'approved', 'rejected', 'returned', 'forwarded'])->default('pending');
             $table->text('comments')->nullable();
             $table->integer('sequence');
             $table->boolean('is_active')->default(true);
