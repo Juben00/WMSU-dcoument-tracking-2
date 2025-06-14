@@ -147,9 +147,7 @@ class UserController extends Controller
         $user->fill($validated);
         $user->save();
 
-        return redirect()->route('users.profile')->with('flash', [
-            'success' => 'Profile updated successfully.'
-        ]);
+        return redirect()->route('users.profile')->with('success', 'Profile updated successfully.');
     }
 
     public function updatePassword(Request $request)
