@@ -6,6 +6,8 @@ import RejectModal from './components/RejectModal';
 import ForwardModal from './components/ForwardModal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { log } from 'console';
+import { toast } from 'react-hot-toast';
 
 interface DocumentFile {
     id: number;
@@ -19,6 +21,7 @@ interface DocumentRecipient {
         id: number;
         first_name: string;
         last_name: string;
+        office_id: number;
     };
     status: string;
     comments?: string;
@@ -65,9 +68,16 @@ interface Props {
             role: string;
         } | null;
     }>;
+    users?: Array<{
+        id: number;
+        first_name: string;
+        last_name: string;
+        office_id: number;
+        role: string;
+    }>;
 }
 
-const ViewDocument = ({ document, auth, offices }: Props) => {
+const ViewDocument = ({ document, auth, offices, users }: Props) => {
     const [isForwardModalOpen, setIsForwardModalOpen] = useState(false);
     const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
     const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
@@ -83,28 +93,11 @@ const ViewDocument = ({ document, auth, offices }: Props) => {
         forward_to_id: null as number | null,
     });
 
-    const handleApprove = (comments: string, file: File | null) => {
-        setData({
-            status: 'approved',
-            comments: comments,
-            revision_file: null,
-            forward_to_id: null
-        });
-        post(`/documents/${document.id}/respond`);
-        setIsApproveModalOpen(false);
-    };
 
-    const handleForward = (officeId: number, comments: string) => {
-        post(`/documents/${document.id}/forward`, {
-            forward_to_id: officeId,
-            comments,
-        } as any);
-        setIsForwardModalOpen(false);
-    };
-
+    console.log(users);
     // Check if current user is an active recipient
     const currentRecipient = document.recipients.find(
-        (r: DocumentRecipient) => r.user.id === auth.user.id && r.status === 'pending'
+        (r: DocumentRecipient) => r.user.id === auth.user.id
     );
 
     const getStatusColor = (status: string) => {
@@ -211,7 +204,7 @@ const ViewDocument = ({ document, auth, offices }: Props) => {
                         </div>
 
                         {/* Document Actions */}
-                        {currentRecipient && (
+                        {currentRecipient && document.status === 'pending' && (
                             <div className="mt-8 border-t pt-6">
                                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Document Actions</h2>
                                 <div className="flex space-x-4">
@@ -227,11 +220,20 @@ const ViewDocument = ({ document, auth, offices }: Props) => {
                                     >
                                         Reject
                                     </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {currentRecipient && document.status === 'in_review' && (
+                            <div className="mt-8 border-t pt-6">
+                                <h2 className="text-lg font-semibold text-gray-900 mb-4">Document Actions</h2>
+                                <div className="flex space-x-4">
+                                    {/* forward to office */}
                                     <button
                                         onClick={() => setIsForwardModalOpen(true)}
                                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                                     >
-                                        Forward
+                                        Forward to Office
                                     </button>
                                 </div>
                             </div>
@@ -285,9 +287,9 @@ const ViewDocument = ({ document, auth, offices }: Props) => {
             <ForwardModal
                 isOpen={isForwardModalOpen}
                 onClose={() => setIsForwardModalOpen(false)}
-                onForward={handleForward}
                 processing={processing}
-                offices={offices}
+                users={users || []}
+                documentId={document.id}
             />
         </>
     );

@@ -43,49 +43,23 @@ class DocumentController extends Controller
     {
         $request->validate([
             'forward_to_id' => 'required|exists:users,id',
-            'comments' => 'required|string',
-            'is_final_approver' => 'boolean'
+            'comments' => 'nullable|string|max:1000',
+            'files.*' => 'nullable|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,jpg,jpeg,png', // 10MB max per file
         ]);
 
-        $currentRecipient = DocumentRecipient::where('document_id', $document->id)
-            ->where('user_id', Auth::id())
-            ->where('is_active', true)
-            ->firstOrFail();
-
-        // Check if the user is already a recipient
-        $existingRecipient = DocumentRecipient::where('document_id', $document->id)
-            ->where('user_id', $request->forward_to_id)
-            ->first();
-
-        if ($existingRecipient) {
-            return response()->json([
-                'message' => 'This user is already in the approval chain'
-            ], 400);
-        }
-
-        // Update current recipient
-        $currentRecipient->update([
-            'status' => 'forwarded',
-            'comments' => $request->comments,
-            'responded_at' => now(),
-            'is_active' => false,
-            'forwarded_to' => $request->forward_to_id
-        ]);
-
-        // Create new recipient
         DocumentRecipient::create([
             'document_id' => $document->id,
             'user_id' => $request->forward_to_id,
-            'status' => 'pending',
-            'sequence' => $currentRecipient->sequence + 1,
-            'is_active' => true,
             'forwarded_by' => Auth::id(),
-            'is_final_approver' => $request->is_final_approver ?? false
+            'status' => 'forwarded',
+            'comments' => $request->comments,
+            'sequence' => DocumentRecipient::where('document_id', $document->id)->max('sequence') + 1,
+            'is_active' => true,
+            'is_final_approver' => User::find($request->forward_to_id)->role === 'admin' ? true : false,
+            'responded_at' => now()
         ]);
 
-        return response()->json([
-            'message' => 'Document forwarded successfully'
-        ]);
+        return redirect()->route('documents.view', $document->id)->with('success', 'Document forwarded successfully');
     }
 
     public function respondToDocument(Request $request, Document $document)
@@ -177,11 +151,31 @@ class DocumentController extends Controller
 
         $document->load(['files', 'owner', 'recipients.user']);
 
+        // Get all recipient user IDs, excluding the test user
+        $recipientUserIds = $document->recipients()
+            ->whereHas('user', function($query) {
+                $query->where('email', '!=', 'test@example.com');
+
+            })
+            ->pluck('user_id');
+
+        // Get all unique, non-null office_ids from those users
+        $officeIds = User::whereIn('id', $recipientUserIds)
+            ->whereNotNull('office_id')
+            ->pluck('office_id')
+            ->unique();
+
+        // Get all users with those office_ids, excluding the current user
+        $users = User::whereIn('office_id', $officeIds)
+            ->where('id', '!=', Auth::id())
+            ->get();
+
         return Inertia::render('Users/Documents/View', [
             'document' => $document,
             'auth' => [
                 'user' => Auth::user()
-            ]
+            ],
+            'users' => $users
         ]);
     }
 
