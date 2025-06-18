@@ -28,7 +28,8 @@ class UserController extends Controller
 
     public function offices()
     {
-        $users = User::whereIn('role', ['user', 'receiver'])->with('office')->get();
+        // get all users with role user or receiver and with office same as the user's office
+        $users = User::whereIn('role', ['user', 'receiver'])->where('office_id', Auth::user()->office_id)->with('office')->get();
         return Inertia::render('Users/Offices', [
             'auth' => [
                 'user' => Auth::user()
@@ -220,7 +221,9 @@ class UserController extends Controller
                 'file_path' => $filePath,
                 'original_filename' => $file->getClientOriginalName(),
                 'mime_type' => $file->getMimeType(),
-                'file_size' => $file->getSize()
+                'file_size' => $file->getSize(),
+                'uploaded_by' => Auth::id(),
+                'upload_type' => 'original',
             ]);
         }
 
