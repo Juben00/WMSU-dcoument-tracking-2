@@ -155,7 +155,6 @@ class DocumentController extends Controller
         $recipientUserIds = $document->recipients()
             ->whereHas('user', function($query) {
                 $query->where('email', '!=', 'test@example.com');
-
             })
             ->pluck('user_id');
 
@@ -170,8 +169,15 @@ class DocumentController extends Controller
             ->where('id', '!=', Auth::id())
             ->get();
 
+        // Add is_final_approver to the document data
+        $documentData = $document->toArray();
+        $documentData['is_final_approver'] = $document->recipients()
+            ->where('user_id', Auth::id())
+            ->where('is_active', true)
+            ->value('is_final_approver') ?? false;
+
         return Inertia::render('Users/Documents/View', [
-            'document' => $document,
+            'document' => $documentData,
             'auth' => [
                 'user' => Auth::user()
             ],

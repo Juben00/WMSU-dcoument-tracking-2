@@ -40,6 +40,7 @@ interface Document {
     };
     files: DocumentFile[];
     recipients: DocumentRecipient[];
+    is_final_approver: boolean;
 }
 
 interface Office {
@@ -94,7 +95,7 @@ const ViewDocument = ({ document, auth, offices, users }: Props) => {
     });
 
 
-    console.log(users);
+    console.log(document);
     // Check if current user is an active recipient
     const currentRecipient = document.recipients.find(
         (r: DocumentRecipient) => r.user.id === auth.user.id
@@ -203,41 +204,38 @@ const ViewDocument = ({ document, auth, offices, users }: Props) => {
                             </div>
                         </div>
 
-                        {/* Document Actions */}
-                        {currentRecipient && document.status === 'pending' && (
-                            <div className="mt-8 border-t pt-6">
-                                <h2 className="text-lg font-semibold text-gray-900 mb-4">Document Actions</h2>
-                                <div className="flex space-x-4">
-                                    <button
-                                        onClick={() => setIsApproveModalOpen(true)}
-                                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-                                    >
-                                        Approve
-                                    </button>
-                                    <button
-                                        onClick={() => setIsRejectModalOpen(true)}
-                                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                                    >
-                                        Reject
-                                    </button>
-                                </div>
-                            </div>
-                        )}
 
-                        {currentRecipient && document.status === 'in_review' && (
-                            <div className="mt-8 border-t pt-6">
-                                <h2 className="text-lg font-semibold text-gray-900 mb-4">Document Actions</h2>
-                                <div className="flex space-x-4">
-                                    {/* forward to office */}
+                        <div className="mt-8 border-t pt-6">
+                            <h2 className="text-lg font-semibold text-gray-900 mb-4">Document Actions</h2>
+                            <div className="flex space-x-4">
+                                {/* Document Actions */}
+                                {(document.is_final_approver || document.status === 'pending') && currentRecipient && (
+                                    <>
+                                        <button
+                                            onClick={() => setIsApproveModalOpen(true)}
+                                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                                        >
+                                            Approve
+                                        </button>
+                                        <button
+                                            onClick={() => setIsRejectModalOpen(true)}
+                                            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                                        >
+                                            Reject
+                                        </button>
+                                    </>
+                                )}
+
+                                {currentRecipient && document.status === 'in_review' && (
                                     <button
                                         onClick={() => setIsForwardModalOpen(true)}
                                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                                     >
                                         Forward to Office
                                     </button>
-                                </div>
+                                )}
                             </div>
-                        )}
+                        </div>
 
                         {document.recipients.length > 0 && (
                             <div className="mt-8">
