@@ -1,27 +1,38 @@
-import React from 'react';
+import type React from "react"
+import { cn } from "@/lib/utils"
 
 interface TabsProps {
-    tabs: string[];
-    current: number;
-    onChange: (idx: number) => void;
+  tabs: string[]
+  current: number
+  onChange: (idx: number) => void
+  className?: string
 }
 
-const Tabs: React.FC<TabsProps> = ({ tabs, current, onChange }) => (
-    <div className="flex border-b mb-6">
+const MinimalTabs: React.FC<TabsProps> = ({ tabs, current, onChange, className }) => {
+  return (
+    <div className={cn("w-full max-w-2xl mx-auto", className)}>
+      <nav className="flex space-x-12" aria-label="Tabs">
         {tabs.map((tab, idx) => (
-            <button
-                key={tab}
-                className={`px-6 py-2 -mb-px font-medium border-b-2 transition-colors duration-200 focus:outline-none ${current === idx
-                    ? 'border-red-700 text-red-700 bg-white'
-                    : 'border-transparent text-gray-500 hover:text-red-700'
-                    }`}
-                onClick={() => onChange(idx)}
-                type="button"
-            >
-                {tab}
-            </button>
+          <button
+            key={tab}
+            className={cn(
+              "pb-4 text-sm font-medium transition-colors duration-200 border-b-2",
+              "focus:outline-none focus:ring-0",
+              current === idx ? "border-red-700 text-red-700" : "border-transparent text-gray-500",
+            )}
+            onClick={() => onChange(idx)}
+            type="button"
+            role="tab"
+            aria-selected={current === idx}
+            aria-controls={`tabpanel-${idx}`}
+            id={`tab-${idx}`}
+          >
+            {tab}
+          </button>
         ))}
+      </nav>
     </div>
-);
+  )
+}
 
-export default Tabs;
+export default MinimalTabs
