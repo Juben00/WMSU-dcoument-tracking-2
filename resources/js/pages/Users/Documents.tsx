@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Navbar from '@/components/User/navbar';
 import { Link } from '@inertiajs/react';
+import { Eye, Download, Search, FileCheck2, Clock, XCircle, Undo2, FileSearch } from 'lucide-react';
 
 interface Document {
     id: number;
@@ -20,10 +21,18 @@ interface Props {
     };
 }
 
-const Documents = ({ documents, auth }: Props) => {
-    const [activeTab, setActiveTab] = useState('drafts');
+const statusIcons: Record<string, React.ReactNode> = {
+    approved: <FileCheck2 className="w-4 h-4 mr-1 text-green-600" />,
+    pending: <Clock className="w-4 h-4 mr-1 text-yellow-600" />,
+    rejected: <XCircle className="w-4 h-4 mr-1 text-red-600" />,
+    returned: <Undo2 className="w-4 h-4 mr-1 text-orange-600" />,
 
-    const drafts = documents.filter(doc => doc.status === 'draft');
+};
+
+const Documents = ({ documents, auth }: Props) => {
+    const [activeTab, setActiveTab] = useState('received');
+    const [search, setSearch] = useState('');
+
     const received = documents.filter(doc => doc.owner_id !== auth.user.id);
     const sent = documents.filter(doc => doc.status !== 'draft' && doc.owner_id === auth.user.id);
 
@@ -44,95 +53,128 @@ const Documents = ({ documents, auth }: Props) => {
         }
     };
 
-    const renderDocuments = (docs: Document[]) => {
-        return docs.map((doc) => (
-            <tr key={doc.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#{doc.id}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{doc.title}</td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(doc.status)}`}>
-                        {doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}
-                    </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(doc.created_at).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <Link href={`/documents/${doc.id}`} className="text-red-700 hover:text-red-900 mr-3">
-                        View
-                    </Link>
-                    {doc.files?.map((file, index) => (
-                        <Link
-                            key={file.id}
-                            href={`/documents/${doc.id}/files/${file.id}`}
-                            className="text-red-700 hover:text-red-900"
-                        >
-                            {index === 0 ? 'Download' : `Download ${index + 1}`}
-                        </Link>
-                    ))}
-                </td>
-            </tr>
-        ));
+    const filterDocs = (docs: Document[]) => {
+        if (!search.trim()) return docs;
+        return docs.filter(doc =>
+            doc.title.toLowerCase().includes(search.toLowerCase()) ||
+            doc.id.toString().includes(search)
+        );
     };
+
+    const renderDocuments = (docs: Document[]) => {
+        const filtered = filterDocs(docs);
+        return filtered.length === 0 ? (
+            <tr>
+                <td colSpan={5} className="py-10 text-center text-gray-400 text-lg">No documents found.</td>
+            </tr>
+        ) : (
+            filtered.map((doc) => (
+                <tr
+                    key={doc.id}
+                    className="transition hover:bg-gray-50 group"
+                >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">#{doc.id}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{doc.title}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex items-center text-xs leading-5 font-semibold rounded-full ${getStatusColor(doc.status)}`}>
+                            {statusIcons[doc.status] || statusIcons.default}
+                            {doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}
+                        </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(doc.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium flex gap-2">
+                        <Link
+                            href={`/documents/${doc.id}`}
+                            className="inline-flex items-center gap-1 text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded shadow-sm transition font-semibold focus:outline-none focus:ring-2 focus:ring-red-400"
+                        >
+                            <Eye className="w-4 h-4" />
+                            View
+                        </Link>
+                        {doc.files?.map((file, index) => (
+                            <Link
+                                key={file.id}
+                                href={`/documents/${doc.id}/files/${file.id}`}
+                                className="inline-flex items-center gap-1 text-red-700 bg-red-100 hover:bg-red-200 px-3 py-1.5 rounded shadow-sm transition font-semibold focus:outline-none focus:ring-2 focus:ring-red-200"
+                            >
+                                <Download className="w-4 h-4" />
+                                {index === 0 ? 'Download' : `Download ${index + 1}`}
+                            </Link>
+                        ))}
+                    </td>
+                </tr>
+            ))
+        );
+    };
+    console.log(documents);
 
     return (
         <>
             <Navbar />
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-bold text-gray-800">Documents</h1>
-                    <Link href="/documents/create" className="bg-red-700 text-white px-4 py-2 rounded-md hover:bg-red-800 transition-colors duration-200">
+                <div className="flex justify-between items-center mb-8">
+                    <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Documents</h1>
+                    <Link
+                        href="/documents/create"
+                        className="inline-flex items-center gap-2 bg-red-700 text-white px-5 py-2.5 rounded-lg shadow hover:bg-red-800 transition-colors duration-200 font-semibold focus:outline-none focus:ring-2 focus:ring-red-400"
+                    >
+                        <FileCheck2 className="w-5 h-5" />
                         New Document
                     </Link>
                 </div>
 
                 {/* Tabs */}
-                <div className="border-b border-gray-200 mb-6">
-                    <nav className="-mb-px flex space-x-8">
-                        <button
-                            onClick={() => setActiveTab('drafts')}
-                            className={`${activeTab === 'drafts'
-                                ? 'border-red-500 text-red-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-                        >
-                            Drafts
-                        </button>
+                <div className="mb-8">
+                    <nav className="flex rounded-lg shadow overflow-hidden w-fit mx-auto border border-gray-200">
                         <button
                             onClick={() => setActiveTab('received')}
-                            className={`${activeTab === 'received'
-                                ? 'border-red-500 text-red-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                            className={`px-6 py-3 text-sm font-semibold transition focus:outline-none ${activeTab === 'received'
+                                ? 'bg-red-600 text-white shadow-inner'
+                                : 'bg-white text-gray-700 hover:bg-gray-50'} `}
                         >
                             Received
                         </button>
                         <button
                             onClick={() => setActiveTab('sent')}
-                            className={`${activeTab === 'sent'
-                                ? 'border-red-500 text-red-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                            className={`px-6 py-3 text-sm font-semibold transition focus:outline-none border-l border-gray-200 ${activeTab === 'sent'
+                                ? 'bg-red-600 text-white shadow-inner'
+                                : 'bg-white text-gray-700 hover:bg-gray-50'} `}
                         >
                             Sent
                         </button>
                     </nav>
                 </div>
 
+                {/* Search Filter */}
+                <div className="flex items-center mb-6 max-w-md mx-auto">
+                    <div className="relative w-full">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <Search className="w-5 h-5 text-gray-400" />
+                        </span>
+                        <input
+                            type="text"
+                            className="block w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 text-sm"
+                            placeholder="Search by title or ID..."
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                        />
+                    </div>
+                </div>
+
                 {/* Documents Table */}
-                <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                <div className="bg-white rounded-xl shadow-lg overflow-x-auto border border-gray-100">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Document ID</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Submitted</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Document ID</th>
+                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Title</th>
+                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Date Submitted</th>
+                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {activeTab === 'drafts' && renderDocuments(drafts)}
+                        <tbody className="bg-white divide-y divide-gray-100">
                             {activeTab === 'received' && renderDocuments(received)}
                             {activeTab === 'sent' && renderDocuments(sent)}
                         </tbody>

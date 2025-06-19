@@ -4,10 +4,6 @@ import { Link, useForm } from '@inertiajs/react';
 import ApproveModal from './components/ApproveModal';
 import RejectModal from './components/RejectModal';
 import ForwardModal from './components/ForwardModal';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { log } from 'console';
-import { toast } from 'react-hot-toast';
 
 interface DocumentFile {
     id: number;
@@ -41,6 +37,7 @@ interface Document {
     files: DocumentFile[];
     recipients: DocumentRecipient[];
     is_final_approver: boolean;
+    receipientStatus: string;
 }
 
 interface Office {
@@ -209,7 +206,7 @@ const ViewDocument = ({ document, auth, offices, users }: Props) => {
                             <h2 className="text-lg font-semibold text-gray-900 mb-4">Document Actions</h2>
                             <div className="flex space-x-4">
                                 {/* Document Actions */}
-                                {(document.is_final_approver || document.status === 'pending') && currentRecipient && (
+                                {(document.is_final_approver || document.receipientStatus === 'pending') && currentRecipient && (
                                     <>
                                         <button
                                             onClick={() => setIsApproveModalOpen(true)}
@@ -226,7 +223,7 @@ const ViewDocument = ({ document, auth, offices, users }: Props) => {
                                     </>
                                 )}
 
-                                {currentRecipient && document.status === 'in_review' && (
+                                {currentRecipient && document.receipientStatus === 'approved' && (
                                     <button
                                         onClick={() => setIsForwardModalOpen(true)}
                                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"

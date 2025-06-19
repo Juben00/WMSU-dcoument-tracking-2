@@ -17,5 +17,10 @@ class OfficeSeeder extends Seeder
             'name' => 'Office 1',
             'description' => 'Office 1 description',
         ]);
+
+        Office::create([
+            'name' => 'Office 2',
+            'description' => 'Office 2 description',
+        ]);
     }
 }

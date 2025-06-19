@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\DocumentFile;
+
 class Document extends Model
 {
     use HasFactory;
@@ -28,11 +29,6 @@ class Document extends Model
     public function recipients(): HasMany
     {
         return $this->hasMany(DocumentRecipient::class);
-    }
-
-    public function revisions(): HasMany
-    {
-        return $this->hasMany(DocumentRevision::class);
     }
 
     public function files(): HasMany

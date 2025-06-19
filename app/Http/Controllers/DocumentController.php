@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Document;
 use App\Models\DocumentRecipient;
-use App\Models\DocumentRevision;
-use App\Models\DocumentFile;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -74,21 +72,31 @@ class DocumentController extends Controller
         $recipient = DocumentRecipient::where('document_id', $document->id)
             ->where('user_id', Auth::id())
             ->where('is_active', true)
-            ->firstOrFail();
+            ->first();
 
-        // Handle file upload if provided
-        if ($request->hasFile('attachment_file')) {
-            $filePath = $request->file('attachment_file')->store('document-attachments');
-
-            // Create a new document file record
-            DocumentFile::create([
-                'document_id' => $document->id,
-                'file_path' => $filePath,
-                'original_filename' => $request->file('attachment_file')->getClientOriginalName(),
-                'mime_type' => $request->file('attachment_file')->getMimeType(),
-                'file_size' => $request->file('attachment_file')->getSize()
+        if (!$recipient) {
+            return redirect()->back()->withErrors([
+                'message' => 'You are not authorized to approve this document or your approval is already recorded.'
             ]);
         }
+
+        $fileRecord = null;
+        if ($request->hasFile('attachment_file')) {
+            $file = $request->file('attachment_file');
+            $filePath = $file->store('document-attachments', 'public');
+            // Save file info to DocumentFile
+            $fileRecord = $document->files()->create([
+                'file_path' => $filePath,
+                'original_filename' => $file->getClientOriginalName(),
+                'mime_type' => $file->getMimeType(),
+                'file_size' => $file->getSize(),
+                'uploaded_by' => Auth::id(),
+                'upload_type' => 'response',
+            ]);
+        }
+
+        // Use the recipient's is_final_approver from DB
+        $isFinalApprover = $recipient->is_final_approver;
 
         // Update recipient status
         $recipient->update([
@@ -96,37 +104,32 @@ class DocumentController extends Controller
             'comments' => $request->comments,
             'responded_at' => now(),
             'is_active' => false,
-            'is_final_approver' => $request->is_final_approver
+            'is_final_approver' => $isFinalApprover,
         ]);
 
-        // Update document status based on response
-        switch ($request->status) {
-            case 'approved':
-                if ($request->is_final_approver) {
-                    Log::info('Document approved by final approver', [
-                        'document_id' => $document->id,
-                        'user_id' => Auth::id(),
-                        'user_role' => Auth::user()->role
-                    ]);
-                    $document->update(['status' => 'approved']);
-                } else {
-                    Log::info('Document approved by non-final approver', [
-                        'document_id' => $document->id,
-                        'user_id' => Auth::id(),
-                        'user_role' => Auth::user()->role
-                    ]);
-                    $document->update(['status' => 'in_review']);
-                }
-                break;
-            case 'rejected':
-                $document->update(['status' => 'rejected']);
-                break;
-            case 'returned':
-                $document->update(['status' => 'returned']);
-                break;
+        // Update document status based on all recipients' responses
+        $allRecipients = DocumentRecipient::where('document_id', $document->id)->get();
+        $allApproved = $allRecipients->every(function ($rec) {
+            return $rec->status === 'approved';
+        });
+        $anyRejected = $allRecipients->contains(function ($rec) {
+            return $rec->status === 'rejected';
+        });
+        $anyReturned = $allRecipients->contains(function ($rec) {
+            return $rec->status === 'returned';
+        });
+
+        if ($anyRejected) {
+            $document->update(['status' => 'rejected']);
+        } elseif ($anyReturned) {
+            $document->update(['status' => 'returned']);
+        } elseif ($allApproved) {
+            $document->update(['status' => 'approved']);
+        } else {
+            $document->update(['status' => 'in_review']);
         }
 
-        return back()->with('success', 'Response recorded successfully');
+        return redirect()->back()->with('success', 'Response recorded successfully');
     }
 
     public function getDocumentChain(Document $document)
@@ -176,6 +179,8 @@ class DocumentController extends Controller
             ->where('is_active', true)
             ->value('is_final_approver') ?? false;
 
+        $documentData['receipientStatus'] = $document->recipients()->where('user_id', Auth::id())->first()->status ?? false;
+
         return Inertia::render('Users/Documents/View', [
             'document' => $documentData,
             'auth' => [
@@ -185,55 +190,7 @@ class DocumentController extends Controller
         ]);
     }
 
-    public function downloadDocument(Document $document, DocumentFile $file)
+    public function downloadDocument(Document $document)
     {
-        // Check if user has access to the document
-        if ($document->owner_id !== Auth::id() && !$document->recipients()->where('user_id', Auth::id())->exists()) {
-            abort(403, 'Unauthorized access to document');
-        }
-
-        // Check if file belongs to the document
-        if ($file->document_id !== $document->id) {
-            abort(404, 'File not found');
-        }
-
-        try {
-            // Get the full path to the file
-            $filePath = storage_path('app/public/' . $file->file_path);
-
-            // Log the file path for debugging
-            Log::info('Attempting to download file', [
-                'file_path' => $filePath,
-                'original_filename' => $file->original_filename,
-                'document_id' => $document->id,
-                'file_id' => $file->id
-            ]);
-
-            // Check if file exists
-            if (!file_exists($filePath)) {
-                Log::error('File not found at path', [
-                    'file_path' => $filePath,
-                    'original_filename' => $file->original_filename
-                ]);
-                abort(404, 'File not found in storage');
-            }
-
-            // Return the file download response
-            return response()->download(
-                $filePath,
-                $file->original_filename,
-                [
-                    'Content-Type' => $file->mime_type,
-                    'Content-Disposition' => 'attachment; filename="' . $file->original_filename . '"'
-                ]
-            );
-        } catch (\Exception $e) {
-            Log::error('Error downloading file', [
-                'error' => $e->getMessage(),
-                'file_path' => $filePath ?? null,
-                'original_filename' => $file->original_filename
-            ]);
-            abort(500, 'Error downloading file: ' . $e->getMessage());
-        }
     }
 }
