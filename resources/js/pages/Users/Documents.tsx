@@ -127,7 +127,6 @@ const Documents = ({ documents, auth }: Props) => {
             ))
         );
     };
-    console.log(documents);
 
     return (
         <>
