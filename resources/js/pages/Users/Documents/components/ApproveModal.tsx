@@ -99,7 +99,8 @@ const ApproveModal: React.FC<ApproveModalProps> = ({ isOpen, onClose, documentId
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Attachment (Optional)</label>
+                            <label className="block text-sm font-medium text-gray-700">Response Attachment (Optional)</label>
+                            <p className="text-sm text-gray-500 mb-2">This file will be added as a response attachment to the document.</p>
                             <input
                                 type="file"
                                 onChange={(e) => {

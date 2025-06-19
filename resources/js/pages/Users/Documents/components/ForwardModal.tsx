@@ -163,7 +163,8 @@ const ForwardModal: React.FC<ForwardModalProps> = ({
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Attach Files (Optional)</Label>
+                        <Label>Response Attachments (Optional)</Label>
+                        <p className="text-sm text-gray-500 mb-2">These files will be added as response attachments to the document.</p>
                         <Input
                             type="file"
                             multiple

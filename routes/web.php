@@ -65,12 +65,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Document routes
     Route::get('/documents/{document}', [DocumentController::class, 'viewDocument'])->name('documents.view');
-    Route::get('/documents/{document}/files/{file}', [DocumentController::class, 'downloadDocument'])->name('documents.download');
     Route::post('/documents/{document}/respond', [DocumentController::class, 'respondToDocument'])->name('documents.respond');
     Route::post('/documents/{document}/forward', [DocumentController::class, 'forwardDocument'])->name('documents.forward');
     Route::get('/documents/{document}/chain', [DocumentController::class, 'getDocumentChain'])->name('documents.chain');
 
     Route::get('/dashboard/data', [UserController::class, 'dashboardData'])->name('dashboard.data');
+});
+
+// Download route without email verification requirement
+Route::middleware(['auth'])->group(function () {
+    Route::get('/documents/{document}/files/{file}', [DocumentController::class, 'downloadDocument'])->name('documents.download');
 });
 
 require __DIR__.'/settings.php';

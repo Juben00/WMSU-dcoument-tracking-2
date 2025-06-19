@@ -4,11 +4,14 @@ import { Link, useForm } from '@inertiajs/react';
 import ApproveModal from './components/ApproveModal';
 import RejectModal from './components/RejectModal';
 import ForwardModal from './components/ForwardModal';
+import { Download } from 'lucide-react';
 
 interface DocumentFile {
     id: number;
     original_filename: string;
     file_size: number;
+    upload_type: string;
+    uploaded_by: number;
 }
 
 interface DocumentRecipient {
@@ -124,6 +127,10 @@ const ViewDocument = ({ document, auth, offices, users }: Props) => {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     };
 
+    // Group files by upload type
+    const originalFiles = document.files.filter(file => file.upload_type === 'original');
+    const responseFiles = document.files.filter(file => file.upload_type === 'response');
+
     return (
         <>
             <Navbar />
@@ -177,27 +184,61 @@ const ViewDocument = ({ document, auth, offices, users }: Props) => {
                             <div>
                                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Files</h2>
                                 <div className="space-y-4">
-                                    {document.files.map((file) => (
-                                        <div key={file.id} className="flex items-center gap-3 truncate justify-between p-4 bg-gray-50 rounded-lg">
-                                            <div className="flex items-center space-x-3 truncate">
-                                                <svg className="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                                </svg>
-                                                <div className="flex flex-col truncate">
-                                                    <p className="text-sm font-medium text-gray-900">{file.original_filename}</p>
-                                                    <p className="text-xs text-gray-500">{formatFileSize(file.file_size)}</p>
+                                    {/* Original Files Section */}
+                                    <h2 className="text-lg font-semibold text-gray-900 mb-4">Original Files</h2>
+                                    <div className="space-y-4 mb-8">
+                                        {originalFiles.map((file) => (
+                                            <div key={file.id} className="flex items-center gap-3 truncate justify-between p-4 bg-gray-50 rounded-lg">
+                                                <div className="flex items-center space-x-3 truncate">
+                                                    <svg className="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                    </svg>
+                                                    <div className="flex flex-col truncate">
+                                                        <p className="text-sm font-medium text-gray-900">{file.original_filename}</p>
+                                                        <p className="text-xs text-gray-500">{formatFileSize(file.file_size)}</p>
+                                                    </div>
                                                 </div>
+                                                <a
+                                                    href={route('documents.download', { document: document.id, file: file.id })}
+                                                    download={file.original_filename}
+                                                    className="inline-flex items-center gap-1 text-red-700 bg-red-100 hover:bg-red-200 px-3 py-1.5 rounded shadow-sm transition font-semibold focus:outline-none focus:ring-2 focus:ring-red-200"
+                                                >
+                                                    <Download className="w-4 h-4" />
+                                                    Download
+                                                </a>
                                             </div>
-                                            {/* Open in new tab */}
-                                            <a
-                                                target='_blank'
-                                                href={`/documents/${document.id}/files/${file.id}`}
-                                                className="text-red-700 hover:text-red-900 text-sm font-medium"
-                                            >
-                                                Download
-                                            </a>
-                                        </div>
-                                    ))}
+                                        ))}
+                                    </div>
+
+                                    {/* Response Files Section */}
+                                    {responseFiles.length > 0 && (
+                                        <>
+                                            <h2 className="text-lg font-semibold text-gray-900 mb-4">Response Files</h2>
+                                            <div className="space-y-4">
+                                                {responseFiles.map((file) => (
+                                                    <div key={file.id} className="flex items-center gap-3 truncate justify-between p-4 bg-blue-50 rounded-lg">
+                                                        <div className="flex items-center space-x-3 truncate">
+                                                            <svg className="h-8 w-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                            </svg>
+                                                            <div className="flex flex-col truncate">
+                                                                <p className="text-sm font-medium text-gray-900">{file.original_filename}</p>
+                                                                <p className="text-xs text-gray-500">{formatFileSize(file.file_size)}</p>
+                                                            </div>
+                                                        </div>
+                                                        <a
+                                                            href={route('documents.download', { document: document.id, file: file.id })}
+                                                            download={file.original_filename}
+                                                            className="inline-flex items-center gap-1 text-blue-700 bg-blue-100 hover:bg-blue-200 px-3 py-1.5 rounded shadow-sm transition font-semibold focus:outline-none focus:ring-2 focus:ring-blue-200"
+                                                        >
+                                                            <Download className="w-4 h-4" />
+                                                            Download
+                                                        </a>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </div>

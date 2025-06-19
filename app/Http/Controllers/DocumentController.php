@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Document;
 use App\Models\DocumentRecipient;
 use App\Models\User;
+use App\Models\DocumentFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
@@ -184,7 +185,63 @@ class DocumentController extends Controller
         ]);
     }
 
-    public function downloadDocument(Document $document)
+    public function downloadDocument(Document $document, DocumentFile $file)
     {
+        // Debug: Log the request
+        Log::info('Download request', [
+            'user_id' => Auth::id(),
+            'document_id' => $document->id,
+            'file_id' => $file->id,
+            'authenticated' => Auth::check()
+        ]);
+
+        // Check if user is authenticated
+        if (!Auth::check()) {
+            Log::warning('User not authenticated for download');
+            abort(401, 'Authentication required');
+        }
+
+        // Check if user has access to the document
+        if ($document->owner_id !== Auth::id() && !$document->recipients()->where('user_id', Auth::id())->exists()) {
+            Log::warning('User not authorized for document', [
+                'user_id' => Auth::id(),
+                'document_owner_id' => $document->owner_id,
+                'is_recipient' => $document->recipients()->where('user_id', Auth::id())->exists()
+            ]);
+            abort(403, 'Unauthorized access to document');
+        }
+
+        // Check if file belongs to the document
+        if ($file->document_id !== $document->id) {
+            Log::warning('File does not belong to document', [
+                'file_document_id' => $file->document_id,
+                'requested_document_id' => $document->id
+            ]);
+            abort(404, 'File not found');
+        }
+
+        // Check if file exists in storage
+        if (!Storage::disk('public')->exists($file->file_path)) {
+            Log::warning('File not found in storage', [
+                'file_path' => $file->file_path
+            ]);
+            abort(404, 'File not found in storage');
+        }
+
+        // Get the full path to the file
+        $path = Storage::disk('public')->path($file->file_path);
+
+        Log::info('File download successful', [
+            'file_path' => $file->file_path,
+            'original_filename' => $file->original_filename,
+            'mime_type' => $file->mime_type
+        ]);
+
+        // Return the file as a download response
+        return response()->download(
+            $path,
+            $file->original_filename,
+            ['Content-Type' => $file->mime_type]
+        );
     }
 }
