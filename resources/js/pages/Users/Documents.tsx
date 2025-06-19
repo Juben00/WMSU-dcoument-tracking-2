@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Navbar from '@/components/User/navbar';
 import { Link } from '@inertiajs/react';
-import { Eye, Download, Search, FileCheck2, Clock, XCircle, Undo2, FileSearch } from 'lucide-react';
+import { Eye, Download, Search, FileCheck2, Clock, XCircle, Undo2, FileSearch, Filter } from 'lucide-react';
 
 interface Document {
     id: number;
@@ -32,6 +32,8 @@ const statusIcons: Record<string, React.ReactNode> = {
 const Documents = ({ documents, auth }: Props) => {
     const [activeTab, setActiveTab] = useState('received');
     const [search, setSearch] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [sortBy, setSortBy] = useState('latest');
 
     const received = documents.filter(doc => doc.owner_id !== auth.user.id);
     const sent = documents.filter(doc => doc.status !== 'draft' && doc.owner_id === auth.user.id);
@@ -54,11 +56,29 @@ const Documents = ({ documents, auth }: Props) => {
     };
 
     const filterDocs = (docs: Document[]) => {
-        if (!search.trim()) return docs;
-        return docs.filter(doc =>
-            doc.title.toLowerCase().includes(search.toLowerCase()) ||
-            doc.id.toString().includes(search)
-        );
+        let filtered = docs;
+
+        // Filter by search
+        if (search.trim()) {
+            filtered = filtered.filter(doc =>
+                doc.title.toLowerCase().includes(search.toLowerCase()) ||
+                doc.id.toString().includes(search)
+            );
+        }
+
+        // Filter by status
+        if (statusFilter !== 'all') {
+            filtered = filtered.filter(doc => doc.status === statusFilter);
+        }
+
+        // Sort by date
+        filtered.sort((a, b) => {
+            const dateA = new Date(a.created_at).getTime();
+            const dateB = new Date(b.created_at).getTime();
+            return sortBy === 'latest' ? dateB - dateA : dateA - dateB;
+        });
+
+        return filtered;
     };
 
     const renderDocuments = (docs: Document[]) => {
@@ -146,9 +166,9 @@ const Documents = ({ documents, auth }: Props) => {
                     </nav>
                 </div>
 
-                {/* Search Filter */}
-                <div className="flex items-center mb-6 max-w-md mx-auto">
-                    <div className="relative w-full">
+                {/* Search and Filter */}
+                <div className="flex items-center gap-4 mb-6 max-w-4xl mx-auto">
+                    <div className="relative flex-1">
                         <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                             <Search className="w-5 h-5 text-gray-400" />
                         </span>
@@ -159,6 +179,48 @@ const Documents = ({ documents, auth }: Props) => {
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                         />
+                    </div>
+                    <div className="relative">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <Filter className="w-5 h-5 text-gray-400" />
+                        </span>
+                        <select
+                            className="block w-full pl-10 pr-8 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 text-sm appearance-none bg-white"
+                            value={statusFilter}
+                            onChange={e => setStatusFilter(e.target.value)}
+                        >
+                            <option value="all">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                            <option value="returned">Returned</option>
+                            <option value="in_review">In Review</option>
+                        </select>
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div className="relative">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h18M3 8h18M3 12h18M3 16h18" />
+                            </svg>
+                        </span>
+                        <select
+                            className="block w-full pl-10 pr-8 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 text-sm appearance-none bg-white"
+                            value={sortBy}
+                            onChange={e => setSortBy(e.target.value)}
+                        >
+                            <option value="latest">Latest First</option>
+                            <option value="oldest">Oldest First</option>
+                        </select>
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
                     </div>
                 </div>
 
