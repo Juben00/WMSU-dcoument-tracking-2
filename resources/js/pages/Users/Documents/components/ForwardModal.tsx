@@ -143,11 +143,11 @@ const ForwardModal: React.FC<ForwardModalProps> = ({
                                 <SelectValue placeholder="Select a recipient" />
                             </SelectTrigger>
                             <SelectContent>
-                                {users.map((user) => (
+                                {users.length > 0 ? users.map((user) => (
                                     <SelectItem key={user.id} value={user.id.toString()}>
                                         {user.first_name} {user.last_name} ({user.role})
                                     </SelectItem>
-                                ))}
+                                )) : <SelectItem value="no-users">No users found</SelectItem>}
                             </SelectContent>
                         </Select>
                     </div>

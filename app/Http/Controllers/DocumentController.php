@@ -158,21 +158,8 @@ class DocumentController extends Controller
 
         $document->load(['files', 'owner', 'recipients.user']);
 
-        // Get all recipient user IDs, excluding the test user
-        $recipientUserIds = $document->recipients()
-            ->whereHas('user', function($query) {
-                $query->where('email', '!=', 'test@example.com');
-            })
-            ->pluck('user_id');
-
-        // Get all unique, non-null office_ids from those users
-        $officeIds = User::whereIn('id', $recipientUserIds)
-            ->whereNotNull('office_id')
-            ->pluck('office_id')
-            ->unique();
-
-        // Get all users with those office_ids, excluding the current user
-        $users = User::whereIn('office_id', $officeIds)
+        // Get users from the same office as the current user, excluding the current user
+        $users = User::where('office_id', Auth::user()->office_id)
             ->where('id', '!=', Auth::id())
             ->get();
 
