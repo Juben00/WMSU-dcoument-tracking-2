@@ -15,11 +15,18 @@ class DocumentFile extends Model
         'file_path',
         'original_filename',
         'mime_type',
-        'file_size'
+        'file_size',
+        'uploaded_by',
+        'upload_type',
     ];
 
     public function document(): BelongsTo
     {
         return $this->belongsTo(Document::class);
+    }
+
+    public function uploader(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'uploaded_by');
     }
 }

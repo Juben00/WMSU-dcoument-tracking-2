@@ -9,6 +9,12 @@ interface AuthUser {
     role?: string;
 }
 
+interface NavItem {
+    label: string;
+    href: string;
+    method?: string;
+}
+
 interface PageProps extends InertiaPageProps {
     auth: {
         user?: AuthUser;
@@ -18,10 +24,12 @@ interface PageProps extends InertiaPageProps {
 const Navbar = () => {
     const [menuOpen, setMenuOpen] = useState(false);
 
-    const { auth } = usePage<PageProps>().props;
+    const page = usePage<PageProps>();
+    const { auth } = page.props;
     const role = auth?.user?.role || 'user';
+    const currentUrl = page.url;
 
-    const NavItems = [
+    const NavItems: NavItem[] = [
         {
             label: 'Dashboard',
             href: '/dashboard',
@@ -41,7 +49,7 @@ const Navbar = () => {
         },
     ];
 
-    const AdminNavItems = [
+    const AdminNavItems: NavItem[] = [
         {
             label: 'Offices',
             href: '/offices',
@@ -65,19 +73,24 @@ const Navbar = () => {
 
                     {/* Desktop Menu */}
                     <div className="hidden md:flex space-x-2 items-center">
-                        {currentNavItems.map((item, index) => (
-                            <Link
-                                key={index}
-                                href={item.href}
-                                method={item.method as any}
-                                className={`px-3 py-2 rounded-md text-sm font-medium ${item.label === 'Logout'
-                                    ? 'text-white bg-red-700 hover:bg-red-800'
-                                    : 'text-gray-600 hover:bg-red-50 hover:text-red-700'
-                                    } transition-colors duration-200`}
-                            >
-                                {item.label}
-                            </Link>
-                        ))}
+                        {currentNavItems.map((item, index) => {
+                            const isActive = currentUrl === item.href || (item.href !== '/logout' && currentUrl.startsWith(item.href));
+                            return (
+                                <Link
+                                    key={index}
+                                    href={item.href}
+                                    {...(item.method ? { method: item.method as any } : {})}
+                                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${item.label === 'Logout'
+                                        ? 'text-white bg-red-700 hover:bg-red-800'
+                                        : isActive
+                                            ? 'text-red-700 font-bold bg-red-50'
+                                            : 'text-gray-600 hover:bg-red-50 hover:text-red-700'
+                                        }`}
+                                >
+                                    {item.label}
+                                </Link>
+                            );
+                        })}
                     </div>
 
                     {/* Mobile menu button */}
@@ -108,19 +121,24 @@ const Navbar = () => {
                     } overflow-hidden`}
             >
                 <div className="px-2 pt-2 pb-3 space-y-1 bg-white shadow-lg">
-                    {currentNavItems.map((item, index) => (
-                        <Link
-                            key={index}
-                            href={item.href}
-                            method={item.method as any}
-                            className={`block px-3 py-2 rounded-md text-base font-medium ${item.label === 'Logout'
-                                ? 'text-white bg-red-700 hover:bg-red-800'
-                                : 'text-gray-600 hover:bg-red-50 hover:text-red-700'
-                                } transition-colors duration-200`}
-                        >
-                            {item.label}
-                        </Link>
-                    ))}
+                    {currentNavItems.map((item, index) => {
+                        const isActive = currentUrl === item.href || (item.href !== '/logout' && currentUrl.startsWith(item.href));
+                        return (
+                            <Link
+                                key={index}
+                                href={item.href}
+                                {...(item.method ? { method: item.method as any } : {})}
+                                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${item.label === 'Logout'
+                                    ? 'text-white bg-red-700 hover:bg-red-800'
+                                    : isActive
+                                        ? 'text-red-700 font-bold bg-red-100'
+                                        : 'text-gray-600 hover:bg-red-50 hover:text-red-700'
+                                    }`}
+                            >
+                                {item.label}
+                            </Link>
+                        );
+                    })}
                 </div>
             </div>
         </nav>

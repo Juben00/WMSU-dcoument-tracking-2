@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\Office;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
@@ -28,7 +29,8 @@ class UserController extends Controller
 
     public function offices()
     {
-        $users = User::whereIn('role', ['user', 'receiver'])->with('office')->get();
+        // get all users with role user or receiver and with office same as the user's office
+        $users = User::whereIn('role', ['user', 'receiver'])->where('office_id', Auth::user()->office_id)->with('office')->get();
         return Inertia::render('Users/Offices', [
             'auth' => [
                 'user' => Auth::user()
@@ -193,15 +195,16 @@ class UserController extends Controller
         ]);
     }
 
-    public function storeDocument(Request $request)
+    public function sendDocument(Request $request)
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'files' => 'required|array',
             'files.*' => 'required|file|max:10240', // 10MB max per file
-            'status' => 'required|string|in:draft,pending',
-            'recipient_id' => 'required_if:status,pending|exists:users,id'
+            'recipient_ids' => 'required|array|min:1',
+            'recipient_ids.*' => 'exists:users,id',
+            'initial_recipient_id' => 'required|exists:users,id'
         ]);
 
         // Create the document
@@ -209,33 +212,46 @@ class UserController extends Controller
             'owner_id' => Auth::id(),
             'title' => $validated['title'],
             'description' => $validated['description'],
-            'status' => $validated['status']
+            'status' => 'pending'
         ]);
 
         // Handle multiple file uploads
         foreach ($request->file('files') as $file) {
             $filePath = $file->store('documents', 'public');
-
             $document->files()->create([
                 'file_path' => $filePath,
                 'original_filename' => $file->getClientOriginalName(),
                 'mime_type' => $file->getMimeType(),
-                'file_size' => $file->getSize()
+                'file_size' => $file->getSize(),
+                'uploaded_by' => Auth::id(),
+                'upload_type' => 'original',
             ]);
         }
 
-        // If document is being submitted (not draft), create the initial recipient
-        if ($validated['status'] === 'pending' && isset($validated['recipient_id'])) {
+        // Extra safety: check recipient_ids is not empty
+        if (empty($validated['recipient_ids'])) {
+            \Illuminate\Support\Facades\Log::error('No recipient_ids provided for document send', ['request' => $request->all()]);
+            return back()->withErrors(['recipient_ids' => 'At least one recipient is required.']);
+        }
+
+        // Create recipients
+        $sequence = 1;
+        foreach ($validated['recipient_ids'] as $recipientId) {
+            if (!$recipientId) {
+                \Illuminate\Support\Facades\Log::error('Attempted to create DocumentRecipient with empty user_id', ['recipientId' => $recipientId]);
+                continue;
+            }
             DocumentRecipient::create([
                 'document_id' => $document->id,
-                'user_id' => $validated['recipient_id'],
+                'user_id' => $recipientId,
                 'status' => 'pending',
-                'sequence' => 1,
-                'is_active' => true
+                'sequence' => $sequence,
+                'is_active' => $recipientId == $validated['initial_recipient_id'],
             ]);
+            $sequence++;
         }
 
-        return redirect()->route('users.documents')->with('success', 'Document uploaded successfully.');
+        return redirect()->route('users.documents')->with('success', 'Document sent successfully.');
     }
 
     public function showDocument($document)
@@ -329,5 +345,46 @@ class UserController extends Controller
         ]);
 
         return redirect()->route('users.offices');
+    }
+
+    // Dashboard Data for User
+    public function dashboardData()
+    {
+        $userId = Auth::id();
+        // Fetch as collections
+        $ownedDocuments = Document::where('owner_id', $userId)->get();
+        $receivedDocuments = Document::whereHas('recipients', function($query) use ($userId) {
+            $query->where('user_id', $userId);
+        })->get();
+
+        // Merge collections and remove duplicates (if any)
+        $allDocuments = $ownedDocuments->merge($receivedDocuments)->unique('id');
+
+        $totalDocuments = $allDocuments->count();
+        $pendingDocuments = $allDocuments->where('status', 'pending')->count();
+        $completedDocuments = $allDocuments->where('status', 'approved')->count();
+
+        // Recent Activities: last 5 actions involving the user (owned or received)
+        $recentActivities = DocumentRecipient::where('user_id', $userId)
+            ->orderByDesc('responded_at')
+            ->with('document')
+            ->take(5)
+            ->get()
+            ->map(function($activity) {
+                return [
+                    'document_id' => $activity->document_id,
+                    'title' => $activity->document->title ?? 'Untitled',
+                    'status' => $activity->status,
+                    'responded_at' => $activity->responded_at,
+                    'comments' => $activity->comments,
+                ];
+            });
+
+        return response()->json([
+            'totalDocuments' => $totalDocuments,
+            'pendingDocuments' => $pendingDocuments,
+            'completedDocuments' => $completedDocuments,
+            'recentActivities' => $recentActivities,
+        ]);
     }
 }

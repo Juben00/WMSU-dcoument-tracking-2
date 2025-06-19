@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('document_files', function (Blueprint $table) {
@@ -17,14 +14,13 @@ return new class extends Migration
             $table->string('file_path');
             $table->string('original_filename');
             $table->string('mime_type');
-            $table->integer('file_size');
+            $table->unsignedBigInteger('file_size');
+            $table->foreignId('uploaded_by')->constrained('users')->onDelete('cascade');
+            $table->string('upload_type')->default('original');
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('document_files');

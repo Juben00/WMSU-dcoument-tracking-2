@@ -124,27 +124,32 @@ const Offices = ({ auth, users }: Props) => {
         }
     };
 
+    console.log(users);
+
     return (
         <>
             <Navbar />
-
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-bold text-gray-800">Offices</h1>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+                {/* Header Section */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-2 sm:gap-0">
+                    <div>
+                        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Office Users</h1>
+                        <p className="text-base text-gray-500 mt-1">Manage the users within your office.</p>
+                    </div>
                     <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                         <DialogTrigger asChild>
-                            <Button>
-                                <Plus className="mr-2 h-4 w-4" />
+                            <Button className="bg-primary text-white font-semibold shadow-md hover:bg-primary/90 transition-all flex items-center gap-2">
+                                <Plus className="h-5 w-5" />
                                 Create User
                             </Button>
                         </DialogTrigger>
-                        <DialogContent>
+                        <DialogContent className="max-w-lg rounded-xl p-6">
                             <DialogHeader>
-                                <DialogTitle>Create New User</DialogTitle>
+                                <DialogTitle className="text-xl font-bold">Create New User</DialogTitle>
                             </DialogHeader>
-                            <form onSubmit={handleCreateUser} className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
+                            <form onSubmit={handleCreateUser} className="space-y-5 mt-2">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
                                         <Label htmlFor="first_name">First Name</Label>
                                         <Input
                                             id="first_name"
@@ -155,7 +160,7 @@ const Offices = ({ auth, users }: Props) => {
                                         />
                                         <InputError message={errors.first_name} />
                                     </div>
-                                    <div className="space-y-2">
+                                    <div className="space-y-1.5">
                                         <Label htmlFor="last_name">Last Name</Label>
                                         <Input
                                             id="last_name"
@@ -167,9 +172,8 @@ const Offices = ({ auth, users }: Props) => {
                                         <InputError message={errors.last_name} />
                                     </div>
                                 </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
                                         <Label htmlFor="middle_name">Middle Name</Label>
                                         <Input
                                             id="middle_name"
@@ -179,7 +183,7 @@ const Offices = ({ auth, users }: Props) => {
                                         />
                                         <InputError message={errors.middle_name} />
                                     </div>
-                                    <div className="space-y-2">
+                                    <div className="space-y-1.5">
                                         <Label htmlFor="suffix">Suffix</Label>
                                         <Input
                                             id="suffix"
@@ -190,9 +194,8 @@ const Offices = ({ auth, users }: Props) => {
                                         <InputError message={errors.suffix} />
                                     </div>
                                 </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
                                         <Label htmlFor="gender">Gender</Label>
                                         <Select
                                             value={data.gender}
@@ -208,7 +211,7 @@ const Offices = ({ auth, users }: Props) => {
                                         </Select>
                                         <InputError message={errors.gender} />
                                     </div>
-                                    <div className="space-y-2">
+                                    <div className="space-y-1.5">
                                         <Label htmlFor="position">Position</Label>
                                         <Input
                                             id="position"
@@ -220,9 +223,8 @@ const Offices = ({ auth, users }: Props) => {
                                         <InputError message={errors.position} />
                                     </div>
                                 </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
                                         <Label htmlFor="role">Role</Label>
                                         <Select
                                             value={data.role}
@@ -241,8 +243,7 @@ const Offices = ({ auth, users }: Props) => {
                                         <InputError message={errors.role} />
                                     </div>
                                 </div>
-
-                                <div className="space-y-2">
+                                <div className="space-y-1.5">
                                     <Label htmlFor="email">Email</Label>
                                     <Input
                                         id="email"
@@ -254,12 +255,11 @@ const Offices = ({ auth, users }: Props) => {
                                     />
                                     <InputError message={errors.email} />
                                 </div>
-
-                                <div className="flex justify-end gap-2">
+                                <div className="flex justify-end gap-2 pt-2">
                                     <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                                         Cancel
                                     </Button>
-                                    <Button type="submit" disabled={processing}>
+                                    <Button type="submit" disabled={processing} className="bg-primary text-white font-semibold">
                                         Create User
                                     </Button>
                                 </div>
@@ -267,33 +267,35 @@ const Offices = ({ auth, users }: Props) => {
                         </DialogContent>
                     </Dialog>
                 </div>
-
                 {/* Users Table */}
-                <div className="bg-white rounded-lg shadow">
+                <div className="bg-white rounded-2xl shadow-lg overflow-x-auto border border-gray-100">
                     <Table>
                         <TableHeader>
-                            <TableRow>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Email</TableHead>
-                                <TableHead>Position</TableHead>
-                                <TableHead>Role</TableHead>
-                                <TableHead>Actions</TableHead>
+                            <TableRow className="bg-gray-50">
+                                <TableHead className="font-semibold text-gray-700">Name</TableHead>
+                                <TableHead className="font-semibold text-gray-700">Gender</TableHead>
+                                <TableHead className="font-semibold text-gray-700">Email</TableHead>
+                                <TableHead className="font-semibold text-gray-700">Position</TableHead>
+                                <TableHead className="font-semibold text-gray-700">Role</TableHead>
+                                <TableHead className="font-semibold text-gray-700">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {users.map((user) => (
-                                <TableRow key={user.id}>
-                                    <TableCell>
-                                        {user.first_name} {user.middle_name} {user.last_name} {user.suffix}
+                            {users.length > 0 ? users.map((user) => (
+                                <TableRow key={user.id} className="hover:bg-gray-50 transition-all">
+                                    <TableCell className="py-3">
+                                        <span className="font-medium text-gray-900">{user.first_name} {user.middle_name} {user.last_name} {user.suffix}</span>
                                     </TableCell>
-                                    <TableCell>{user.email}</TableCell>
-                                    <TableCell>{user.position}</TableCell>
-                                    <TableCell className='capitalize'>{user.role}</TableCell>
-                                    <TableCell>
+                                    <TableCell className="py-3">{user.gender}</TableCell>
+                                    <TableCell className="py-3">{user.email}</TableCell>
+                                    <TableCell className="py-3">{user.position}</TableCell>
+                                    <TableCell className='capitalize py-3'>{user.role}</TableCell>
+                                    <TableCell className="py-3">
                                         <div className="flex gap-2">
                                             <Button
                                                 variant="outline"
                                                 size="sm"
+                                                className="border-gray-300 hover:border-primary hover:text-primary"
                                                 onClick={() => handleEditUser(user)}
                                             >
                                                 <Pencil className="h-4 w-4" />
@@ -301,6 +303,7 @@ const Offices = ({ auth, users }: Props) => {
                                             <Button
                                                 variant="destructive"
                                                 size="sm"
+                                                className="hover:bg-red-600"
                                                 onClick={() => handleDeleteUser(user.id)}
                                             >
                                                 <Trash2 className="h-4 w-4" />
@@ -308,20 +311,28 @@ const Offices = ({ auth, users }: Props) => {
                                         </div>
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                            )) : (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="text-center py-8">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2a4 4 0 018 0v2m-4-4a4 4 0 00-4-4V7a4 4 0 018 0v2a4 4 0 00-4 4z" /></svg>
+                                            <span className="text-gray-400 text-lg">No users found in this office.</span>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            )}
                         </TableBody>
                     </Table>
                 </div>
-
                 {/* Edit Dialog */}
                 <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                    <DialogContent>
+                    <DialogContent className="max-w-lg rounded-xl p-6">
                         <DialogHeader>
-                            <DialogTitle>Edit User</DialogTitle>
+                            <DialogTitle className="text-xl font-bold">Edit User</DialogTitle>
                         </DialogHeader>
-                        <form onSubmit={handleUpdateUser} className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
+                        <form onSubmit={handleUpdateUser} className="space-y-5 mt-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
                                     <Label htmlFor="edit_first_name">First Name</Label>
                                     <Input
                                         id="edit_first_name"
@@ -332,7 +343,7 @@ const Offices = ({ auth, users }: Props) => {
                                     />
                                     <InputError message={errors.first_name} />
                                 </div>
-                                <div className="space-y-2">
+                                <div className="space-y-1.5">
                                     <Label htmlFor="edit_last_name">Last Name</Label>
                                     <Input
                                         id="edit_last_name"
@@ -344,9 +355,8 @@ const Offices = ({ auth, users }: Props) => {
                                     <InputError message={errors.last_name} />
                                 </div>
                             </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
                                     <Label htmlFor="edit_middle_name">Middle Name</Label>
                                     <Input
                                         id="edit_middle_name"
@@ -356,7 +366,7 @@ const Offices = ({ auth, users }: Props) => {
                                     />
                                     <InputError message={errors.middle_name} />
                                 </div>
-                                <div className="space-y-2">
+                                <div className="space-y-1.5">
                                     <Label htmlFor="edit_suffix">Suffix</Label>
                                     <Input
                                         id="edit_suffix"
@@ -367,9 +377,8 @@ const Offices = ({ auth, users }: Props) => {
                                     <InputError message={errors.suffix} />
                                 </div>
                             </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
                                     <Label htmlFor="edit_gender">Gender</Label>
                                     <Select
                                         value={data.gender}
@@ -385,7 +394,7 @@ const Offices = ({ auth, users }: Props) => {
                                     </Select>
                                     <InputError message={errors.gender} />
                                 </div>
-                                <div className="space-y-2">
+                                <div className="space-y-1.5">
                                     <Label htmlFor="edit_position">Position</Label>
                                     <Input
                                         id="edit_position"
@@ -397,8 +406,7 @@ const Offices = ({ auth, users }: Props) => {
                                     <InputError message={errors.position} />
                                 </div>
                             </div>
-
-                            <div className="space-y-2">
+                            <div className="space-y-1.5">
                                 <Label htmlFor="edit_email">Email</Label>
                                 <Input
                                     id="edit_email"
@@ -410,8 +418,7 @@ const Offices = ({ auth, users }: Props) => {
                                 />
                                 <InputError message={errors.email} />
                             </div>
-
-                            <div className="space-y-2">
+                            <div className="space-y-1.5">
                                 <Label htmlFor="edit_role">Role</Label>
                                 <Select
                                     value={data.role}
@@ -432,12 +439,11 @@ const Offices = ({ auth, users }: Props) => {
                                 </Select>
                                 <InputError message={errors.role} />
                             </div>
-
-                            <div className="flex justify-end gap-2">
+                            <div className="flex justify-end gap-2 pt-2">
                                 <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
                                     Cancel
                                 </Button>
-                                <Button type="submit" disabled={processing}>
+                                <Button type="submit" disabled={processing} className="bg-primary text-white font-semibold">
                                     Update User
                                 </Button>
                             </div>

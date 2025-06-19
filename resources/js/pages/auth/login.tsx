@@ -36,7 +36,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
     };
 
     return (
-        <AuthLayout title="Log in to your account" description="Enter your email and password below to log in">
+        <AuthLayout title="WMSU" description="Document Management and Tracking System">
             <Head title="Log in" />
 
             <form className="flex flex-col gap-6" onSubmit={submit}>
@@ -86,6 +86,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             checked={data.remember}
                             onClick={() => setData('remember', !data.remember)}
                             tabIndex={3}
+                            className='border-2 border-gray-500'
                         />
                         <Label htmlFor="remember">Remember me</Label>
                     </div>
@@ -95,13 +96,13 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                         Log in
                     </Button>
                 </div>
-
+                {/*
                 <div className="text-center text-sm text-muted-foreground">
                     Don't have an account?{' '}
                     <TextLink href={route('register')} tabIndex={5}>
                         Sign up
                     </TextLink>
-                </div>
+                </div> */}
             </form>
 
             {status && <div className="mb-4 text-center text-sm font-medium text-green-600">{status}</div>}

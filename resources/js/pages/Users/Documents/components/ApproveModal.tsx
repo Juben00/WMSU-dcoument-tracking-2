@@ -94,6 +94,8 @@ const ApproveModal: React.FC<ApproveModalProps> = ({ isOpen, onClose, documentId
                                 }}
                                 className="mt-1"
                                 rows={3}
+                                required
+                                placeholder="Please provide a comment..."
                             />
                         </div>
                         <div>
@@ -127,7 +129,7 @@ const ApproveModal: React.FC<ApproveModalProps> = ({ isOpen, onClose, documentId
                             </button>
                             <button
                                 type="submit"
-                                disabled={processing}
+                                disabled={processing || !comments.trim()}
                                 className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
                             >
                                 {processing ? 'Processing...' : 'Approve'}

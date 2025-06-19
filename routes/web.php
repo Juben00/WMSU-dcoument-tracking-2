@@ -54,7 +54,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // // User Document Profile Routes
     Route::get('/documents/create', [UserController::class, 'createDocument'])->name('users.createDocument');
-    Route::post('/users/documents', [UserController::class, 'storeDocument'])->name('users.documents.store');
+
+    // send document to recipients
+    Route::post('/users/documents/send', [UserController::class, 'sendDocument'])->name('users.documents.send');
+
     Route::get('/users/documents/{document}', [UserController::class, 'showDocument'])->name('users.documents.show');
     Route::get('/users/documents/{document}/edit', [UserController::class, 'editDocument'])->name('users.documents.edit');
     Route::put('/users/documents/{document}', [UserController::class, 'updateDocument'])->name('users.documents.update');
@@ -66,6 +69,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/documents/{document}/respond', [DocumentController::class, 'respondToDocument'])->name('documents.respond');
     Route::post('/documents/{document}/forward', [DocumentController::class, 'forwardDocument'])->name('documents.forward');
     Route::get('/documents/{document}/chain', [DocumentController::class, 'getDocumentChain'])->name('documents.chain');
+
+    Route::get('/dashboard/data', [UserController::class, 'dashboardData'])->name('dashboard.data');
 });
 
 require __DIR__.'/settings.php';
