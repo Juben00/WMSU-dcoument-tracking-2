@@ -1,74 +1,110 @@
-import React from 'react';
-import { User } from '@/types';
-import {
-    UserCircle,
-    Mail,
-    BadgeInfo,
-    UserCog,
-    Building2,
-    CheckCircle,
-    XCircle,
-    Calendar,
-} from 'lucide-react';
+import React from "react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import { CalendarDays, Mail, MapPin, Shield } from "lucide-react"
+import type { User } from "@/types"
 
 interface Props {
-    user: User;
+    user: User
 }
 
-const AccountDetailsCard: React.FC<Props> = ({ user }) => (
-    <div className="bg-gradient-to-br from-white via-gray-50 to-gray-100 border border-gray-200 rounded-2xl shadow-lg p-8 max-w-xl mx-auto transition-shadow hover:shadow-2xl">
-        <div className="flex items-center space-x-8 mb-8">
-            <div className="relative h-24 w-24 rounded-full bg-gray-100 flex items-center justify-center shadow-md border-4 border-white">
-                {user.avatar ? (
-                    <img src={user.avatar} alt="Profile" className="h-24 w-24 rounded-full object-cover" />
-                ) : (
-                    <UserCircle className="text-gray-300" size={96} />
-                )}
-            </div>
-            <div>
-                <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                    {user.first_name} {user.last_name}
-                </h2>
-                <p className="text-gray-500 flex items-center gap-2 mt-1"><BadgeInfo className="text-gray-400" size={18} /> ID: {user.id}</p>
-                <p className="text-gray-500 flex items-center gap-2 mt-1"><Mail className="text-gray-400" size={18} /> {user.email}</p>
-            </div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex items-center gap-2 text-gray-700">
-                <UserCog className="text-blue-400" size={18} />
-                <span className="font-medium">Role:</span>
-                <span className="ml-1">{user.role.charAt(0).toUpperCase() + user.role.slice(1)}</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-700">
-                <Building2 className="text-purple-400" size={18} />
-                <span className="font-medium">Office:</span>
-                <span className="ml-1">{user.office?.name || 'Not assigned'}</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-700">
-                {user.is_active ? (
-                    <CheckCircle className="text-green-500" size={18} />
-                ) : (
-                    <XCircle className="text-red-500" size={18} />
-                )}
-                <span className="font-medium">Status:</span>
-                <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-semibold transition-colors ${user.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{user.is_active ? 'Active' : 'Inactive'}</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-700">
-                {user.email_verified_at ? (
-                    <CheckCircle className="text-green-500" size={18} />
-                ) : (
-                    <XCircle className="text-yellow-500" size={18} />
-                )}
-                <span className="font-medium">Email Status:</span>
-                <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-semibold transition-colors ${user.email_verified_at ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{user.email_verified_at ? 'Verified' : 'Unverified'}</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-700 col-span-1 sm:col-span-2">
-                <Calendar className="text-pink-400" size={18} />
-                <span className="font-medium">Member since:</span>
-                <span className="ml-1">{new Date(user.created_at).toLocaleDateString()}</span>
-            </div>
-        </div>
-    </div>
-);
+const AccountDetailsCard: React.FC<Props> = ({ user }) => {
+    const getInitials = (firstName: string, lastName: string) => {
+        return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
+    }
 
-export default AccountDetailsCard;
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        })
+    }
+
+    return (
+        <div className="space-y-6">
+            <div className="flex items-start space-x-4">
+                <Avatar className="h-16 w-16">
+                    <AvatarImage src={user.avatar || "/placeholder.svg"} alt={`${user.first_name} ${user.last_name}`} />
+                    <AvatarFallback className="text-lg font-semibold bg-gray-200 text-gray-500">
+                        {getInitials(user.first_name, user.last_name)}
+                    </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 space-y-1">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-2xl font-bold tracking-tight text-gray-800">
+                            {user.first_name} {user.last_name}
+                        </h2>
+                        <Badge
+                            variant="outline"
+                            className={`${user.is_active ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"}`}
+                        >
+                            {user.is_active ? "Active" : "Inactive"}
+                        </Badge>
+                    </div>
+                    <div className="flex items-center text-gray-600">
+                        <Mail className="mr-2 h-4 w-4" />
+                        <span className="text-sm">{user.email}</span>
+                    </div>
+                    <p className="text-sm text-gray-600">ID: {user.id}</p>
+                </div>
+            </div>
+
+            <Separator />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                    <div className="flex items-center space-x-3">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100">
+                            <Shield className="h-4 w-4 text-gray-600" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-gray-600">Role</p>
+                            <p className="font-semibold text-gray-800 capitalize">{user.role}</p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center space-x-3">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100">
+                            <MapPin className="h-4 w-4 text-gray-600" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-gray-600">Office</p>
+                            <p className="font-semibold text-gray-800">{user.office?.name || "Not assigned"}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="space-y-4">
+                    <div className="flex items-center space-x-3">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100">
+                            <Mail className="h-4 w-4 text-gray-600" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-gray-600">Email Status</p>
+                            <Badge
+                                variant="outline"
+                                className={`mt-1 ${user.email_verified_at ? "bg-green-100 text-green-800 border-green-200" : "bg-yellow-100 text-yellow-800 border-yellow-200"}`}
+                            >
+                                {user.email_verified_at ? "Verified" : "Unverified"}
+                            </Badge>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center space-x-3">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100">
+                            <CalendarDays className="h-4 w-4 text-gray-600" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-gray-600">Member Since</p>
+                            <p className="font-semibold text-gray-800">{formatDate(user.created_at)}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+export default AccountDetailsCard
