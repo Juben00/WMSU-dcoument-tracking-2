@@ -129,7 +129,7 @@ const Documents = ({ documents, auth }: Props) => {
                     <nav className="flex rounded-lg shadow overflow-hidden w-fit mx-auto border border-gray-200">
                         <button
                             onClick={() => setActiveTab('received')}
-                            className={`px-6 py-3 text-sm font-semibold transition focus:outline-none ${activeTab === 'received'
+                            className={`px-6 py-2 text-sm w-[100px] font-semibold transition focus:outline-none ${activeTab === 'received'
                                 ? 'bg-red-600 text-white shadow-inner'
                                 : 'bg-white text-gray-700 hover:bg-gray-50'} `}
                         >
@@ -137,7 +137,7 @@ const Documents = ({ documents, auth }: Props) => {
                         </button>
                         <button
                             onClick={() => setActiveTab('sent')}
-                            className={`px-6 py-3 text-sm font-semibold transition focus:outline-none border-l border-gray-200 ${activeTab === 'sent'
+                            className={`px-6 py-2 text-sm w-[100px] font-semibold transition focus:outline-none border-l border-gray-200 ${activeTab === 'sent'
                                 ? 'bg-red-600 text-white shadow-inner'
                                 : 'bg-white text-gray-700 hover:bg-gray-50'} `}
                         >

@@ -37,7 +37,8 @@ interface Document {
     files: DocumentFile[];
     recipients: DocumentRecipient[];
     is_final_approver: boolean;
-    receipientStatus: string;
+    can_respond: boolean;
+    recipient_status: string | null;
 }
 
 interface Office {
@@ -206,7 +207,7 @@ const ViewDocument = ({ document, auth, offices, users }: Props) => {
                             <h2 className="text-lg font-semibold text-gray-900 mb-4">Document Actions</h2>
                             <div className="flex space-x-4">
                                 {/* Document Actions */}
-                                {(document.is_final_approver || document.receipientStatus === 'pending') && currentRecipient && (
+                                {document.can_respond && (
                                     <>
                                         <button
                                             onClick={() => setIsApproveModalOpen(true)}
@@ -223,7 +224,7 @@ const ViewDocument = ({ document, auth, offices, users }: Props) => {
                                     </>
                                 )}
 
-                                {currentRecipient && document.receipientStatus === 'approved' && (
+                                {currentRecipient && document.recipient_status === 'approved' && (
                                     <button
                                         onClick={() => setIsForwardModalOpen(true)}
                                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"

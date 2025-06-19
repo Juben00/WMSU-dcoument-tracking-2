@@ -130,7 +130,7 @@ const CreateDocument = ({ auth, offices }: Props) => {
 
                     <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
                         <form id="create-doc-form" onSubmit={handleSubmit} className="space-y-8">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="grid grid-cols-1 gap-8">
                                 <div>
                                     <label htmlFor="title" className="block text-sm font-semibold text-gray-700 mb-1">
                                         Title <span className="text-red-500">*</span>
@@ -163,7 +163,7 @@ const CreateDocument = ({ auth, offices }: Props) => {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="grid grid-cols-1  gap-8">
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-1">
                                         Send To <span className="text-red-500">*</span>

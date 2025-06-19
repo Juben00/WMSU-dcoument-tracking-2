@@ -69,14 +69,15 @@ class DocumentController extends Controller
             'is_final_approver' => 'boolean'
         ]);
 
+        // Check if user is a recipient and hasn't responded yet
         $recipient = DocumentRecipient::where('document_id', $document->id)
             ->where('user_id', Auth::id())
-            ->where('is_active', true)
+            ->whereIn('status', ['pending', 'forwarded']) // Allow response if status is pending or forwarded
             ->first();
 
         if (!$recipient) {
             return redirect()->back()->withErrors([
-                'message' => 'You are not authorized to approve this document or your approval is already recorded.'
+                'message' => 'You are not authorized to approve this document or you have already responded.'
             ]);
         }
 
@@ -103,29 +104,32 @@ class DocumentController extends Controller
             'status' => $request->status,
             'comments' => $request->comments,
             'responded_at' => now(),
-            'is_active' => false,
             'is_final_approver' => $isFinalApprover,
         ]);
 
         // Update document status based on all recipients' responses
         $allRecipients = DocumentRecipient::where('document_id', $document->id)->get();
-        $allApproved = $allRecipients->every(function ($rec) {
-            return $rec->status === 'approved';
-        });
-        $anyRejected = $allRecipients->contains(function ($rec) {
-            return $rec->status === 'rejected';
-        });
-        $anyReturned = $allRecipients->contains(function ($rec) {
-            return $rec->status === 'returned';
-        });
 
-        if ($anyRejected) {
+        // Count responses by status
+        $totalRecipients = $allRecipients->count();
+        $approvedCount = $allRecipients->where('status', 'approved')->count();
+        $rejectedCount = $allRecipients->where('status', 'rejected')->count();
+        $returnedCount = $allRecipients->where('status', 'returned')->count();
+        $pendingCount = $allRecipients->whereIn('status', ['pending', 'forwarded'])->count();
+
+        // Determine document status based on responses
+        if ($rejectedCount > 0) {
             $document->update(['status' => 'rejected']);
-        } elseif ($anyReturned) {
+        } elseif ($returnedCount > 0) {
             $document->update(['status' => 'returned']);
-        } elseif ($allApproved) {
+        } elseif ($pendingCount === 0 && $approvedCount === $totalRecipients) {
+            // All recipients have approved
             $document->update(['status' => 'approved']);
+        } elseif ($pendingCount > 0) {
+            // Some recipients still need to respond
+            $document->update(['status' => 'in_review']);
         } else {
+            // Mixed responses (some approved, some other statuses)
             $document->update(['status' => 'in_review']);
         }
 
@@ -174,12 +178,15 @@ class DocumentController extends Controller
 
         // Add is_final_approver to the document data
         $documentData = $document->toArray();
-        $documentData['is_final_approver'] = $document->recipients()
-            ->where('user_id', Auth::id())
-            ->where('is_active', true)
-            ->value('is_final_approver') ?? false;
 
-        $documentData['receipientStatus'] = $document->recipients()->where('user_id', Auth::id())->first()->status ?? false;
+        // Check if current user is a recipient and can respond
+        $currentRecipient = $document->recipients()
+            ->where('user_id', Auth::id())
+            ->first();
+
+        $documentData['can_respond'] = $currentRecipient && in_array($currentRecipient->status, ['pending', 'forwarded']);
+        $documentData['is_final_approver'] = $currentRecipient ? $currentRecipient->is_final_approver : false;
+        $documentData['recipient_status'] = $currentRecipient ? $currentRecipient->status : null;
 
         return Inertia::render('Users/Documents/View', [
             'document' => $documentData,

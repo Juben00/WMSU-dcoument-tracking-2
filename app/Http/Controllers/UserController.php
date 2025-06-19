@@ -246,7 +246,8 @@ class UserController extends Controller
                 'user_id' => $recipientId,
                 'status' => 'pending',
                 'sequence' => $sequence,
-                'is_active' => $recipientId == $validated['initial_recipient_id'],
+                'is_active' => true, // All recipients are active initially
+                'is_final_approver' => User::find($recipientId)->role === 'admin' ? true : false,
             ]);
             $sequence++;
         }
