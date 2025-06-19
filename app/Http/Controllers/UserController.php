@@ -346,4 +346,45 @@ class UserController extends Controller
 
         return redirect()->route('users.offices');
     }
+
+    // Dashboard Data for User
+    public function dashboardData()
+    {
+        $userId = Auth::id();
+        // Fetch as collections
+        $ownedDocuments = Document::where('owner_id', $userId)->get();
+        $receivedDocuments = Document::whereHas('recipients', function($query) use ($userId) {
+            $query->where('user_id', $userId);
+        })->get();
+
+        // Merge collections and remove duplicates (if any)
+        $allDocuments = $ownedDocuments->merge($receivedDocuments)->unique('id');
+
+        $totalDocuments = $allDocuments->count();
+        $pendingDocuments = $allDocuments->where('status', 'pending')->count();
+        $completedDocuments = $allDocuments->where('status', 'approved')->count();
+
+        // Recent Activities: last 5 actions involving the user (owned or received)
+        $recentActivities = DocumentRecipient::where('user_id', $userId)
+            ->orderByDesc('responded_at')
+            ->with('document')
+            ->take(5)
+            ->get()
+            ->map(function($activity) {
+                return [
+                    'document_id' => $activity->document_id,
+                    'title' => $activity->document->title ?? 'Untitled',
+                    'status' => $activity->status,
+                    'responded_at' => $activity->responded_at,
+                    'comments' => $activity->comments,
+                ];
+            });
+
+        return response()->json([
+            'totalDocuments' => $totalDocuments,
+            'pendingDocuments' => $pendingDocuments,
+            'completedDocuments' => $completedDocuments,
+            'recentActivities' => $recentActivities,
+        ]);
+    }
 }
