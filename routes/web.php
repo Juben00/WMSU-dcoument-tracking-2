@@ -70,7 +70,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/documents/{document}/chain', [DocumentController::class, 'getDocumentChain'])->name('documents.chain');
     Route::post('/documents/{document}/publish', [DocumentController::class, 'publishDocument'])->name('documents.publish');
     Route::get('/public/documents/{public_token}', [DocumentController::class, 'publicView'])->name('documents.public_view');
-    Route::post('/documents/{document}/cancel', [DocumentController::class, 'cancelDocument'])->name('documents.cancel');
+    Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
 
     Route::get('/dashboard/data', [UserController::class, 'dashboardData'])->name('dashboard.data');
 });

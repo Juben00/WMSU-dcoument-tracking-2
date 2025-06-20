@@ -149,7 +149,7 @@ const ViewDocument = ({ document, auth, offices, users }: Props) => {
     const [revisionFile, setRevisionFile] = useState<File | null>(null);
     const [approveFile, setApproveFile] = useState<File | null>(null);
 
-    const { post, processing, setData } = useForm({
+    const { post, delete: destroy, processing, setData } = useForm({
         status: '',
         comments: '',
         revision_file: null as File | null,
@@ -479,17 +479,17 @@ const ViewDocument = ({ document, auth, offices, users }: Props) => {
                                             cancelButtonText: 'No, keep it'
                                         });
                                         if (result.isConfirmed) {
-                                            post(route('documents.cancel', { document: document.id }), {
+                                            destroy(route('documents.destroy', { document: document.id }), {
                                                 onSuccess: () => {
                                                     Swal.fire({
                                                         icon: 'success',
-                                                        title: 'Cancelled!',
-                                                        text: 'The document has been cancelled.',
+                                                        title: 'Deleted!',
+                                                        text: 'The document has been deleted.',
                                                         timer: 1500,
                                                         showConfirmButton: false
-                                                    }).then(() => window.location.reload());
+                                                    }).then(() => window.location.href = route('users.documents'));
                                                 },
-                                                onError: (errors) => {
+                                                onError: (errors: any) => {
                                                     Swal.fire({
                                                         icon: 'error',
                                                         title: 'Error',

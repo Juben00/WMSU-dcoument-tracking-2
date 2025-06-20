@@ -307,16 +307,9 @@ class DocumentController extends Controller
         ]);
     }
 
-    public function cancelDocument(Document $document)
+    public function destroy(Document $document)
     {
-        if ($document->owner_id !== Auth::id()) {
-            abort(403, 'Unauthorized');
-        }
-        if (!in_array($document->status, ['pending', 'in_review'])) {
-            return back()->with('error', 'Only pending or in-review documents can be cancelled.');
-        }
         $document->delete();
-        // redirect to documents page
-        return redirect()->route('users.documents')->with('success', 'Document cancelled successfully.');
+        return redirect()->route('users.documents')->with('success', 'Document deleted successfully.');
     }
 }
