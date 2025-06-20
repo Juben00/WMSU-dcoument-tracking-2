@@ -15,7 +15,7 @@ Route::get('/', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
         if (Auth::user()->role === 'superadmin') {
-            return Inertia::render('dashboard');
+            return app(AdminController::class)->dashboard();
         } else {
             return Inertia::render('Users/Dashboard');
         }
