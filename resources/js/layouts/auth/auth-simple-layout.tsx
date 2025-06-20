@@ -20,7 +20,7 @@ export default function AuthSimpleLayout({ children, title, description }: Props
                 backgroundRepeat: 'no-repeat',
             }}
         >
-            <div className="w-full max-w-sm border border-gray-400 p-10 rounded-lg bg-white/80">
+            <div className="w-full max-w-sm border border-gray-400 p-10 rounded-lg bg-white/90">
                 <div className="flex flex-col gap-8">
                     <div className="flex flex-col items-center gap-4">
                         <Link href={route('home')} className="flex flex-col items-center gap-2 font-medium">

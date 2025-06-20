@@ -49,7 +49,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/documents', [UserController::class, 'documents'])->name('users.documents');
     Route::get('/profile', [UserController::class, 'profile'])->name('users.profile');
     Route::patch('/profile', [UserController::class, 'updateProfile'])->name('profile.update');
-    Route::put('/profile/password', [UserController::class, 'updatePassword'])->name('password.update');
+    Route::put('/profile/password', [UserController::class, 'updatePassword'])->name('users.password.update');
     Route::get('/offices', [UserController::class, 'offices'])->name('users.offices');
 
     // // User Document Profile Routes

@@ -73,7 +73,7 @@ const Profile = ({ user }: Props) => {
 
     const handlePasswordSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        put(route('password.update'), {
+        put(route('users.password.update'), {
             onSuccess: () => {
                 resetPassword();
                 Swal.fire({
