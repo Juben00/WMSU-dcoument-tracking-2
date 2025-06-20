@@ -4,6 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useForm } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { usePage } from '@inertiajs/react';
+import Swal from 'sweetalert2';
 
 interface RejectModalProps {
     isOpen: boolean;
@@ -57,14 +58,19 @@ const RejectModal: React.FC<RejectModalProps> = ({ isOpen, onClose, documentId }
                 onClose();
                 setComments('');
                 setRejectFile(null);
-                toast.success('Document rejected successfully');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Document rejected successfully',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
             },
             onError: (errors: any) => {
-                if (errors.message) {
-                    toast.error(errors.message);
-                } else {
-                    toast.error('An error occurred while rejecting the document');
-                }
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: errors.message || 'An error occurred while rejecting the document',
+                });
             }
         });
     };

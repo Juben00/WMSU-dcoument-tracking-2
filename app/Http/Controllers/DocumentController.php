@@ -11,6 +11,11 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
+use BaconQrCode\Writer;
+use Illuminate\Support\Str;
 
 class DocumentController extends Controller
 {
@@ -166,6 +171,7 @@ class DocumentController extends Controller
 
         // Add is_final_approver to the document data
         $documentData = $document->toArray();
+        $documentData['owner_id'] = $document->owner_id;
 
         // Check if current user is a recipient and can respond
         $currentRecipient = $document->recipients()
@@ -243,5 +249,74 @@ class DocumentController extends Controller
             $file->original_filename,
             ['Content-Type' => $file->mime_type]
         );
+    }
+
+    public function publishDocument(Request $request, Document $document)
+    {
+        // Only owner can publish, and only if approved
+        if ($document->owner_id !== Auth::id()) {
+            abort(403, 'Only the owner can publish this document.');
+        }
+        if ($document->status !== 'approved') {
+            abort(403, 'Document must be approved before publishing.');
+        }
+        if ($document->is_public) {
+            return redirect()->back()->with('info', 'Document is already public.');
+        }
+
+        // Generate unique public token
+        $publicToken = Str::random(32);
+        // Generate public URL
+        $publicUrl = route('documents.public_view', ['public_token' => $publicToken], false);
+
+        // Generate QR code SVG
+        $renderer = new ImageRenderer(
+            new RendererStyle(300),
+            new SvgImageBackEnd()
+        );
+        $writer = new Writer($renderer);
+        $qrSvg = $writer->writeString(url($publicUrl));
+
+        // Save SVG to storage
+        $barcodePath = 'barcodes/document_' . $document->id . '_' . $publicToken . '.svg';
+        Storage::disk('public')->put($barcodePath, $qrSvg);
+
+        // Update document
+        $document->update([
+            'is_public' => true,
+            'public_token' => $publicToken,
+            'barcode_path' => $barcodePath,
+        ]);
+
+        return redirect()->back()->with('success', 'Document published publicly.');
+    }
+
+    public function publicView($public_token)
+    {
+        $document = Document::where('public_token', $public_token)
+            ->where('is_public', true)
+            ->with(['files', 'owner', 'recipients.user'])
+            ->firstOrFail();
+
+        $documentData = $document->toArray();
+        $documentData['owner_id'] = $document->owner_id;
+
+        // You may want to return a special Inertia/Blade view for public documents
+        return Inertia::render('Users/Documents/PublicView', [
+            'document' => $documentData,
+        ]);
+    }
+
+    public function cancelDocument(Document $document)
+    {
+        if ($document->owner_id !== Auth::id()) {
+            abort(403, 'Unauthorized');
+        }
+        if (!in_array($document->status, ['pending', 'in_review'])) {
+            return back()->with('error', 'Only pending or in-review documents can be cancelled.');
+        }
+        $document->delete();
+        // redirect to documents page
+        return redirect()->route('users.documents')->with('success', 'Document cancelled successfully.');
     }
 }

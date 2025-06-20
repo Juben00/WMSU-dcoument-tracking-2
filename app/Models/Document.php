@@ -18,7 +18,10 @@ class Document extends Model
         'owner_id',
         'title',
         'status',
-        'description'
+        'description',
+        'is_public',
+        'public_token',
+        'barcode_path',
     ];
 
     public function owner(): BelongsTo

@@ -17,6 +17,9 @@ return new class extends Migration
             $table->string('title');
             $table->enum('status', ['draft', 'pending', 'in_review', 'approved', 'rejected', 'returned']);
             $table->text('description')->nullable();
+            $table->boolean('is_public')->default(false);
+            $table->string('public_token')->unique()->nullable();
+            $table->string('barcode_path')->nullable();
             $table->timestamps();
         });
     }
@@ -27,5 +30,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('documents');
+        Schema::table('documents', function (Blueprint $table) {
+            $table->dropColumn(['is_public', 'public_token', 'barcode_path']);
+        });
     }
 };
