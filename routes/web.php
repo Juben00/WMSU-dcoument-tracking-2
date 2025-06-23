@@ -39,6 +39,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/Admin/offices/{office}/edit', [OfficeController::class, 'edit'])->name('offices.edit');
         Route::put('/Admin/offices/{office}', [OfficeController::class, 'update'])->name('offices.update');
         Route::delete('/Admin/offices/{office}', [OfficeController::class, 'destroy'])->name('offices.destroy');
+
+        // Published Documents Management Routes
+        Route::get('/Admin/published-documents', [AdminController::class, 'publishedDocuments'])->name('admin.published-documents');
+        Route::delete('/Admin/published-documents/{document}', [AdminController::class, 'unpublishDocument'])->name('admin.unpublish-document');
     });
 
     // User Management Routes

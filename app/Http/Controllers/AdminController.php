@@ -259,4 +259,57 @@ class AdminController extends Controller
             'recentUsers' => $recentUsers,
         ]);
     }
+
+    public function publishedDocuments()
+    {
+        $publishedDocuments = Document::where('is_public', true)
+            ->with(['owner', 'files'])
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(function($document) {
+                return [
+                    'id' => $document->id,
+                    'title' => $document->title,
+                    'description' => $document->description,
+                    'status' => $document->status,
+                    'is_public' => $document->is_public,
+                    'public_token' => $document->public_token,
+                    'barcode_path' => $document->barcode_path,
+                    'created_at' => $document->created_at,
+                    'owner' => [
+                        'id' => $document->owner->id,
+                        'name' => $document->owner->first_name . ' ' . $document->owner->last_name,
+                        'email' => $document->owner->email,
+                        'office' => $document->owner->office->name ?? 'No Office',
+                    ],
+                    'files_count' => $document->files->count(),
+                    'public_url' => route('documents.public_view', ['public_token' => $document->public_token]),
+                ];
+            });
+
+        return Inertia::render('Admin/PublishedDocuments', [
+            'publishedDocuments' => $publishedDocuments,
+        ]);
+    }
+
+    public function unpublishDocument(Document $document)
+    {
+        if (!$document->is_public) {
+            return redirect()->back()->with('error', 'Document is not published.');
+        }
+
+        // Delete barcode file if exists
+        if ($document->barcode_path) {
+            Storage::disk('public')->delete($document->barcode_path);
+        }
+
+        // Update document
+        $document->update([
+            'is_public' => false,
+            'public_token' => null,
+            'barcode_path' => null,
+        ]);
+
+        return redirect()->back()->with('success', 'Document unpublished successfully.');
+    }
 }
