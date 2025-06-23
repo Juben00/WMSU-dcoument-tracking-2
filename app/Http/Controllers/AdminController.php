@@ -19,9 +19,12 @@ class AdminController extends Controller
     public function index()
     {
         $admins = User::where('role', 'admin')->with('office')->get();
-        $offices = Office::all();
+        // get all offices where there is no existing admin
+        $offices = Office::whereDoesntHave('users', function($query) {
+            $query->where('role', 'admin');
+        })->get();
 
-        return Inertia::render('Admins/admins', [
+        return Inertia::render('Admins/User', [
             'admins' => $admins,
             'offices' => $offices
         ]);
@@ -287,7 +290,7 @@ class AdminController extends Controller
                 ];
             });
 
-        return Inertia::render('Admin/PublishedDocuments', [
+        return Inertia::render('Admins/PublishedDocuments', [
             'publishedDocuments' => $publishedDocuments,
         ]);
     }

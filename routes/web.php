@@ -32,7 +32,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/Admin/users/{admin}', [AdminController::class, 'destroy'])->name('admins.destroy');
 
         // Office Management Routes
-        Route::get('/Admin/offices', [OfficeController::class, 'index'])->name('offices.index');
+        Route::get('/Admin/offices', [OfficeController::class, 'offices'])->name('offices.index');
         Route::get('/Admin/offices/create', [OfficeController::class, 'create'])->name('offices.create');
         Route::post('/Admin/offices', [OfficeController::class, 'store'])->name('offices.store');
         Route::get('/Admin/offices/{office}', [OfficeController::class, 'show'])->name('offices.show');

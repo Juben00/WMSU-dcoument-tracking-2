@@ -12,10 +12,10 @@ class OfficeController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function offices()
     {
         $offices = Office::all();
-        return Inertia::render('Offices/index', [
+        return Inertia::render('Admins/Offices', [
             'offices' => $offices,
         ]);
     }
