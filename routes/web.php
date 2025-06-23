@@ -67,6 +67,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/users/documents/{document}', [UserController::class, 'updateDocument'])->name('users.documents.update');
     Route::delete('/users/documents/{document}', [UserController::class, 'destroyDocument'])->name('users.documents.destroy');
 
+    // User's Published Documents Management
+    Route::get('/users/published-documents', [UserController::class, 'publishedDocuments'])->name('users.published-documents');
+    Route::delete('/users/published-documents/{document}', [UserController::class, 'unpublishDocument'])->name('users.unpublish-document');
+
     // Document routes
     Route::get('/documents/{document}', [DocumentController::class, 'viewDocument'])->name('documents.view');
     Route::post('/documents/{document}/respond', [DocumentController::class, 'respondToDocument'])->name('documents.respond');

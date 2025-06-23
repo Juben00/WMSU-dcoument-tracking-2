@@ -7,6 +7,7 @@ import {
     XCircle,
     FileSignature,
     Clock,
+    Globe,
 } from 'lucide-react';
 
 const statCards = [
@@ -30,6 +31,13 @@ const statCards = [
         icon: <CheckCircle className="text-4xl text-green-600" />,
         color: 'text-green-600',
         bg: 'bg-green-50',
+    },
+    {
+        key: 'publishedDocuments',
+        label: 'Published Documents',
+        icon: <Globe className="text-4xl text-blue-600" />,
+        color: 'text-blue-600',
+        bg: 'bg-blue-50',
     },
 ]
 
@@ -62,7 +70,7 @@ const Dashboard = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <h1 className="text-3xl font-extrabold text-gray-900 mb-8 tracking-tight">Dashboard</h1>
                 {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
                     {statCards.map(card => (
                         <div key={card.key} className={`rounded-2xl shadow-lg p-8 flex flex-col items-center ${card.bg} transition-transform hover:scale-105`}>
                             {card.icon}

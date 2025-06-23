@@ -37,6 +37,7 @@ const Documents = ({ documents, auth }: Props) => {
 
     const received = documents.filter(doc => doc.owner_id !== auth.user.id);
     const sent = documents.filter(doc => doc.status !== 'draft' && doc.owner_id === auth.user.id);
+    const published = documents.filter(doc => doc.owner_id === auth.user.id && (doc as any).is_public);
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -162,6 +163,14 @@ const Documents = ({ documents, auth }: Props) => {
                         >
                             Sent
                         </button>
+                        <Link
+                            href="/users/published-documents"
+                            className={`px-6 py-2 text-sm w-[120px] font-semibold transition focus:outline-none border-l border-gray-200 ${window.location.pathname === '/users/published-documents'
+                                ? 'bg-red-600 text-white shadow-inner'
+                                : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+                        >
+                            Published
+                        </Link>
                     </nav>
                 </div>
 
@@ -224,20 +233,21 @@ const Documents = ({ documents, auth }: Props) => {
                 </div>
 
                 {/* Documents Table */}
-                <div className="bg-white rounded-xl shadow-lg overflow-x-auto border border-gray-100">
+                <div className="overflow-x-auto bg-white rounded-lg shadow">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Document ID</th>
-                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Title</th>
-                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Date Submitted</th>
-                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Document ID</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Submitted</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-100">
+                        <tbody className="bg-white divide-y divide-gray-200">
                             {activeTab === 'received' && renderDocuments(received)}
                             {activeTab === 'sent' && renderDocuments(sent)}
+                            {activeTab === 'published' && renderDocuments(published)}
                         </tbody>
                     </table>
                 </div>

@@ -364,6 +364,7 @@ class UserController extends Controller
         $totalDocuments = $allDocuments->count();
         $pendingDocuments = $allDocuments->where('status', 'pending')->count();
         $completedDocuments = $allDocuments->where('status', 'approved')->count();
+        $publishedDocuments = $ownedDocuments->where('is_public', true)->count();
 
         // Recent Activities: last 5 actions involving the user (owned or received)
         $recentActivities = DocumentRecipient::where('user_id', $userId)
@@ -385,7 +386,56 @@ class UserController extends Controller
             'totalDocuments' => $totalDocuments,
             'pendingDocuments' => $pendingDocuments,
             'completedDocuments' => $completedDocuments,
+            'publishedDocuments' => $publishedDocuments,
             'recentActivities' => $recentActivities,
         ]);
+    }
+
+    // User's Published Documents Management
+    public function publishedDocuments()
+    {
+        $publishedDocuments = Document::where('owner_id', Auth::id())
+            ->where('is_public', true)
+            ->with(['files'])
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(function($document) {
+                return [
+                    'id' => $document->id,
+                    'title' => $document->title,
+                    'description' => $document->description,
+                    'status' => $document->status,
+                    'is_public' => $document->is_public,
+                    'public_token' => $document->public_token,
+                    'barcode_path' => $document->barcode_path,
+                    'created_at' => $document->created_at,
+                    'files_count' => $document->files->count(),
+                    'public_url' => route('documents.public_view', ['public_token' => $document->public_token]),
+                ];
+            });
+
+        return Inertia::render('Users/PublishedDocuments', [
+            'publishedDocuments' => $publishedDocuments,
+            'auth' => [
+                'user' => Auth::user()
+            ]
+        ]);
+    }
+
+    // Unpublish document (user can only unpublish their own documents)
+    public function unpublishDocument(Document $document)
+    {
+        // Check if the user owns this document
+        if ($document->owner_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $document->update([
+            'is_public' => false,
+            'public_token' => null,
+            'barcode_path' => null,
+        ]);
+
+        return redirect()->route('users.published-documents')->with('success', 'Document unpublished successfully.');
     }
 }
