@@ -88,7 +88,14 @@ export default function Admins({ admins, offices, auth }: Props) {
             <Head title="Admin Management" />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 overflow-x-auto">
                 <div className="flex justify-between items-center">
-                    <h1 className="text-2xl font-semibold">User Management</h1>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
+                            <p className="text-muted-foreground">
+                                Manage all users
+                            </p>
+                        </div>
+                    </div>
                     <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                         <DialogTrigger asChild>
                             <Button>

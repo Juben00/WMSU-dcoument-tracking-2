@@ -67,7 +67,14 @@ export default function Offices({ offices, auth }: Props) {
             <Head title="Offices Management" />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 overflow-x-auto">
                 <div className="flex justify-between items-center">
-                    <h1 className="text-2xl font-semibold">Offices Management</h1>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-3xl font-bold tracking-tight">Offices Management</h1>
+                            <p className="text-muted-foreground">
+                                Manage all offices
+                            </p>
+                        </div>
+                    </div>
                     <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                         <DialogTrigger asChild>
                             <Button>

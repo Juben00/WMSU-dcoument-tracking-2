@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import Swal from 'sweetalert2';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -66,16 +67,26 @@ export default function PublishedDocuments({ publishedDocuments }: Props) {
     );
 
     const handleUnpublishDocument = (document: PublishedDocument) => {
-        if (confirm(`Are you sure you want to unpublish "${document.title}"? This will remove it from public access.`)) {
-            router.delete(route('admin.unpublish-document', document.id), {
-                onSuccess: () => {
-                    toast.success('Document unpublished successfully');
-                },
-                onError: (errors) => {
-                    toast.error('Failed to unpublish document. Please try again.');
-                }
-            });
-        }
+        Swal.fire({
+            title: 'Are you sure?',
+            text: `Are you sure you want to unpublish "${document.title}"? This will remove it from public access.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, unpublish it!',
+            cancelButtonText: 'Cancel',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                router.delete(route('admin.unpublish-document', document.id), {
+                    onSuccess: () => {
+                        toast.success('Document unpublished successfully');
+                    },
+                    onError: (errors) => {
+                        toast.error('Failed to unpublish document. Please try again.');
+                    }
+                });
+            }
+        });
     };
 
     const handleViewDocument = (document: PublishedDocument) => {
