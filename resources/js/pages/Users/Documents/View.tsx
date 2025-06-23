@@ -259,26 +259,34 @@ const ViewDocument = ({ document, auth, offices, users }: Props) => {
                                     )}
                                     {originalFiles.map((file) => (
                                         <div key={file.id} className="bg-gray-50 rounded-xl shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col items-center border border-gray-200">
-                                            <div className="w-full h-40 flex items-center justify-center bg-white rounded-lg mb-3 overflow-hidden border border-gray-100">
-                                                {file.original_filename.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                                                    <img
-                                                        src={file.file_path ? `/storage/${file.file_path}` : '#'}
-                                                        alt={file.original_filename}
-                                                        className="object-contain w-full h-full"
-                                                    />
-                                                ) : file.original_filename.match(/\.(pdf)$/i) ? (
-                                                    <embed
-                                                        src={file.file_path ? `/storage/${file.file_path}` : '#'}
-                                                        type="application/pdf"
-                                                        className="w-full h-full"
-                                                    />
-                                                ) : (
-                                                    <div className="flex flex-col items-center justify-center text-gray-300">
-                                                        <FileText className="h-12 w-12 mb-2" />
-                                                        <span className="text-xs">No Preview</span>
-                                                    </div>
-                                                )}
-                                            </div>
+                                            <a
+                                                href={file.file_path ? `/storage/${file.file_path}` : '#'}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="w-full"
+                                                tabIndex={-1}
+                                            >
+                                                <div className="w-full h-40 flex items-center justify-center bg-white rounded-lg mb-3 overflow-hidden border border-gray-100">
+                                                    {file.original_filename.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                                                        <img
+                                                            src={file.file_path ? `/storage/${file.file_path}` : '#'}
+                                                            alt={file.original_filename}
+                                                            className="object-contain w-full h-full"
+                                                        />
+                                                    ) : file.original_filename.match(/\.(pdf)$/i) ? (
+                                                        <embed
+                                                            src={file.file_path ? `/storage/${file.file_path}` : '#'}
+                                                            type="application/pdf"
+                                                            className="w-full h-full"
+                                                        />
+                                                    ) : (
+                                                        <div className="flex flex-col items-center justify-center text-gray-300">
+                                                            <FileText className="h-12 w-12 mb-2" />
+                                                            <span className="text-xs">No Preview</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </a>
                                             <div className="w-full text-center">
                                                 <p className="text-sm font-medium text-gray-900 truncate" title={file.original_filename}>{file.original_filename}</p>
                                                 <p className="text-xs text-gray-500 mb-2">{formatFileSize(file.file_size)}</p>
@@ -303,26 +311,34 @@ const ViewDocument = ({ document, auth, offices, users }: Props) => {
                                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                                         {responseFiles.map((file) => (
                                             <div key={file.id} className="bg-blue-50 rounded-xl shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col items-center border border-blue-200">
-                                                <div className="w-full h-40 flex items-center justify-center bg-white rounded-lg mb-3 overflow-hidden border border-blue-100">
-                                                    {file.original_filename.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                                                        <img
-                                                            src={file.file_path ? `/storage/${file.file_path}` : '#'}
-                                                            alt={file.original_filename}
-                                                            className="object-contain w-full h-full"
-                                                        />
-                                                    ) : file.original_filename.match(/\.(pdf)$/i) ? (
-                                                        <embed
-                                                            src={file.file_path ? `/storage/${file.file_path}` : '#'}
-                                                            type="application/pdf"
-                                                            className="w-full h-full"
-                                                        />
-                                                    ) : (
-                                                        <div className="flex flex-col items-center justify-center text-blue-300">
-                                                            <FileText className="h-12 w-12 mb-2" />
-                                                            <span className="text-xs">No Preview</span>
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                <a
+                                                    href={file.file_path ? `/storage/${file.file_path}` : '#'}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="w-full"
+                                                    tabIndex={-1}
+                                                >
+                                                    <div className="w-full h-40 flex items-center justify-center bg-white rounded-lg mb-3 overflow-hidden border border-blue-100">
+                                                        {file.original_filename.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                                                            <img
+                                                                src={file.file_path ? `/storage/${file.file_path}` : '#'}
+                                                                alt={file.original_filename}
+                                                                className="object-contain w-full h-full"
+                                                            />
+                                                        ) : file.original_filename.match(/\.(pdf)$/i) ? (
+                                                            <embed
+                                                                src={file.file_path ? `/storage/${file.file_path}` : '#'}
+                                                                type="application/pdf"
+                                                                className="w-full h-full"
+                                                            />
+                                                        ) : (
+                                                            <div className="flex flex-col items-center justify-center text-blue-300">
+                                                                <FileText className="h-12 w-12 mb-2" />
+                                                                <span className="text-xs">No Preview</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </a>
                                                 <div className="w-full text-center">
                                                     <p className="text-sm font-medium text-gray-900 truncate" title={file.original_filename}>{file.original_filename}</p>
                                                     <p className="text-xs text-gray-500 mb-2">{formatFileSize(file.file_size)}</p>
