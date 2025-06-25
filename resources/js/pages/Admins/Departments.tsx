@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import EditDepartment from '@/components/Departments/EditDepartment';
 import type { Departments } from '@/types';
 import AddDepartment from '@/components/Departments/AddDepartment';
+import Swal from 'sweetalert2';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -40,16 +41,32 @@ export default function Departments({ departments, auth }: Props) {
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
     const handleDeleteOffice = (department: Departments) => {
-        if (confirm('Are you sure you want to delete this office?')) {
-            router.delete(route('departments.destroy', department.id), {
-                onSuccess: () => {
-                    toast.success('Department deleted successfully');
-                },
-                onError: (errors) => {
-                    toast.error('Failed to delete department. Please try again.');
-                }
-            });
-        }
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'You won\'t be able to revert this!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                router.delete(route('departments.destroy', department.id), {
+                    onSuccess: () => {
+                        toast.success('Department deleted successfully');
+                        router.reload({ only: ['departments'] });
+                    },
+                    onError: (errors) => {
+                        console.error('Delete error:', errors);
+                        if (errors.department) {
+                            toast.error(errors.department);
+                        } else {
+                            toast.error('Failed to delete department. Please try again.');
+                        }
+                    }
+                });
+            }
+        });
     };
 
     const handleViewOffice = (department: Departments) => {

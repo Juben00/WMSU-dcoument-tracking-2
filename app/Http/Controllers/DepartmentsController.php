@@ -54,26 +54,26 @@ class DepartmentsController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Departments $departments)
+    public function show(Departments $department)
     {
-        return Inertia::render('Departments/show', compact('departments'));
+        return Inertia::render('Departments/show', compact('department'));
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Departments $departments)
+    public function edit(Departments $department)
     {
-        return Inertia::render('Departments/edit', compact('departments'));
+        return Inertia::render('Departments/edit', compact('department'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Departments $departments)
+    public function update(Request $request, Departments $department)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:departments,name,' . $departments->id,
+            'name' => 'required|string|max:255|unique:departments,name,' . $department->id,
             'description' => 'nullable|string|max:1000',
         ]);
 
@@ -83,7 +83,7 @@ class DepartmentsController extends Controller
                 ->withInput();
         }
 
-        $departments->update($request->all());
+        $department->update($request->all());
 
         return redirect()->route('departments.index')
             ->with('success', 'Department updated successfully.');
@@ -92,11 +92,25 @@ class DepartmentsController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Departments $departments)
+    public function destroy(Departments $department)
     {
-        $departments->delete();
+        try {
+            // Check if there are any users associated with this department
+            $userCount = $department->users()->count();
 
-        return redirect()->route('departments.index')
-            ->with('success', 'Department deleted successfully.');
+            if ($userCount > 0) {
+                return back()->withErrors([
+                    'department' => "Cannot delete department '{$department->name}' because it has {$userCount} user(s) associated with it. Please reassign or delete the users first."
+                ]);
+            }
+
+            $department->delete();
+
+            return back()->with('success', 'Department deleted successfully.');
+        } catch (\Exception $e) {
+            return back()->withErrors([
+                'department' => 'Failed to delete department. Please try again.'
+            ]);
+        }
     }
 }

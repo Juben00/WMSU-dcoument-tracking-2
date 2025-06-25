@@ -1,7 +1,8 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -10,7 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("ALTER TABLE documents MODIFY COLUMN status ENUM('draft', 'pending', 'in_review', 'approved', 'rejected', 'returned', 'cancelled') NOT NULL");
+        Schema::table('documents', function (Blueprint $table) {
+            $table->enum('status', ['draft', 'pending', 'in_review', 'approved', 'rejected', 'returned', 'cancelled'])->change();
+        });
     }
 
     /**
@@ -18,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("ALTER TABLE documents MODIFY COLUMN status ENUM('draft', 'pending', 'in_review', 'approved', 'rejected', 'returned') NOT NULL");
+        Schema::table('documents', function (Blueprint $table) {
+            $table->enum('status', ['draft', 'pending', 'in_review', 'approved', 'rejected', 'returned'])->change();
+        });
     }
 };
