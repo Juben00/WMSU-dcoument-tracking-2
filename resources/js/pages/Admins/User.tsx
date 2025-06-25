@@ -15,6 +15,7 @@ import AddNewAdmin from '@/components/Admin/AddAdmin';
 import EditAdmin from '@/components/Admin/EditAdmin';
 import { Admin } from '@/types';
 import { getFullName } from '@/lib/utils';
+import Swal from 'sweetalert2';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -47,29 +48,51 @@ export default function Admins({ admins, departments, auth }: Props) {
 
     const handleToggleStatus = (admin: Admin) => {
         const action = admin.is_active ? 'deactivate' : 'activate';
-        if (confirm(`Are you sure you want to ${action} this admin?`)) {
-            router.patch(route('admins.toggle-status', admin.id), {}, {
-                onSuccess: () => {
-                    toast.success(`Admin ${action}d successfully`);
-                },
-                onError: (errors) => {
-                    toast.error(`Failed to ${action} admin. Please try again.`);
-                }
-            });
-        }
+        Swal.fire({
+            title: 'Are you sure?',
+            text: `You won\'t be able to revert this!`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                router.patch(route('admins.toggle-status', admin.id), {}, {
+                    onSuccess: () => {
+                        toast.success(`Admin ${action}d successfully`);
+                        router.reload({ only: ['admins'] });
+                    },
+                    onError: (errors) => {
+                        toast.error(`Failed to ${action} admin. Please try again.`);
+                    }
+                });
+            }
+        });
     };
 
     const handleDeleteAdmin = (admin: Admin) => {
-        if (confirm('Are you sure you want to delete this admin?')) {
-            router.delete(route('admins.destroy', admin.id), {
-                onSuccess: () => {
-                    toast.success('Admin deleted successfully');
-                },
-                onError: (errors) => {
-                    toast.error('Failed to delete admin. Please try again.');
-                }
-            });
-        }
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'You won\'t be able to revert this!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                router.delete(route('admins.destroy', admin.id), {
+                    onSuccess: () => {
+                        toast.success('Admin deleted successfully');
+                        router.reload({ only: ['admins'] });
+                    },
+                    onError: (errors) => {
+                        toast.error('Failed to delete admin. Please try again.');
+                    }
+                });
+            }
+        });
     };
 
     const handleViewAdmin = (admin: Admin) => {
