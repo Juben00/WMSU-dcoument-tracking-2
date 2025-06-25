@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Navbar from '@/components/User/navbar';
-import { useForm } from '@inertiajs/react';
+import { useForm, router } from '@inertiajs/react';
 import { User } from '@/types';
 import {
     Select,
@@ -49,9 +49,11 @@ const Spinner = () => (
 
 const CreateDocument = ({ auth, departments }: Props) => {
     const [filePreviews, setFilePreviews] = useState<string[]>([]);
+    const [sendThroughId, setSendThroughId] = useState<number | null>(null);
+    const [sendToId, setSendToId] = useState<number | null>(null);
     const { data, setData, post, processing, errors } = useForm<FormData>({
         title: '',
-        document_type: 'memorandum',
+        document_type: 'for_info',
         description: '',
         files: [],
         status: 'pending',
@@ -61,17 +63,17 @@ const CreateDocument = ({ auth, departments }: Props) => {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (data.recipient_ids.length === 0) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'No Recipients Selected',
-                text: 'Please select at least one recipient.',
-                confirmButtonColor: '#b91c1c',
-            });
-            return;
-        }
-        setData('status', 'pending');
-        setTimeout(() => {
+        if (data.document_type === 'for_info') {
+            if (data.recipient_ids.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No Recipients Selected',
+                    text: 'Please select at least one recipient.',
+                    confirmButtonColor: '#b91c1c',
+                });
+                return;
+            }
+            setData('status', 'pending');
             post(route('users.documents.send'), {
                 forceFormData: true,
                 onSuccess: () => {
@@ -85,7 +87,46 @@ const CreateDocument = ({ auth, departments }: Props) => {
                     });
                 }
             });
-        }, 0);
+        } else {
+            if (!sendToId) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No Main Recipient Selected',
+                    text: 'Please select the main recipient (Send To).',
+                    confirmButtonColor: '#b91c1c',
+                });
+                return;
+            }
+
+            console.log('SendToId:', sendToId, 'SendThroughId:', sendThroughId);
+
+            const formData = new FormData();
+            formData.append('title', data.title);
+            formData.append('document_type', data.document_type);
+            formData.append('description', data.description);
+            formData.append('status', 'pending');
+            formData.append('recipient_ids[0]', sendToId.toString());
+            if (sendThroughId) {
+                formData.append('initial_recipient_id', sendThroughId.toString());
+            }
+            data.files.forEach((file, idx) => {
+                formData.append(`files[${idx}]`, file);
+            });
+
+            router.post(route('users.documents.send'), formData, {
+                forceFormData: true,
+                onSuccess: () => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Document Submitted!',
+                        text: 'Your document has been sent successfully.',
+                        confirmButtonColor: '#b91c1c',
+                    }).then(() => {
+                        window.location.href = '/documents';
+                    });
+                }
+            });
+        }
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -198,18 +239,77 @@ const CreateDocument = ({ auth, departments }: Props) => {
 
                             <div className="grid grid-cols-1  gap-8">
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                        Send To <span className="text-red-500">*</span>
-                                    </label>
-                                    <MultiSelect
-                                        options={recipientOptions}
-                                        selected={data.recipient_ids}
-                                        onChange={(selected) => {
-                                            setData('recipient_ids', selected);
-                                            setData('initial_recipient_id', selected[0] ?? null);
-                                        }}
-                                        placeholder="Select recipients"
-                                    />
+                                    {data.document_type === 'for_info' ? (
+                                        <>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                                Send To <span className="text-red-500">*</span>
+                                            </label>
+                                            <MultiSelect
+                                                options={recipientOptions}
+                                                selected={data.recipient_ids}
+                                                onChange={(selected) => {
+                                                    setData('recipient_ids', selected);
+                                                    setData('initial_recipient_id', selected[0] ?? null);
+                                                }}
+                                                placeholder="Select recipients"
+                                            />
+                                            {errors.recipient_ids && (
+                                                <div className="text-red-500 text-xs mt-1">{errors.recipient_ids}</div>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <div className='grid grid-cols-1 gap-8'>
+                                            <div className='grid grid-cols-1'>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                                    Send Through <span className="text-gray-400">(optional)</span>
+                                                </label>
+                                                <Select
+                                                    value={sendThroughId ? sendThroughId.toString() : ''}
+                                                    onValueChange={(value) => {
+                                                        setSendThroughId(value && value !== '' ? parseInt(value) : null);
+                                                    }}
+                                                >
+                                                    <SelectTrigger className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition">
+                                                        <SelectValue placeholder="Select optional through user" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {recipientOptions.map((option) => (
+                                                            <SelectItem key={option.value} value={option.value.toString()}>
+                                                                {option.label}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+
+                                            <div className='grid grid-cols-1'>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                                    Send To <span className="text-red-500">*</span>
+                                                </label>
+                                                <Select
+                                                    value={sendToId ? sendToId.toString() : ''}
+                                                    onValueChange={(value) => {
+                                                        setSendToId(value ? parseInt(value) : null);
+                                                    }}
+                                                >
+                                                    <SelectTrigger className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition">
+                                                        <SelectValue placeholder="Select main recipient" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {recipientOptions.map((option) => (
+                                                            <SelectItem key={option.value} value={option.value.toString()}>
+                                                                {option.label}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                {!sendToId && (
+                                                    <div className="text-red-500 text-xs mt-1">Main recipient is required.</div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {errors.recipient_ids && (
                                         <div className="text-red-500 text-xs mt-1">{errors.recipient_ids}</div>
                                     )}

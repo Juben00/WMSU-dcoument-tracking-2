@@ -162,7 +162,7 @@ class DocumentController extends Controller
             abort(403, 'Unauthorized access to document');
         }
 
-        $document->load(['files', 'owner', 'recipients.user']);
+        $document->load(['files', 'owner', 'recipients.user', 'recipients.forwardedBy', 'recipients.finalRecipient']);
 
         // Get users from the same department as the current user, excluding the current user
         $users = User::where('department_id', Auth::user()->department_id)
@@ -172,6 +172,26 @@ class DocumentController extends Controller
         // Add is_final_approver to the document data
         $documentData = $document->toArray();
         $documentData['owner_id'] = $document->owner_id;
+
+        // Approval chain: recipients ordered by sequence, with user and forwardedBy
+        $approvalChain = $document->recipients()->with(['user', 'forwardedBy', 'finalRecipient'])->orderBy('sequence')->get()->map(function($recipient) {
+            return [
+                'id' => $recipient->id,
+                'user' => $recipient->user,
+                'status' => $recipient->status,
+                'comments' => $recipient->comments,
+                'responded_at' => $recipient->responded_at,
+                'sequence' => $recipient->sequence,
+                'forwarded_by' => $recipient->forwardedBy,
+                'is_final_approver' => $recipient->is_final_approver,
+                'final_recipient' => $recipient->finalRecipient,
+            ];
+        });
+        $documentData['approval_chain'] = $approvalChain;
+
+        // Get the final recipient information from the first recipient record
+        $firstRecipient = $document->recipients()->with('finalRecipient')->first();
+        $documentData['final_recipient'] = $firstRecipient ? $firstRecipient->finalRecipient : null;
 
         // Check if current user is a recipient and can respond
         $currentRecipient = $document->recipients()

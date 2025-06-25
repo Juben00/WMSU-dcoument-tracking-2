@@ -15,7 +15,10 @@ return new class extends Migration
         Schema::create('document_recipients', function (Blueprint $table) {
             $table->id();
             $table->foreignId('document_id')->constrained()->onDelete('cascade');
+            // could be the sent through user or the final recipient
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            //  final recipient if the document is for info
+            $table->foreignId('final_recipient_id')->nullable()->constrained('users')->onDelete('set null');
             $table->foreignId('forwarded_by')->nullable()->constrained('users')->onDelete('set null');
             $table->enum('status', ['pending', 'approved', 'rejected', 'returned', 'forwarded'])->default('pending');
             $table->text('comments')->nullable();

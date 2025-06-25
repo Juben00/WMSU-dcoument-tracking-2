@@ -206,7 +206,7 @@ class UserController extends Controller
             'files.*' => 'required|file|max:10240', // 10MB max per file
             'recipient_ids' => 'required|array|min:1',
             'recipient_ids.*' => 'exists:users,id',
-            'initial_recipient_id' => 'required|exists:users,id'
+            'initial_recipient_id' => 'nullable|exists:users,id'
         ]);
 
         // Create the document
@@ -231,28 +231,47 @@ class UserController extends Controller
             ]);
         }
 
-        // Extra safety: check recipient_ids is not empty
-        if (empty($validated['recipient_ids'])) {
-            \Illuminate\Support\Facades\Log::error('No recipient_ids provided for document send', ['request' => $request->all()]);
-            return back()->withErrors(['recipient_ids' => 'At least one recipient is required.']);
-        }
-
-        // Create recipients
-        $sequence = 1;
-        foreach ($validated['recipient_ids'] as $recipientId) {
-            if (!$recipientId) {
-                \Illuminate\Support\Facades\Log::error('Attempted to create DocumentRecipient with empty user_id', ['recipientId' => $recipientId]);
-                continue;
+        // Recipient logic
+        if ($validated['document_type'] === 'for_info') {
+            // Multi-recipient logic (unchanged)
+            $sequence = 1;
+            foreach ($validated['recipient_ids'] as $recipientId) {
+                if (!$recipientId) continue;
+                DocumentRecipient::create([
+                    'document_id' => $document->id,
+                    'user_id' => $recipientId,
+                    'final_recipient_id' => $recipientId,
+                    'status' => 'pending',
+                    'sequence' => $sequence,
+                    'is_active' => true,
+                    'is_final_approver' => User::find($recipientId)->role === 'admin' ? true : false,
+                ]);
+                $sequence++;
             }
+        } else {
+            // For memorandum, order, special_order documents
+            $sendThroughId = $request->input('initial_recipient_id');
+            $sendToId = $request->input('recipient_ids')[0];
+
+            // Debug log to check values
+            Log::info('Send Document Debug', [
+                'sendThroughId' => $sendThroughId,
+                'sendToId' => $sendToId,
+                'request_recipient_ids' => $request->input('recipient_ids'),
+                'request_initial_recipient_id' => $request->input('initial_recipient_id'),
+            ]);
+
+            // Always create a recipient record with the final recipient as the "send to" user
             DocumentRecipient::create([
                 'document_id' => $document->id,
-                'user_id' => $recipientId,
+                'user_id' => $sendThroughId ? $sendThroughId : $sendToId, // Initially send to "through" user or directly to "to" user
+                'final_recipient_id' => $sendToId, // Final destination is always the "send to" user
                 'status' => 'pending',
-                'sequence' => $sequence,
-                'is_active' => true, // All recipients are active initially
-                'is_final_approver' => User::find($recipientId)->role === 'admin' ? true : false,
+                'sequence' => 1,
+                'is_active' => true,
+                'is_final_approver' => User::find($sendToId)->role === 'admin' ? true : false,
+                'forwarded_by' => null,
             ]);
-            $sequence++;
         }
 
         return redirect()->route('users.documents')->with('success', 'Document sent successfully.');

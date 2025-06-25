@@ -27,6 +27,13 @@ interface DocumentRecipient {
     status: string;
     comments?: string;
     responded_at?: string;
+    sequence?: number;
+    forwarded_by?: {
+        id: number;
+        first_name: string;
+        last_name: string;
+    } | null;
+    is_final_approver?: boolean;
 }
 
 interface Document {
@@ -49,6 +56,12 @@ interface Document {
     is_public: boolean;
     barcode_path?: string;
     department_id: number;
+    final_recipient?: {
+        id: number;
+        first_name: string;
+        last_name: string;
+        department_id: number;
+    } | null;
 }
 
 interface Department {
@@ -215,6 +228,16 @@ const ViewDocument = ({ document, auth, departments, users }: Props) => {
     const originalFiles = document.files.filter(file => file.upload_type === 'original');
     const responseFiles = document.files.filter(file => file.upload_type === 'response');
 
+    // Use approval_chain if available, else fallback to recipients
+    const approvalChain = (document as any).approval_chain || document.recipients;
+
+    // Find through and to recipients for non-for_info documents
+    const throughRecipient = document.document_type !== 'for_info' && approvalChain.length >= 1 ? approvalChain[0] : null;
+    // The 'to' user is not yet a recipient if approvalChain.length < 2
+    const toRecipientUserId = (document as any).to_user_id; // You may need to pass this from backend or infer from context
+    const toRecipientExists = approvalChain.length >= 2;
+    const isThroughUser = throughRecipient && throughRecipient.user.id === auth.user.id;
+
     return (
         <>
             <Navbar />
@@ -234,10 +257,7 @@ const ViewDocument = ({ document, auth, departments, users }: Props) => {
                                 <h2 className="text-xl font-semibold text-gray-900">Document Information</h2>
                             </div>
                             <dl className="space-y-5">
-                                <div>
-                                    <dt className="text-sm font-medium text-gray-500">Title</dt>
-                                    <dd className="mt-1 text-base text-gray-900 font-semibold">{document.title}</dd>
-                                </div>
+                                {/* document type information */}
                                 <div>
                                     <dt className="text-sm font-medium text-gray-500">Document Type</dt>
                                     <dd className="mt-1">
@@ -245,6 +265,35 @@ const ViewDocument = ({ document, auth, departments, users }: Props) => {
                                             {getDocumentTypeDisplayName(document.document_type)}
                                         </span>
                                     </dd>
+                                </div>
+                                {/* Document Through Information */}
+                                {document.document_type !== 'for_info' && (
+                                    <>
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-500">Sent To</dt>
+                                            <dd className="mt-1">
+                                                {document.final_recipient ? (
+                                                    <span className="text-gray-900 font-medium">
+                                                        {document.final_recipient.first_name} {document.final_recipient.last_name}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-gray-400">None</span>
+                                                )}
+                                            </dd>
+                                        </div>
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-500">Sent Through</dt>
+                                            <dd className="mt-1">
+                                                {throughRecipient
+                                                    ? `${throughRecipient.user.first_name} ${throughRecipient.user.last_name}`
+                                                    : <span className="text-gray-400">None</span>}
+                                            </dd>
+                                        </div>
+                                    </>
+                                )}
+                                <div>
+                                    <dt className="text-sm font-medium text-gray-500">Title</dt>
+                                    <dd className="mt-1 text-base text-gray-900 font-semibold">{document.title}</dd>
                                 </div>
                                 <div>
                                     <dt className="text-sm font-medium text-gray-500">Status</dt>
@@ -452,12 +501,13 @@ const ViewDocument = ({ document, auth, departments, users }: Props) => {
                                     </button>
                                 </>
                             )}
-                            {currentRecipient && document.recipient_status === 'approved' && (
+                            {/* Show Forward button only for through user and if toRecipient does not exist */}
+                            {isThroughUser && !toRecipientExists && (
                                 <button
                                     onClick={async () => {
                                         const result = await Swal.fire({
-                                            title: 'Are you sure?',
-                                            text: 'Do you want to forward this document to another office?',
+                                            title: 'Forward Document',
+                                            text: 'Do you want to forward this document to the next recipient?',
                                             icon: 'info',
                                             showCancelButton: true,
                                             confirmButtonColor: '#2563eb',
@@ -466,12 +516,31 @@ const ViewDocument = ({ document, auth, departments, users }: Props) => {
                                             cancelButtonText: 'Cancel'
                                         });
                                         if (result.isConfirmed) {
-                                            setIsForwardModalOpen(true);
+                                            setData('forward_to_id', toRecipientUserId);
+                                            setData('comments', '');
+                                            post(route('documents.forward', { document: document.id }), {
+                                                onSuccess: () => {
+                                                    Swal.fire({
+                                                        icon: 'success',
+                                                        title: 'Forwarded!',
+                                                        text: 'The document has been forwarded.',
+                                                        timer: 1500,
+                                                        showConfirmButton: false
+                                                    }).then(() => window.location.reload());
+                                                },
+                                                onError: (errors: any) => {
+                                                    Swal.fire({
+                                                        icon: 'error',
+                                                        title: 'Error',
+                                                        text: errors?.message || 'An error occurred while forwarding the document.'
+                                                    });
+                                                }
+                                            });
                                         }
                                     }}
                                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-semibold shadow"
                                 >
-                                    Forward to Office
+                                    Forward to Next Recipient
                                 </button>
                             )}
                         </div>
@@ -565,7 +634,7 @@ const ViewDocument = ({ document, auth, departments, users }: Props) => {
                 </div>
 
                 {/* Approval Chain Timeline */}
-                {document.recipients.length > 0 && (
+                {approvalChain.length > 0 && (
                     <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-100">
                         <div className="p-8">
                             <div className="flex items-center gap-2 mb-6">
@@ -575,7 +644,7 @@ const ViewDocument = ({ document, auth, departments, users }: Props) => {
                             <div className="relative ml-4">
                                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-gray-200 rounded-full" style={{ zIndex: 0 }}></div>
                                 <div className="space-y-8">
-                                    {document.recipients.map((recipient, idx) => (
+                                    {approvalChain.map((recipient: DocumentRecipient, idx: number) => (
                                         <div key={recipient.id} className="relative flex items-start gap-4">
                                             <div className="z-10">
                                                 <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${getStatusColor(recipient.status)} bg-white`}></div>
@@ -584,6 +653,9 @@ const ViewDocument = ({ document, auth, departments, users }: Props) => {
                                                 <div className="flex items-center justify-between">
                                                     <p className="text-base font-medium text-gray-900">
                                                         {recipient.user.first_name} {recipient.user.last_name}
+                                                        {recipient.forwarded_by && (
+                                                            <span className="ml-2 text-xs text-gray-500">(Sent through: {recipient.forwarded_by.first_name} {recipient.forwarded_by.last_name})</span>
+                                                        )}
                                                     </p>
                                                     <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(recipient.status)}`}>
                                                         {recipient.status.charAt(0).toUpperCase() + recipient.status.slice(1)}
@@ -606,7 +678,6 @@ const ViewDocument = ({ document, auth, departments, users }: Props) => {
                     </div>
                 )}
             </div>
-
             {/* Modals */}
             <ApproveModal
                 isOpen={isApproveModalOpen}
