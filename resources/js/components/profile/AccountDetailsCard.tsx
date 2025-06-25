@@ -70,8 +70,8 @@ const AccountDetailsCard: React.FC<Props> = ({ user }) => {
                             <MapPin className="h-4 w-4 text-gray-600" />
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-gray-600">Office</p>
-                            <p className="font-semibold text-gray-800">{user.office?.name || "Not assigned"}</p>
+                            <p className="text-sm font-medium text-gray-600">Department</p>
+                            <p className="font-semibold text-gray-800">{user.department?.name || "Not assigned"}</p>
                         </div>
                     </div>
                 </div>

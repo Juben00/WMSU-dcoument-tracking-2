@@ -51,8 +51,8 @@ const Navbar = () => {
 
     const AdminNavItems: NavItem[] = [
         {
-            label: 'Offices',
-            href: '/offices',
+            label: 'Departments',
+            href: '/departments',
         },
         ...NavItems,
     ];

@@ -124,7 +124,7 @@ const Offices = ({ auth, users }: Props) => {
         }
     };
 
-    console.log(users);
+    console.log(auth.user);
 
     return (
         <>
@@ -133,8 +133,8 @@ const Offices = ({ auth, users }: Props) => {
                 {/* Header Section */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-2 sm:gap-0">
                     <div>
-                        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Office Users</h1>
-                        <p className="text-base text-gray-500 mt-1">Manage the users within your office.</p>
+                        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">{auth.user.department?.name || "Department"}</h1>
+                        <p className="text-base text-gray-500 mt-1">Manage the users within your department.</p>
                     </div>
                     <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                         <DialogTrigger asChild>

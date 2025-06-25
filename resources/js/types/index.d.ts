@@ -39,7 +39,7 @@ export interface User {
     suffix: string | null;
     gender: string;
     position: string;
-    office: Departments | null;
+    department: Departments | null;
     role: string;
     avatar?: string;
     email: string;

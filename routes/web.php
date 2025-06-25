@@ -54,7 +54,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile', [UserController::class, 'profile'])->name('users.profile');
     Route::patch('/profile', [UserController::class, 'updateProfile'])->name('profile.update');
     Route::put('/profile/password', [UserController::class, 'updatePassword'])->name('users.password.update');
-    Route::get('/offices', [UserController::class, 'offices'])->name('users.offices');
+    Route::get('/departments', [UserController::class, 'departments'])->name('users.departments');
 
     // // User Document Profile Routes
     Route::get('/documents/create', [UserController::class, 'createDocument'])->name('users.createDocument');

@@ -11,11 +11,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
-use App\Models\Office;
+use App\Models\Departments;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Log;
-use App\Models\Departments;
 
 class UserController extends Controller
 {
@@ -28,13 +27,14 @@ class UserController extends Controller
         ]);
     }
 
-    public function offices()
+    public function departments()
     {
         // get all users with role user or receiver and with department same as the user's department
         $users = User::whereIn('role', ['user', 'receiver'])->where('department_id', Auth::user()->department_id)->with('department')->get();
-        return Inertia::render('Users/Offices', [
+        return Inertia::render('Users/Department', [
             'auth' => [
-                'user' => Auth::user()
+                'user' => Auth::user(),
+                'department' => Auth::user()->department
             ],
             'users' => $users
         ]);
@@ -80,7 +80,7 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        return redirect()->route('users.offices');
+        return redirect()->route('users.departments');
     }
 
     public function toggleStatus(User $admin)
@@ -95,7 +95,7 @@ class UserController extends Controller
     public function destroy(User $user)
     {
         $user->delete();
-        return redirect()->route('users.offices');
+        return redirect()->route('users.departments');
     }
 
     // Document Profile Methods
@@ -346,7 +346,7 @@ class UserController extends Controller
             'email' => $request->email,
         ]);
 
-        return redirect()->route('users.offices');
+        return redirect()->route('users.departments');
     }
 
     // Dashboard Data for User
