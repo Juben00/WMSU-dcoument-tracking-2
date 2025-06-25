@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
+import { route } from 'ziggy-js';
 import WmsuLogo from '../WmsuLogo';
 import { NavMain } from '../nav-main';
 import { usePage } from '@inertiajs/react';
@@ -44,7 +45,7 @@ const Navbar = () => {
         },
         {
             label: 'Logout',
-            href: '/logout',
+            href: route('logout'),
             method: 'post',
         },
     ];
@@ -74,7 +75,7 @@ const Navbar = () => {
                     {/* Desktop Menu */}
                     <div className="hidden md:flex space-x-2 items-center">
                         {currentNavItems.map((item, index) => {
-                            const isActive = currentUrl === item.href || (item.href !== '/logout' && currentUrl.startsWith(item.href));
+                            const isActive = currentUrl === item.href || (item.href !== route('logout') && currentUrl.startsWith(item.href));
                             return (
                                 <Link
                                     key={index}
@@ -122,7 +123,7 @@ const Navbar = () => {
             >
                 <div className="px-2 pt-2 pb-3 space-y-1 bg-white shadow-lg">
                     {currentNavItems.map((item, index) => {
-                        const isActive = currentUrl === item.href || (item.href !== '/logout' && currentUrl.startsWith(item.href));
+                        const isActive = currentUrl === item.href || (item.href !== route('logout') && currentUrl.startsWith(item.href));
                         return (
                             <Link
                                 key={index}
