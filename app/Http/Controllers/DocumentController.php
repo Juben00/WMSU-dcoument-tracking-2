@@ -164,8 +164,8 @@ class DocumentController extends Controller
 
         $document->load(['files', 'owner', 'recipients.user']);
 
-        // Get users from the same office as the current user, excluding the current user
-        $users = User::where('office_id', Auth::user()->office_id)
+        // Get users from the same department as the current user, excluding the current user
+        $users = User::where('department_id', Auth::user()->department_id)
             ->where('id', '!=', Auth::id())
             ->get();
 

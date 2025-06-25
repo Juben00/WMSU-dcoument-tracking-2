@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('suffix')->nullable();
             $table->enum('gender', ['Male', 'Female'])->default('Male');
             $table->string('position');
-            $table->foreignId('office_id')->nullable();
+            $table->foreignId('department_id')->nullable();
             $table->enum('role', ['superadmin', 'admin', 'receiver', 'user'])->default('user');
             $table->string('avatar')->nullable();
             $table->boolean('is_active')->default(true);

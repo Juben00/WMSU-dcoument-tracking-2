@@ -22,7 +22,7 @@ class UserSeeder extends Seeder
             'suffix' => 'Suffix',
             'gender' => 'Male',
             'position' => 'Position',
-            'office_id' => null,
+            'department_id' => null,
             'role' => 'superadmin',
             'avatar' => 'https://ui-avatars.com/api/?name=Test+User',
             'email' => 'test@example.com',
@@ -36,7 +36,7 @@ class UserSeeder extends Seeder
             'suffix' => 'Suffix',
             'gender' => 'Male',
             'position' => 'Position',
-            'office_id' => 1,
+            'department_id' => 1,
             'role' => 'admin',
             'avatar' => 'https://ui-avatars.com/api/?name=Joe+Doe',
             'email' => 'joevinansoc870@gmail.com',
@@ -50,10 +50,24 @@ class UserSeeder extends Seeder
             'suffix' => 'Suffix',
             'gender' => 'Female',
             'position' => 'Position',
-            'office_id' => 2,
+            'department_id' => 2,
             'role' => 'admin',
             'avatar' => 'https://ui-avatars.com/api/?name=Joe+Doe',
             'email' => 'joevinansoc871@gmail.com',
+            'password' => Hash::make('password'),
+        ]);
+
+        User::factory()->create([
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'middle_name' => '',
+            'suffix' => 'Suffix',
+            'gender' => 'Male',
+            'position' => 'Position',
+            'department_id' => 3,
+            'role' => 'admin',
+            'avatar' => 'https://ui-avatars.com/api/?name=Joe+Doe',
+            'email' => 'joevinansoc872@gmail.com',
             'password' => Hash::make('password'),
         ]);
     }

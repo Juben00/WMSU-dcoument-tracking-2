@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Office extends Model
+class Departments extends Model
 {
     /** @use HasFactory<\Database\Factories\OfficeFactory> */
     use HasFactory;
@@ -13,10 +13,11 @@ class Office extends Model
     protected $fillable = [
         'name',
         'description',
+        'type',
     ];
 
     public function users()
     {
-        return $this->hasMany(User::class);
+        return $this->hasMany(User::class, 'department_id');
     }
 }

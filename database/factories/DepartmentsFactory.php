@@ -5,9 +5,9 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Office>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Departments>
  */
-class OfficeFactory extends Factory
+class DepartmentsFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -19,6 +19,7 @@ class OfficeFactory extends Factory
         return [
             'name' => $this->faker->company(),
             'description' => $this->faker->sentence(),
+            'type' => $this->faker->randomElement(['office', 'college']),
         ];
     }
 }

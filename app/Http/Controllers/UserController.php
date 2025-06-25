@@ -15,6 +15,7 @@ use App\Models\Office;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Log;
+use App\Models\Departments;
 
 class UserController extends Controller
 {
@@ -29,8 +30,8 @@ class UserController extends Controller
 
     public function offices()
     {
-        // get all users with role user or receiver and with office same as the user's office
-        $users = User::whereIn('role', ['user', 'receiver'])->where('office_id', Auth::user()->office_id)->with('office')->get();
+        // get all users with role user or receiver and with department same as the user's department
+        $users = User::whereIn('role', ['user', 'receiver'])->where('department_id', Auth::user()->department_id)->with('department')->get();
         return Inertia::render('Users/Offices', [
             'auth' => [
                 'user' => Auth::user()
@@ -53,15 +54,15 @@ class UserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        // Check if trying to create a receiver and if one already exists for this office
+        // Check if trying to create a receiver and if one already exists for this department
         if ($request->role === 'receiver') {
-            $existingReceiver = User::where('office_id', Auth::user()->office_id)
+            $existingReceiver = User::where('department_id', Auth::user()->department_id)
                 ->where('role', 'receiver')
                 ->first();
 
             if ($existingReceiver) {
                 return back()->withErrors([
-                    'role' => 'A receiver already exists for this office.'
+                    'role' => 'A receiver already exists for this department.'
                 ]);
             }
         }
@@ -73,7 +74,7 @@ class UserController extends Controller
             'suffix' => $request->suffix,
             'gender' => $request->gender,
             'position' => $request->position,
-            'office_id' => Auth::user()->office_id,
+            'department_id' => Auth::user()->department_id,
             'role' => $request->role,
             'email' => $request->email,
             'password' => Hash::make($request->password),
@@ -121,7 +122,7 @@ class UserController extends Controller
 
     public function profile()
     {
-        $user = User::with('office')->find(Auth::id());
+        $user = User::with('department')->find(Auth::id());
         return Inertia::render('Users/Profile', [
             'user' => $user
         ]);
@@ -168,17 +169,17 @@ class UserController extends Controller
 
     public function createDocument()
     {
-        $offices = Office::with(['users' => function($query) {
+        $departments = Departments::with(['users' => function($query) {
             $query->whereIn('role', ['receiver', 'admin'])->where('id', '!=', Auth::user()->id)
                   ->orderBy('role', 'desc'); // This will put receivers first
         }])->get();
 
-        // Transform the data to include the contact person for each office
-        $officesWithContact = $offices->map(function($office) {
-            $contactPerson = $office->users->first();
+        // Transform the data to include the contact person for each department
+        $departmentsWithContact = $departments->map(function($department) {
+            $contactPerson = $department->users->first();
             return [
-                'id' => $office->id,
-                'name' => $office->name,
+                'id' => $department->id,
+                'name' => $department->name,
                 'contact_person' => $contactPerson ? [
                     'id' => $contactPerson->id,
                     'name' => $contactPerson->first_name . ' ' . $contactPerson->last_name,
@@ -191,7 +192,7 @@ class UserController extends Controller
             'auth' => [
                 'user' => Auth::user()
             ],
-            'offices' => $officesWithContact
+            'departments' => $departmentsWithContact
         ]);
     }
 
@@ -320,16 +321,16 @@ class UserController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
         ]);
 
-        // Check if trying to update to receiver role and if one already exists for this office
+        // Check if trying to update to receiver role and if one already exists for this department
         if ($request->role === 'receiver' && $user->role !== 'receiver') {
-            $existingReceiver = User::where('office_id', Auth::user()->office_id)
+            $existingReceiver = User::where('department_id', Auth::user()->department_id)
                 ->where('role', 'receiver')
                 ->where('id', '!=', $user->id)
                 ->first();
 
             if ($existingReceiver) {
                 return back()->withErrors([
-                    'role' => 'A receiver already exists for this office.'
+                    'role' => 'A receiver already exists for this department.'
                 ]);
             }
         }

@@ -16,7 +16,7 @@ interface DocumentRecipient {
         id: number;
         first_name: string;
         last_name: string;
-        office_id: number;
+        department_id: number;
     };
     status: string;
     comments?: string;
@@ -36,6 +36,7 @@ interface Document {
     files: DocumentFile[];
     recipients: DocumentRecipient[];
     barcode_path?: string;
+    department_id: number;
 }
 
 interface Props {

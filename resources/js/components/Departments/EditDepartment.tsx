@@ -4,30 +4,33 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Office } from '@/types';
-import InputError from '../input-error';
+import { Departments } from '@/types';
+import InputError from '@/components/input-error';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 
 interface Props {
-    office: Office;
+    department: Departments;
     setIsEditDialogOpen: (value: boolean) => void;
 }
 
-export default function EditOffice({ office, setIsEditDialogOpen }: Props) {
+export default function EditDepartment({ department, setIsEditDialogOpen }: Props) {
     const { data, setData, put, processing, errors, reset } = useForm({
-        name: office.name,
-        description: office.description,
+        name: department.name,
+        description: department.description,
+        type: department.type,
     });
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        put(route('offices.update', office.id), {
+        put(route('departments.update', department.id), {
             onSuccess: () => {
-                toast.success('Office updated successfully');
+                toast.success('Department updated successfully');
                 setIsEditDialogOpen(false);
                 reset();
             },
             onError: (errors) => {
-                toast.error('Failed to update office. Please try again.');
+                toast.error('Failed to update department. Please try again.');
             },
         });
     };
@@ -35,12 +38,12 @@ export default function EditOffice({ office, setIsEditDialogOpen }: Props) {
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-                <Label htmlFor="name">Office Name</Label>
+                <Label htmlFor="name">Department Name</Label>
                 <Input
                     id="name"
                     value={data.name}
                     onChange={(e) => setData('name', e.target.value)}
-                    placeholder="Enter office name"
+                    placeholder="Enter department name"
                     required
                 />
                 <InputError message={errors.name} />
@@ -52,9 +55,26 @@ export default function EditOffice({ office, setIsEditDialogOpen }: Props) {
                     id="description"
                     value={data.description || ''}
                     onChange={(e) => setData('description', e.target.value)}
-                    placeholder="Enter office description"
+                    placeholder="Enter department description"
                 />
                 <InputError message={errors.description} />
+            </div>
+
+            {/* department type */}
+            <div className="space-y-2">
+                <Label htmlFor="type">Department Type</Label>
+                <Select
+                    value={data.type}
+                    onValueChange={(value) => setData('type', value as 'office' | 'college')}
+                >
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select department type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="office">Office</SelectItem>
+                        <SelectItem value="college">College</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
 
             <div className="flex justify-end gap-2">
@@ -66,7 +86,7 @@ export default function EditOffice({ office, setIsEditDialogOpen }: Props) {
                     Cancel
                 </Button>
                 <Button type="submit" disabled={processing}>
-                    {processing ? 'Updating...' : 'Update Office'}
+                    {processing ? 'Updating...' : 'Update Department'}
                 </Button>
             </div>
         </form>

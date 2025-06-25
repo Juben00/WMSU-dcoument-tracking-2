@@ -50,7 +50,7 @@ interface DashboardProps {
             cancelled: number;
             public: number;
         };
-        offices: {
+        departments: {
             total: number;
             with_users: number;
         };
@@ -69,7 +69,7 @@ interface DashboardProps {
         month: string;
         count: number;
     }>;
-    topOffices: Array<{
+    topDepartments: Array<{
         id: number;
         name: string;
         user_count: number;
@@ -81,7 +81,7 @@ interface DashboardProps {
         name: string;
         email: string;
         role: string;
-        office: string;
+        department: string;
         is_active: boolean;
         created_at: string;
     }>;
@@ -91,7 +91,7 @@ export default function Dashboard({
     stats,
     recentActivities,
     monthlyTrends,
-    topOffices,
+    topDepartments,
     statusDistribution,
     recentUsers
 }: DashboardProps) {
@@ -170,13 +170,13 @@ export default function Dashboard({
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total Offices</CardTitle>
+                            <CardTitle className="text-sm font-medium">Total Departments</CardTitle>
                             <Building2 className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{stats.offices.total}</div>
+                            <div className="text-2xl font-bold">{stats.departments.total}</div>
                             <p className="text-xs text-muted-foreground">
-                                {stats.offices.with_users} with users
+                                {stats.departments.with_users} with users
                             </p>
                         </CardContent>
                     </Card>
@@ -305,24 +305,24 @@ export default function Dashboard({
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Building2 className="h-5 w-5" />
-                                Top Offices by Documents
+                                Top Departments by Documents
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Office</TableHead>
+                                        <TableHead>Department</TableHead>
                                         <TableHead>Users</TableHead>
                                         <TableHead>Documents</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {topOffices.map((office) => (
-                                        <TableRow key={office.id}>
-                                            <TableCell className="font-medium">{office.name}</TableCell>
-                                            <TableCell>{office.user_count}</TableCell>
-                                            <TableCell>{office.document_count}</TableCell>
+                                    {topDepartments.map((department) => (
+                                        <TableRow key={department.id}>
+                                            <TableCell className="font-medium">{department.name}</TableCell>
+                                            <TableCell>{department.user_count}</TableCell>
+                                            <TableCell>{department.document_count}</TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>
@@ -350,7 +350,7 @@ export default function Dashboard({
                                             </Avatar>
                                             <div>
                                                 <p className="text-sm font-medium">{user.name}</p>
-                                                <p className="text-xs text-muted-foreground">{user.office}</p>
+                                                <p className="text-xs text-muted-foreground">{user.department}</p>
                                             </div>
                                         </div>
                                         <Badge className={getRoleColor(user.role)}>

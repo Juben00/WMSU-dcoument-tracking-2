@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->foreign('office_id')
+            $table->foreign('department_id')
                   ->references('id')
-                  ->on('offices')
+                  ->on('departments')
                   ->onDelete('set null');
         });
     }
@@ -25,7 +25,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropForeign(['office_id']);
+            $table->dropForeign(['department_id']);
         });
     }
 };

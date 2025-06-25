@@ -25,7 +25,7 @@ class User extends Authenticatable
         'suffix',
         'gender',
         'position',
-        'office_id',
+        'department_id',
         'role',
         'avatar',
         'email',
@@ -51,7 +51,6 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
-        'is_admin' => 'boolean',
         'is_active' => 'boolean',
     ];
 
@@ -60,8 +59,8 @@ class User extends Authenticatable
         return $this->hasMany(\App\Models\Document::class, 'owner_id');
     }
 
-    public function office()
+    public function department()
     {
-        return $this->belongsTo(Office::class);
+        return $this->belongsTo(Departments::class, 'department_id');
     }
 }

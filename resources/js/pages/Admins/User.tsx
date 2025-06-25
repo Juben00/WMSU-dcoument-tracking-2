@@ -5,16 +5,14 @@ import { BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState } from 'react';
-import { useForm } from '@inertiajs/react';
 import { Plus, Trash2, Lock, Unlock, Eye, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import AddNewAdmin from '@/components/Admin/add-new-admin';
-import EditAdmin from '@/components/Admin/edit-admin';
+import AddNewAdmin from '@/components/Admin/AddAdmin';
+import EditAdmin from '@/components/Admin/EditAdmin';
 import { Admin } from '@/types';
 import { getFullName } from '@/lib/utils';
 
@@ -28,10 +26,11 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 interface Props {
     admins: Admin[];
-    offices: {
+    departments: {
         id: number;
         name: string;
         description: string;
+        type: 'office' | 'college';
     }[];
     auth: {
         user: {
@@ -40,7 +39,7 @@ interface Props {
     };
 }
 
-export default function Admins({ admins, offices, auth }: Props) {
+export default function Admins({ admins, departments, auth }: Props) {
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -103,7 +102,7 @@ export default function Admins({ admins, offices, auth }: Props) {
                                 Create User
                             </Button>
                         </DialogTrigger>
-                        <AddNewAdmin setIsCreateDialogOpen={setIsCreateDialogOpen} offices={offices} />
+                        <AddNewAdmin setIsCreateDialogOpen={setIsCreateDialogOpen} departments={departments} />
                     </Dialog>
                 </div>
 
@@ -113,7 +112,7 @@ export default function Admins({ admins, offices, auth }: Props) {
                             <TableRow>
                                 <TableHead>Name</TableHead>
                                 <TableHead>Position</TableHead>
-                                <TableHead>Office</TableHead>
+                                <TableHead>Department</TableHead>
                                 <TableHead>Email</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>Created At</TableHead>
@@ -125,7 +124,7 @@ export default function Admins({ admins, offices, auth }: Props) {
                                 <TableRow key={admin.id}>
                                     <TableCell>{getFullName(admin)}</TableCell>
                                     <TableCell>{admin.position}</TableCell>
-                                    <TableCell>{admin.office?.name || 'N/A'}</TableCell>
+                                    <TableCell>{admin.department?.name || 'N/A'}</TableCell>
                                     <TableCell>{admin.email}</TableCell>
                                     <TableCell>
                                         <span className={`px-2 py-1 rounded-full text-xs ${admin.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
@@ -225,8 +224,8 @@ export default function Admins({ admins, offices, auth }: Props) {
                                     </div>
                                 </div>
                                 <div>
-                                    <Label>Office</Label>
-                                    <p className="text-sm">{selectedAdmin.office?.name || 'N/A'}</p>
+                                    <Label>Department</Label>
+                                    <p className="text-sm">{selectedAdmin.department?.name || 'N/A'}</p>
                                 </div>
                                 <div>
                                     <Label>Position</Label>
@@ -254,7 +253,7 @@ export default function Admins({ admins, offices, auth }: Props) {
                         {selectedAdmin && (
                             <EditAdmin
                                 admin={selectedAdmin}
-                                offices={offices}
+                                departments={departments}
                                 setIsEditDialogOpen={setIsEditDialogOpen}
                             />
                         )}

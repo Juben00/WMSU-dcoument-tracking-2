@@ -14,8 +14,8 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
     {
-        title: 'Offices',
-        href: '/Admin/offices',
+        title: 'Departments',
+        href: '/Admin/departments',
         icon: Building,
     },
     {

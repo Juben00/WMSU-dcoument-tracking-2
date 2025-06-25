@@ -22,7 +22,7 @@ interface DocumentRecipient {
         id: number;
         first_name: string;
         last_name: string;
-        office_id: number;
+        department_id: number;
     };
     status: string;
     comments?: string;
@@ -47,9 +47,10 @@ interface Document {
     owner_id: number;
     is_public: boolean;
     barcode_path?: string;
+    department_id: number;
 }
 
-interface Office {
+interface Department {
     id: number;
     name: string;
     contact_person: {
@@ -66,7 +67,7 @@ interface Props {
             id: number;
         };
     };
-    offices?: Array<{
+    departments?: Array<{
         id: number;
         name: string;
         contact_person: {
@@ -79,7 +80,7 @@ interface Props {
         id: number;
         first_name: string;
         last_name: string;
-        office_id: number;
+        department_id: number;
         role: string;
     }>;
 }
@@ -140,7 +141,7 @@ const FileCard = ({ file, documentId, color = 'red' }: { file: any, documentId: 
     </div>
 );
 
-const ViewDocument = ({ document, auth, offices, users }: Props) => {
+const ViewDocument = ({ document, auth, departments, users }: Props) => {
     const [isForwardModalOpen, setIsForwardModalOpen] = useState(false);
     const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
     const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
@@ -479,7 +480,7 @@ const ViewDocument = ({ document, auth, offices, users }: Props) => {
                             </div>
                         )}
                         {/* Cancel Document Button for Owner */}
-                        {document.owner_id === auth.user.id && ['pending', 'in_review'].includes(document.status) && (
+                        {document.owner_id === auth.user.id && ['pending', 'in_review', 'approved'].includes(document.status) && (
                             <div className="mt-4">
                                 <button
                                     className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 font-semibold shadow"

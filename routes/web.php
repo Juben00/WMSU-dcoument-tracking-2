@@ -5,8 +5,8 @@ use Inertia\Inertia;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\OfficeController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\DepartmentsController;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -32,13 +32,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/Admin/users/{admin}', [AdminController::class, 'destroy'])->name('admins.destroy');
 
         // Office Management Routes
-        Route::get('/Admin/offices', [OfficeController::class, 'offices'])->name('offices.index');
-        Route::get('/Admin/offices/create', [OfficeController::class, 'create'])->name('offices.create');
-        Route::post('/Admin/offices', [OfficeController::class, 'store'])->name('offices.store');
-        Route::get('/Admin/offices/{office}', [OfficeController::class, 'show'])->name('offices.show');
-        Route::get('/Admin/offices/{office}/edit', [OfficeController::class, 'edit'])->name('offices.edit');
-        Route::put('/Admin/offices/{office}', [OfficeController::class, 'update'])->name('offices.update');
-        Route::delete('/Admin/offices/{office}', [OfficeController::class, 'destroy'])->name('offices.destroy');
+        Route::get('/Admin/departments', [DepartmentsController::class, 'departments'])->name('departments.index');
+        Route::get('/Admin/departments/create', [DepartmentsController::class, 'create'])->name('departments.create');
+        Route::post('/Admin/departments', [DepartmentsController::class, 'store'])->name('departments.store');
+        Route::get('/Admin/departments/{department}', [DepartmentsController::class, 'show'])->name('departments.show');
+        Route::get('/Admin/departments/{department}/edit', [DepartmentsController::class, 'edit'])->name('departments.edit');
+        Route::put('/Admin/departments/{department}', [DepartmentsController::class, 'update'])->name('departments.update');
+        Route::delete('/Admin/departments/{department}', [DepartmentsController::class, 'destroy'])->name('departments.destroy');
 
         // Published Documents Management Routes
         Route::get('/Admin/published-documents', [AdminController::class, 'publishedDocuments'])->name('admin.published-documents');
