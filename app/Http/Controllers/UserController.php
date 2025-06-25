@@ -200,6 +200,7 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
+            'document_type' => 'required|in:special_order,order,memorandum,for_info',
             'description' => 'nullable|string',
             'files' => 'required|array',
             'files.*' => 'required|file|max:10240', // 10MB max per file
@@ -212,6 +213,7 @@ class UserController extends Controller
         $document = Document::create([
             'owner_id' => Auth::id(),
             'title' => $validated['title'],
+            'document_type' => $validated['document_type'],
             'description' => $validated['description'],
             'status' => 'pending'
         ]);

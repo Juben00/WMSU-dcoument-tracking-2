@@ -6,6 +6,7 @@ import { Eye, Download, Search, FileCheck2, Clock, XCircle, Undo2, FileSearch, F
 interface Document {
     id: number;
     title: string;
+    document_type: 'special_order' | 'order' | 'memorandum' | 'for_info';
     status: string;
     created_at: string;
     owner_id: number;
@@ -26,13 +27,13 @@ const statusIcons: Record<string, React.ReactNode> = {
     pending: <Clock className="w-4 h-4 mr-1 text-yellow-600" />,
     rejected: <XCircle className="w-4 h-4 mr-1 text-red-600" />,
     returned: <Undo2 className="w-4 h-4 mr-1 text-orange-600" />,
-
 };
 
 const Documents = ({ documents, auth }: Props) => {
     const [activeTab, setActiveTab] = useState('received');
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
+    const [documentTypeFilter, setDocumentTypeFilter] = useState('all');
     const [sortBy, setSortBy] = useState('latest');
 
     const received = documents.filter(doc => doc.owner_id !== auth.user.id);
@@ -56,6 +57,36 @@ const Documents = ({ documents, auth }: Props) => {
         }
     };
 
+    const getDocumentTypeColor = (documentType: string) => {
+        switch (documentType) {
+            case 'special_order':
+                return 'bg-purple-100 text-purple-800';
+            case 'order':
+                return 'bg-blue-100 text-blue-800';
+            case 'memorandum':
+                return 'bg-green-100 text-green-800';
+            case 'for_info':
+                return 'bg-gray-100 text-gray-800';
+            default:
+                return 'bg-gray-100 text-gray-800';
+        }
+    };
+
+    const getDocumentTypeDisplayName = (documentType: string) => {
+        switch (documentType) {
+            case 'special_order':
+                return 'Special Order';
+            case 'order':
+                return 'Order';
+            case 'memorandum':
+                return 'Memorandum';
+            case 'for_info':
+                return 'For Info';
+            default:
+                return 'Unknown';
+        }
+    };
+
     const filterDocs = (docs: Document[]) => {
         let filtered = docs;
 
@@ -72,6 +103,11 @@ const Documents = ({ documents, auth }: Props) => {
             filtered = filtered.filter(doc => doc.status === statusFilter);
         }
 
+        // Filter by document type
+        if (documentTypeFilter !== 'all') {
+            filtered = filtered.filter(doc => doc.document_type === documentTypeFilter);
+        }
+
         // Sort by date
         filtered.sort((a, b) => {
             const dateA = new Date(a.created_at).getTime();
@@ -86,7 +122,7 @@ const Documents = ({ documents, auth }: Props) => {
         const filtered = filterDocs(docs);
         return filtered.length === 0 ? (
             <tr>
-                <td colSpan={5} className="py-10 text-center text-gray-400 text-lg">No documents found.</td>
+                <td colSpan={6} className="py-10 text-center text-gray-400 text-lg">No documents found.</td>
             </tr>
         ) : (
             filtered.map((doc) => (
@@ -96,6 +132,11 @@ const Documents = ({ documents, auth }: Props) => {
                 >
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">#{doc.id}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{doc.title}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex items-center text-xs leading-5 font-semibold rounded-full ${getDocumentTypeColor(doc.document_type)}`}>
+                            {getDocumentTypeDisplayName(doc.document_type)}
+                        </span>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 inline-flex items-center text-xs leading-5 font-semibold rounded-full ${getStatusColor(doc.status)}`}>
                             {statusIcons[doc.status] || statusIcons.default}
@@ -175,7 +216,7 @@ const Documents = ({ documents, auth }: Props) => {
                 </div>
 
                 {/* Search and Filter */}
-                <div className="flex items-center gap-4 mb-6 max-w-4xl mx-auto">
+                <div className="flex items-center gap-4 mb-6 max-w-6xl mx-auto">
                     <div className="relative flex-1">
                         <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                             <Search className="w-5 h-5 text-gray-400" />
@@ -212,6 +253,27 @@ const Documents = ({ documents, auth }: Props) => {
                     </div>
                     <div className="relative">
                         <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <FileSearch className="w-5 h-5 text-gray-400" />
+                        </span>
+                        <select
+                            className="block w-full pl-10 pr-8 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 text-sm appearance-none bg-white"
+                            value={documentTypeFilter}
+                            onChange={e => setDocumentTypeFilter(e.target.value)}
+                        >
+                            <option value="all">All Types</option>
+                            <option value="special_order">Special Order</option>
+                            <option value="order">Order</option>
+                            <option value="memorandum">Memorandum</option>
+                            <option value="for_info">For Info</option>
+                        </select>
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div className="relative">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                             <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h18M3 8h18M3 12h18M3 16h18" />
                             </svg>
@@ -239,6 +301,7 @@ const Documents = ({ documents, auth }: Props) => {
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Document ID</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Submitted</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>

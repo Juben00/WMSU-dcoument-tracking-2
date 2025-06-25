@@ -16,6 +16,7 @@ import Swal from 'sweetalert2';
 
 type FormData = {
     title: string;
+    document_type: 'special_order' | 'order' | 'memorandum' | 'for_info';
     description: string;
     files: File[];
     status: 'pending' | 'in_review' | 'approved' | 'rejected' | 'returned';
@@ -27,7 +28,7 @@ interface Props {
     auth: {
         user: User;
     };
-    offices: Array<{
+    departments: Array<{
         id: number;
         name: string;
         contact_person: {
@@ -46,10 +47,11 @@ const Spinner = () => (
     </svg>
 );
 
-const CreateDocument = ({ auth, offices }: Props) => {
+const CreateDocument = ({ auth, departments }: Props) => {
     const [filePreviews, setFilePreviews] = useState<string[]>([]);
     const { data, setData, post, processing, errors } = useForm<FormData>({
         title: '',
+        document_type: 'memorandum',
         description: '',
         files: [],
         status: 'pending',
@@ -111,12 +113,19 @@ const CreateDocument = ({ auth, offices }: Props) => {
         };
     }, [filePreviews]);
 
-    const recipientOptions = offices
-        .filter((office) => office.contact_person)
-        .map((office) => ({
-            value: office.contact_person!.id,
-            label: `${office.contact_person!.name} - ${office.name}`,
+    const recipientOptions = departments
+        .filter((department) => department.contact_person)
+        .map((department) => ({
+            value: department.contact_person!.id,
+            label: `${department.contact_person!.name} - ${department.name}`,
         }));
+
+    const documentTypeOptions = [
+        { value: 'special_order', label: 'Special Order' },
+        { value: 'order', label: 'Order' },
+        { value: 'memorandum', label: 'Memorandum' },
+        { value: 'for_info', label: 'For Info' },
+    ];
 
     return (
         <>
@@ -145,6 +154,30 @@ const CreateDocument = ({ auth, offices }: Props) => {
                                         onChange={e => setData('title', e.target.value)}
                                     />
                                     {errors.title && <div className="text-red-500 text-xs mt-1">{errors.title}</div>}
+                                </div>
+
+                                <div>
+                                    <label htmlFor="document_type" className="block text-sm font-semibold text-gray-700 mb-1">
+                                        Document Type <span className="text-red-500">*</span>
+                                    </label>
+                                    <Select
+                                        value={data.document_type}
+                                        onValueChange={(value: 'special_order' | 'order' | 'memorandum' | 'for_info') =>
+                                            setData('document_type', value)
+                                        }
+                                    >
+                                        <SelectTrigger className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition">
+                                            <SelectValue placeholder="Select document type" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {documentTypeOptions.map((option) => (
+                                                <SelectItem key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    {errors.document_type && <div className="text-red-500 text-xs mt-1">{errors.document_type}</div>}
                                 </div>
 
                                 <div>

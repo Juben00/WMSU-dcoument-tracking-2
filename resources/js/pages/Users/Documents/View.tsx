@@ -32,6 +32,7 @@ interface DocumentRecipient {
 interface Document {
     id: number;
     title: string;
+    document_type: 'special_order' | 'order' | 'memorandum' | 'for_info';
     description?: string;
     status: string;
     created_at: string;
@@ -180,6 +181,36 @@ const ViewDocument = ({ document, auth, departments, users }: Props) => {
         }
     };
 
+    const getDocumentTypeColor = (documentType: string) => {
+        switch (documentType) {
+            case 'special_order':
+                return 'bg-purple-100 text-purple-800';
+            case 'order':
+                return 'bg-blue-100 text-blue-800';
+            case 'memorandum':
+                return 'bg-green-100 text-green-800';
+            case 'for_info':
+                return 'bg-gray-100 text-gray-800';
+            default:
+                return 'bg-gray-100 text-gray-800';
+        }
+    };
+
+    const getDocumentTypeDisplayName = (documentType: string) => {
+        switch (documentType) {
+            case 'special_order':
+                return 'Special Order';
+            case 'order':
+                return 'Order';
+            case 'memorandum':
+                return 'Memorandum';
+            case 'for_info':
+                return 'For Info';
+            default:
+                return 'Unknown';
+        }
+    };
+
     // Group files by upload type
     const originalFiles = document.files.filter(file => file.upload_type === 'original');
     const responseFiles = document.files.filter(file => file.upload_type === 'response');
@@ -206,6 +237,14 @@ const ViewDocument = ({ document, auth, departments, users }: Props) => {
                                 <div>
                                     <dt className="text-sm font-medium text-gray-500">Title</dt>
                                     <dd className="mt-1 text-base text-gray-900 font-semibold">{document.title}</dd>
+                                </div>
+                                <div>
+                                    <dt className="text-sm font-medium text-gray-500">Document Type</dt>
+                                    <dd className="mt-1">
+                                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getDocumentTypeColor(document.document_type)}`}>
+                                            {getDocumentTypeDisplayName(document.document_type)}
+                                        </span>
+                                    </dd>
                                 </div>
                                 <div>
                                     <dt className="text-sm font-medium text-gray-500">Status</dt>
