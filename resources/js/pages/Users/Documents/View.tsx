@@ -50,6 +50,7 @@ interface Document {
     files: DocumentFile[];
     recipients: DocumentRecipient[];
     is_final_approver: boolean;
+    final_recipient_id: number | null;
     can_respond: boolean;
     recipient_status: string | null;
     owner_id: number;
@@ -106,6 +107,9 @@ const formatFileSize = (bytes: number) => {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
+
+
+
 
 // FileCard component for previewing and downloading files
 const FileCard = ({ file, documentId, color = 'red' }: { file: any, documentId: number, color?: 'red' | 'blue' }) => (
@@ -457,7 +461,58 @@ const ViewDocument = ({ document, auth, departments, users }: Props) => {
                             <h2 className="text-xl font-semibold text-gray-900">Document Actions</h2>
                         </div>
                         <div className="flex flex-wrap gap-4 mb-4">
-                            {document.can_respond && (
+                            {document.can_respond && document.document_type === 'for_info' && (
+                                <button
+                                    onClick={async () => {
+                                        const result = await Swal.fire({
+                                            title: 'Are you sure?',
+                                            text: 'Do you want to mark this document as received?',
+                                            icon: 'question',
+                                            showCancelButton: true,
+                                            confirmButtonColor: '#16a34a',
+                                            cancelButtonColor: '#d1d5db',
+                                            confirmButtonText: 'Yes, mark it as received!',
+                                            cancelButtonText: 'Cancel'
+                                        });
+                                        if (result.isConfirmed) {
+                                            post(route('documents.received', { document: document.id }), {
+                                                onSuccess: () => {
+                                                    Swal.fire({
+                                                        icon: 'success',
+                                                        title: 'Received!',
+                                                        text: 'The document has been marked as received.',
+                                                        timer: 1500,
+                                                        showConfirmButton: false
+                                                    }).then(() => window.location.reload());
+                                                },
+                                                onError: (errors: any) => {
+                                                    Swal.fire({
+                                                        icon: 'error',
+                                                        title: 'Error',
+                                                        text: errors?.message || 'An error occurred while marking the document as received.'
+                                                    });
+                                                }
+                                            });
+                                        }
+                                    }}
+                                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-semibold shadow"
+                                >
+                                    Received
+                                </button>
+                            )}
+
+
+                            {document.can_respond === false && document.document_type === 'for_info' && document.final_recipient_id !== auth.user.id && (
+                                <button
+                                    onClick={() => setIsForwardModalOpen(true)}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                                >
+                                    Forward to Office
+                                </button>
+                            )}
+
+
+                            {document.can_respond && document.document_type !== 'for_info' && document.final_recipient_id === auth.user.id && (
                                 <>
                                     <button
                                         onClick={async () => {
@@ -587,6 +642,8 @@ const ViewDocument = ({ document, auth, departments, users }: Props) => {
                                 </button>
                             </div>
                         )}
+
+
                         {/* Cancel Document Button for Owner */}
                         {document.owner_id === auth.user.id && ['pending', 'in_review', 'approved'].includes(document.status) && (
                             <div className="mt-4">
@@ -665,8 +722,9 @@ const ViewDocument = ({ document, auth, departments, users }: Props) => {
                                                     <p className="text-sm text-gray-500 mt-2">{recipient.comments}</p>
                                                 )}
                                                 {recipient.responded_at && (
-                                                    <div className="text-xs text-gray-400 mt-2">
-                                                        Responded: {new Date(recipient.responded_at).toLocaleDateString()}
+                                                    <div className="text-sm text-gray-600 mt-2">
+                                                        {/* display date and time in the format of dd/mm/yyyy hh:mm AM/PM */}
+                                                        Responded: {new Date(recipient.responded_at).toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
                                                     </div>
                                                 )}
                                             </div>

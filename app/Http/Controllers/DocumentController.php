@@ -211,6 +211,25 @@ class DocumentController extends Controller
         ]);
     }
 
+    public function markAsReceived(Document $document)
+    {
+        $documentRecipient = DocumentRecipient::where('document_id', $document->id)
+            ->where('user_id', Auth::id())
+            ->first();
+        $documentRecipient->update(['status' => 'received']);
+        $documentRecipient->update(['responded_at' => now()]);
+
+        // if all the recipients have received the document, update the document status to in_review
+        $allRecipients = DocumentRecipient::where('document_id', $document->id)->get();
+        if ($allRecipients->every(function($recipient) {
+            return $recipient->status === 'received';
+        })) {
+            $document->update(['status' => 'received']);
+        }
+
+        return redirect()->back()->with('success', 'Document marked as received.');
+    }
+
     public function downloadDocument(Document $document, DocumentFile $file)
     {
         // Debug: Log the request

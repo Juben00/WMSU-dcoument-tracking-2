@@ -237,10 +237,14 @@ class UserController extends Controller
             $sequence = 1;
             foreach ($validated['recipient_ids'] as $recipientId) {
                 if (!$recipientId) continue;
+
+                // get the admin of the recipient's department
+                $admin = User::where('department_id', User::find($recipientId)->department_id)->where('role', 'admin')->first();
+
                 DocumentRecipient::create([
                     'document_id' => $document->id,
                     'user_id' => $recipientId,
-                    'final_recipient_id' => $recipientId,
+                    'final_recipient_id' => $admin->id,
                     'status' => 'pending',
                     'sequence' => $sequence,
                     'is_active' => true,

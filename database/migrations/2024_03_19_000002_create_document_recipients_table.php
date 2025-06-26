@@ -20,7 +20,7 @@ return new class extends Migration
             //  final recipient if the document is for info
             $table->foreignId('final_recipient_id')->nullable()->constrained('users')->onDelete('set null');
             $table->foreignId('forwarded_by')->nullable()->constrained('users')->onDelete('set null');
-            $table->enum('status', ['pending', 'approved', 'rejected', 'returned', 'forwarded'])->default('pending');
+            $table->enum('status', ['pending', 'received', 'approved', 'rejected', 'returned', 'forwarded'])->default('pending');
             $table->text('comments')->nullable();
             $table->integer('sequence');
             $table->boolean('is_active')->default(true);
