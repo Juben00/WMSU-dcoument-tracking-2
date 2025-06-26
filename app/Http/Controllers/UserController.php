@@ -253,19 +253,14 @@ class UserController extends Controller
             $sendThroughId = $request->input('initial_recipient_id');
             $sendToId = $request->input('recipient_ids')[0];
 
-            // Debug log to check values
-            Log::info('Send Document Debug', [
-                'sendThroughId' => $sendThroughId,
-                'sendToId' => $sendToId,
-                'request_recipient_ids' => $request->input('recipient_ids'),
-                'request_initial_recipient_id' => $request->input('initial_recipient_id'),
-            ]);
+            // Get the sendtoId's office admin
+            $officeAdmin = User::where('department_id', User::find($sendToId)->department_id)->where('role', 'admin')->first();
 
             // Always create a recipient record with the final recipient as the "send to" user
             DocumentRecipient::create([
                 'document_id' => $document->id,
                 'user_id' => $sendThroughId ? $sendThroughId : $sendToId, // Initially send to "through" user or directly to "to" user
-                'final_recipient_id' => $sendToId, // Final destination is always the "send to" user
+                'final_recipient_id' => $officeAdmin->id, // Final destination is always the "send to" user
                 'status' => 'pending',
                 'sequence' => 1,
                 'is_active' => true,
