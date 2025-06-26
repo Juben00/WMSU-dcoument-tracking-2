@@ -51,6 +51,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
     const [filePreviews, setFilePreviews] = useState<string[]>([]);
     const [sendThroughId, setSendThroughId] = useState<number | null>(null);
     const [sendToId, setSendToId] = useState<number | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const { data, setData, post, processing, errors } = useForm<FormData>({
         title: '',
         document_type: 'for_info',
@@ -63,6 +64,14 @@ const CreateDocument = ({ auth, departments }: Props) => {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Prevent double submission
+        if (isSubmitting || processing) {
+            return;
+        }
+
+        setIsSubmitting(true);
+
         if (data.document_type === 'for_info') {
             if (data.recipient_ids.length === 0) {
                 Swal.fire({
@@ -71,6 +80,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
                     text: 'Please select at least one recipient.',
                     confirmButtonColor: '#b91c1c',
                 });
+                setIsSubmitting(false);
                 return;
             }
             setData('status', 'pending');
@@ -85,6 +95,9 @@ const CreateDocument = ({ auth, departments }: Props) => {
                     }).then(() => {
                         window.location.href = '/documents';
                     });
+                },
+                onError: () => {
+                    setIsSubmitting(false);
                 }
             });
         } else {
@@ -95,10 +108,9 @@ const CreateDocument = ({ auth, departments }: Props) => {
                     text: 'Please select the main recipient (Send To).',
                     confirmButtonColor: '#b91c1c',
                 });
+                setIsSubmitting(false);
                 return;
             }
-
-            console.log('SendToId:', sendToId, 'SendThroughId:', sendThroughId);
 
             const formData = new FormData();
             formData.append('title', data.title);
@@ -124,6 +136,9 @@ const CreateDocument = ({ auth, departments }: Props) => {
                     }).then(() => {
                         window.location.href = '/documents';
                     });
+                },
+                onError: () => {
+                    setIsSubmitting(false);
                 }
             });
         }
@@ -359,16 +374,17 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                 <button
                                     type="button"
                                     onClick={() => window.history.back()}
-                                    className="px-5 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition shadow-sm"
+                                    disabled={isSubmitting || processing}
+                                    className="px-5 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={processing}
-                                    className="px-6 py-2 rounded-lg shadow text-sm font-semibold text-white bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-60 flex items-center justify-center transition"
+                                    disabled={isSubmitting || processing}
+                                    className="px-6 py-2 rounded-lg shadow text-sm font-semibold text-white bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center transition"
                                 >
-                                    {processing ? (<><span>Submitting...</span><Spinner /></>) : 'Submit Document'}
+                                    {isSubmitting || processing ? (<><span>Submitting...</span><Spinner /></>) : 'Submit Document'}
                                 </button>
                             </div>
                         </form>
