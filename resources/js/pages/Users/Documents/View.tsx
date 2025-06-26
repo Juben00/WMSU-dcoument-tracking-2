@@ -191,6 +191,45 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
         (r: DocumentRecipient) => r.user.id === auth.user.id
     );
 
+    // Helper functions to determine user permissions and document states
+    const isOwner = () => document.owner_id === auth.user.id;
+    const isFinalRecipient = () => document.final_recipient?.id === auth.user.id;
+    const isAdmin = () => auth.user.role === 'admin';
+    const isForInfoDocument = () => document.document_type === 'for_info';
+    const isNonForInfoDocument = () => document.document_type !== 'for_info';
+    const canRespond = () => document.can_respond;
+    const cannotRespond = () => !document.can_respond;
+    const isNotOwner = () => !isOwner();
+    const isNotFinalRecipient = () => !isFinalRecipient();
+
+    // Action permission checks
+    const canMarkAsReceived = () => {
+        if (isForInfoDocument()) {
+            return canRespond();
+        }
+        return canRespond() && isNonForInfoDocument() && isNotFinalRecipient();
+    };
+
+    const canApproveOrReject = () => {
+        return canRespond() && isNonForInfoDocument() && isFinalRecipient();
+    };
+
+    const canForwardToOffice = () => {
+        return cannotRespond() && isNotFinalRecipient() && isNotOwner();
+    };
+
+    const canForwardToOtherOffice = () => {
+        return cannotRespond() && isNotFinalRecipient() && isAdmin() && isNotOwner();
+    };
+
+    const canPublishPublicly = () => {
+        return ['approved', 'received'].includes(document.status) && !document.is_public && isOwner();
+    };
+
+    const canCancelDocument = () => {
+        return isOwner() && ['pending', 'in_review', 'approved'].includes(document.status);
+    };
+
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'approved':
@@ -477,9 +516,8 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                             <h2 className="text-xl font-semibold text-gray-900">Document Actions</h2>
                         </div>
                         <div className="flex flex-wrap gap-4 mb-4">
-                            {/* do not touch */}
-
-                            {document.can_respond && document.document_type === 'for_info' && (
+                            {/* Mark as Received Button */}
+                            {canMarkAsReceived() && (
                                 <button
                                     onClick={async () => {
                                         const result = await Swal.fire({
@@ -519,30 +557,8 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                 </button>
                             )}
 
-
-                            {document.can_respond === false && document.document_type === 'for_info' && document.final_recipient?.id !== auth.user.id && document.owner_id !== auth.user.id &&
-                                (
-                                    <button
-                                        onClick={() => setIsForwardModalOpen(true)}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                                    >
-                                        Forward to Office
-                                    </button>
-                                )}
-
-                            {document.can_respond === false && document.document_type === 'for_info' && document.final_recipient?.id !== auth.user.id && auth.user.role === 'admin' && document.owner_id !== auth.user.id &&
-                                (
-                                    <button
-                                        onClick={() => setIsForwardOtherOfficeModalOpen(true)}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                                    >
-                                        Forward to other office
-                                    </button>
-                                )}
-                            {/* do not touch */}
-
-
-                            {document.can_respond && document.document_type !== 'for_info' && document.final_recipient?.id === auth.user.id && (
+                            {/* Approve/Reject Buttons for Final Recipient */}
+                            {canApproveOrReject() && (
                                 <>
                                     <button
                                         onClick={async () => {
@@ -587,71 +603,29 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                 </>
                             )}
 
-                            {document.can_respond && document.document_type !== 'for_info' && document.final_recipient?.id !== auth.user.id && (
-                                <>
-                                    {/* received button */}
-                                    <button
-                                        onClick={async () => {
-                                            const result = await Swal.fire({
-                                                title: 'Are you sure?',
-                                                text: 'Do you want to mark this document as received?',
-                                                icon: 'question',
-                                                showCancelButton: true,
-                                                confirmButtonColor: '#16a34a',
-                                                cancelButtonColor: '#d1d5db',
-                                                confirmButtonText: 'Yes, mark it as received!',
-                                                cancelButtonText: 'Cancel'
-                                            });
-                                            if (result.isConfirmed) {
-                                                post(route('documents.received', { document: document.id }), {
-                                                    onSuccess: () => {
-                                                        Swal.fire({
-                                                            icon: 'success',
-                                                            title: 'Received!',
-                                                            text: 'The document has been marked as received.',
-                                                            timer: 1500,
-                                                            showConfirmButton: false
-                                                        }).then(() => window.location.reload());
-                                                    },
-                                                    onError: (errors: any) => {
-                                                        Swal.fire({
-                                                            icon: 'error',
-                                                            title: 'Error',
-                                                            text: errors?.message || 'An error occurred while marking the document as received.'
-                                                        });
-                                                    }
-                                                });
-                                            }
-                                        }}
-                                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-semibold shadow"
-                                    >
-                                        Received
-                                    </button>
-                                </>
+                            {/* Forward to Office Button */}
+                            {canForwardToOffice() && (
+                                <button
+                                    onClick={() => setIsForwardModalOpen(true)}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                                >
+                                    Forward to Office
+                                </button>
                             )}
 
-                            {document.can_respond === false && document.document_type !== 'for_info' && document.final_recipient?.id !== auth.user.id && document.owner_id !== auth.user.id &&
-                                (
-                                    <button
-                                        onClick={() => setIsForwardModalOpen(true)}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                                    >
-                                        Forward to Office
-                                    </button>
-                                )}
-
-                            {document.can_respond === false && document.document_type !== 'for_info' && document.final_recipient?.id !== auth.user.id && auth.user.role === 'admin' && document.owner_id !== auth.user.id &&
-                                (
-                                    <button
-                                        onClick={() => setIsForwardOtherOfficeModalOpen(true)}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                                    >
-                                        Forward to other office
-                                    </button>
-                                )}
+                            {/* Forward to Other Office Button */}
+                            {canForwardToOtherOffice() && (
+                                <button
+                                    onClick={() => setIsForwardOtherOfficeModalOpen(true)}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                                >
+                                    Forward to other office
+                                </button>
+                            )}
                         </div>
+
                         {/* Publish Publicly Button for Owner */}
-                        {document.status === 'approved' && !document.is_public && document.owner_id === auth.user.id && (
+                        {canPublishPublicly() && (
                             <div className="mt-4">
                                 <button
                                     className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-semibold shadow"
@@ -694,9 +668,8 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                             </div>
                         )}
 
-
                         {/* Cancel Document Button for Owner */}
-                        {document.owner_id === auth.user.id && ['pending', 'in_review', 'approved'].includes(document.status) && (
+                        {canCancelDocument() && (
                             <div className="mt-4">
                                 <button
                                     className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 font-semibold shadow"

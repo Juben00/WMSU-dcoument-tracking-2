@@ -334,7 +334,7 @@ class DocumentController extends Controller
         if ($document->owner_id !== Auth::id()) {
             abort(403, 'Only the owner can publish this document.');
         }
-        if ($document->status !== 'approved') {
+        if ($document->status !== 'approved' && $document->status !== 'received') {
             abort(403, 'Document must be approved before publishing.');
         }
         if ($document->is_public) {
