@@ -461,6 +461,8 @@ const ViewDocument = ({ document, auth, departments, users }: Props) => {
                             <h2 className="text-xl font-semibold text-gray-900">Document Actions</h2>
                         </div>
                         <div className="flex flex-wrap gap-4 mb-4">
+                            {/* do not touch */}
+
                             {document.can_respond && document.document_type === 'for_info' && (
                                 <button
                                     onClick={async () => {
@@ -510,6 +512,7 @@ const ViewDocument = ({ document, auth, departments, users }: Props) => {
                                     Forward to Office
                                 </button>
                             )}
+                            {/* do not touch */}
 
 
                             {document.can_respond && document.document_type !== 'for_info' && document.final_recipient_id === auth.user.id && (
@@ -560,6 +563,7 @@ const ViewDocument = ({ document, auth, departments, users }: Props) => {
                             {isThroughUser && !toRecipientExists && (
                                 <button
                                     onClick={async () => {
+                                        ``
                                         const result = await Swal.fire({
                                             title: 'Forward Document',
                                             text: 'Do you want to forward this document to the next recipient?',
