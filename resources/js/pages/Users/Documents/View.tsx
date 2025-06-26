@@ -6,6 +6,7 @@ import RejectModal from './components/RejectModal';
 import ForwardModal from './components/ForwardModal';
 import { Download, FileText, FileCheck, Users, QrCode } from 'lucide-react';
 import Swal from 'sweetalert2';
+import ForwardOtherOfficeModal from './components/ForwardOtherOfficeModal';
 
 interface DocumentFile {
     id: number;
@@ -80,6 +81,7 @@ interface Props {
     auth: {
         user: {
             id: number;
+            role: string;
         };
     };
     departments?: Array<{
@@ -92,6 +94,13 @@ interface Props {
         } | null;
     }>;
     users?: Array<{
+        id: number;
+        first_name: string;
+        last_name: string;
+        department_id: number;
+        role: string;
+    }>;
+    otherDepartmentUsers?: Array<{
         id: number;
         first_name: string;
         last_name: string;
@@ -159,8 +168,9 @@ const FileCard = ({ file, documentId, color = 'red' }: { file: any, documentId: 
     </div>
 );
 
-const ViewDocument = ({ document, auth, departments, users }: Props) => {
+const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers }: Props) => {
     const [isForwardModalOpen, setIsForwardModalOpen] = useState(false);
+    const [isForwardOtherOfficeModalOpen, setIsForwardOtherOfficeModalOpen] = useState(false);
     const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
     const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
     const [selectedOffice, setSelectedOffice] = useState<string>('');
@@ -237,10 +247,15 @@ const ViewDocument = ({ document, auth, departments, users }: Props) => {
 
     // Find through and to recipients for non-for_info documents
     const throughRecipient = document.document_type !== 'for_info' && approvalChain.length >= 1 ? approvalChain[0] : null;
+
     // The 'to' user is not yet a recipient if approvalChain.length < 2
     const toRecipientUserId = (document as any).to_user_id; // You may need to pass this from backend or infer from context
     const toRecipientExists = approvalChain.length >= 2;
     const isThroughUser = throughRecipient && throughRecipient.user.id === auth.user.id;
+
+    console.log('document', document);
+
+    console.log('recepient id', document.final_recipient?.id);
 
     return (
         <>
@@ -285,14 +300,15 @@ const ViewDocument = ({ document, auth, departments, users }: Props) => {
                                                 )}
                                             </dd>
                                         </div>
-                                        <div>
-                                            <dt className="text-sm font-medium text-gray-500">Sent Through</dt>
-                                            <dd className="mt-1">
-                                                {throughRecipient
-                                                    ? `${throughRecipient.user.first_name} ${throughRecipient.user.last_name}`
-                                                    : <span className="text-gray-400">None</span>}
-                                            </dd>
-                                        </div>
+                                        {/* Only show 'Sent Through' if final_recipient.id !== throughRecipient.user.id */}
+                                        {throughRecipient && (!document.final_recipient || document.final_recipient.id !== throughRecipient.user.id) && (
+                                            <div>
+                                                <dt className="text-sm font-medium text-gray-500">Sent Through</dt>
+                                                <dd className="mt-1">
+                                                    {`${throughRecipient.user.first_name} ${throughRecipient.user.last_name}`}
+                                                </dd>
+                                            </div>
+                                        )}
                                     </>
                                 )}
                                 <div>
@@ -504,18 +520,29 @@ const ViewDocument = ({ document, auth, departments, users }: Props) => {
                             )}
 
 
-                            {document.can_respond === false && document.document_type === 'for_info' && document.final_recipient_id !== auth.user.id && (
-                                <button
-                                    onClick={() => setIsForwardModalOpen(true)}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                                >
-                                    Forward to Office
-                                </button>
-                            )}
+                            {document.can_respond === false && document.document_type === 'for_info' && document.final_recipient?.id !== auth.user.id && document.owner_id !== auth.user.id &&
+                                (
+                                    <button
+                                        onClick={() => setIsForwardModalOpen(true)}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                                    >
+                                        Forward to Office
+                                    </button>
+                                )}
+
+                            {document.can_respond === false && document.document_type === 'for_info' && document.final_recipient?.id !== auth.user.id && auth.user.role === 'admin' && document.owner_id !== auth.user.id &&
+                                (
+                                    <button
+                                        onClick={() => setIsForwardOtherOfficeModalOpen(true)}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                                    >
+                                        Forward to other office
+                                    </button>
+                                )}
                             {/* do not touch */}
 
 
-                            {document.can_respond && document.document_type !== 'for_info' && document.final_recipient_id === auth.user.id && (
+                            {document.can_respond && document.document_type !== 'for_info' && document.final_recipient?.id === auth.user.id && (
                                 <>
                                     <button
                                         onClick={async () => {
@@ -559,49 +586,69 @@ const ViewDocument = ({ document, auth, departments, users }: Props) => {
                                     </button>
                                 </>
                             )}
-                            {/* Show Forward button only for through user and if toRecipient does not exist */}
-                            {isThroughUser && !toRecipientExists && (
-                                <button
-                                    onClick={async () => {
-                                        ``
-                                        const result = await Swal.fire({
-                                            title: 'Forward Document',
-                                            text: 'Do you want to forward this document to the next recipient?',
-                                            icon: 'info',
-                                            showCancelButton: true,
-                                            confirmButtonColor: '#2563eb',
-                                            cancelButtonColor: '#d1d5db',
-                                            confirmButtonText: 'Yes, forward it!',
-                                            cancelButtonText: 'Cancel'
-                                        });
-                                        if (result.isConfirmed) {
-                                            setData('forward_to_id', toRecipientUserId);
-                                            setData('comments', '');
-                                            post(route('documents.forward', { document: document.id }), {
-                                                onSuccess: () => {
-                                                    Swal.fire({
-                                                        icon: 'success',
-                                                        title: 'Forwarded!',
-                                                        text: 'The document has been forwarded.',
-                                                        timer: 1500,
-                                                        showConfirmButton: false
-                                                    }).then(() => window.location.reload());
-                                                },
-                                                onError: (errors: any) => {
-                                                    Swal.fire({
-                                                        icon: 'error',
-                                                        title: 'Error',
-                                                        text: errors?.message || 'An error occurred while forwarding the document.'
-                                                    });
-                                                }
+
+                            {document.can_respond && document.document_type !== 'for_info' && document.final_recipient?.id !== auth.user.id && (
+                                <>
+                                    {/* received button */}
+                                    <button
+                                        onClick={async () => {
+                                            const result = await Swal.fire({
+                                                title: 'Are you sure?',
+                                                text: 'Do you want to mark this document as received?',
+                                                icon: 'question',
+                                                showCancelButton: true,
+                                                confirmButtonColor: '#16a34a',
+                                                cancelButtonColor: '#d1d5db',
+                                                confirmButtonText: 'Yes, mark it as received!',
+                                                cancelButtonText: 'Cancel'
                                             });
-                                        }
-                                    }}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-semibold shadow"
-                                >
-                                    Forward to Next Recipient
-                                </button>
+                                            if (result.isConfirmed) {
+                                                post(route('documents.received', { document: document.id }), {
+                                                    onSuccess: () => {
+                                                        Swal.fire({
+                                                            icon: 'success',
+                                                            title: 'Received!',
+                                                            text: 'The document has been marked as received.',
+                                                            timer: 1500,
+                                                            showConfirmButton: false
+                                                        }).then(() => window.location.reload());
+                                                    },
+                                                    onError: (errors: any) => {
+                                                        Swal.fire({
+                                                            icon: 'error',
+                                                            title: 'Error',
+                                                            text: errors?.message || 'An error occurred while marking the document as received.'
+                                                        });
+                                                    }
+                                                });
+                                            }
+                                        }}
+                                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-semibold shadow"
+                                    >
+                                        Received
+                                    </button>
+                                </>
                             )}
+
+                            {document.can_respond === false && document.document_type !== 'for_info' && document.final_recipient?.id !== auth.user.id && document.owner_id !== auth.user.id &&
+                                (
+                                    <button
+                                        onClick={() => setIsForwardModalOpen(true)}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                                    >
+                                        Forward to Office
+                                    </button>
+                                )}
+
+                            {document.can_respond === false && document.document_type !== 'for_info' && document.final_recipient?.id !== auth.user.id && auth.user.role === 'admin' && document.owner_id !== auth.user.id &&
+                                (
+                                    <button
+                                        onClick={() => setIsForwardOtherOfficeModalOpen(true)}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                                    >
+                                        Forward to other office
+                                    </button>
+                                )}
                         </div>
                         {/* Publish Publicly Button for Owner */}
                         {document.status === 'approved' && !document.is_public && document.owner_id === auth.user.id && (
@@ -756,6 +803,13 @@ const ViewDocument = ({ document, auth, departments, users }: Props) => {
                 onClose={() => setIsForwardModalOpen(false)}
                 processing={processing}
                 users={users || []}
+                documentId={document.id}
+            />
+            <ForwardOtherOfficeModal
+                isOpen={isForwardOtherOfficeModalOpen}
+                onClose={() => setIsForwardOtherOfficeModalOpen(false)}
+                processing={processing}
+                users={otherDepartmentUsers || []}
                 documentId={document.id}
             />
         </>

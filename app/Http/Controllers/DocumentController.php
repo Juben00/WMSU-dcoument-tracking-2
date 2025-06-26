@@ -16,6 +16,7 @@ use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Writer;
 use Illuminate\Support\Str;
+use App\Models\Departments;
 
 class DocumentController extends Controller
 {
@@ -62,6 +63,15 @@ class DocumentController extends Controller
             'is_final_approver' => User::find($request->forward_to_id)->role === 'admin' ? true : false,
             'responded_at' => now()
         ]);
+
+        // check if all of the recipients have received the document and if the document is for_info then update the document status to received
+        $allRecipients = DocumentRecipient::where('document_id', $document->id)->get();
+        $allReceived = $allRecipients->every(function($recipient) {
+            return $recipient->status === 'received';
+        });
+        if ($allReceived && $document->document_type === 'for_info') {
+            $document->update(['status' => 'received']);
+        }
 
         return redirect()->route('documents.view', $document->id)->with('success', 'Document forwarded successfully');
     }
@@ -139,6 +149,15 @@ class DocumentController extends Controller
             $document->update(['status' => 'in_review']);
         }
 
+        // if the final approver approves the document then update the document status to approved
+        if ($isFinalApprover && $request->status === 'approved') {
+            $document->update(attributes: ['status' => 'approved']);
+        } elseif ($isFinalApprover && $request->status === 'rejected') {
+            $document->update(['status' => 'rejected']);
+        } elseif ($isFinalApprover && $request->status === 'returned') {
+            $document->update(['status' => 'returned']);
+        }
+
         return redirect()->back()->with('success', 'Response recorded successfully');
     }
 
@@ -168,6 +187,21 @@ class DocumentController extends Controller
         $users = User::where('department_id', Auth::user()->department_id)
             ->where('id', '!=', Auth::id())
             ->get();
+
+        // Get users from other departments (excluding current user's department and current user), prioritizing 'receiver' or 'admin' roles
+        $otherDepartments = Departments::where('id', '!=', Auth::user()->department_id)->get();
+        $otherOfficeUsers = collect();
+        foreach ($otherDepartments as $department) {
+            $receiver = $department->users()->where('role', 'receiver')->where('id', '!=', Auth::id())->first();
+            if ($receiver) {
+                $otherOfficeUsers->push($receiver);
+            } else {
+                $admin = $department->users()->where('role', 'admin')->where('id', '!=', Auth::id())->first();
+                if ($admin) {
+                    $otherOfficeUsers->push($admin);
+                }
+            }
+        }
 
         // Add is_final_approver to the document data
         $documentData = $document->toArray();
@@ -207,7 +241,8 @@ class DocumentController extends Controller
             'auth' => [
                 'user' => Auth::user()
             ],
-            'users' => $users
+            'users' => $users,
+            'otherDepartmentUsers' => $otherOfficeUsers
         ]);
     }
 
@@ -219,12 +254,15 @@ class DocumentController extends Controller
         $documentRecipient->update(['status' => 'received']);
         $documentRecipient->update(['responded_at' => now()]);
 
-        // if all the recipients have received the document, update the document status to in_review
+        // Check if all recipients have received the document and if the document is for_info, then update the document status to received
         $allRecipients = DocumentRecipient::where('document_id', $document->id)->get();
-        if ($allRecipients->every(function($recipient) {
+        $allReceived = $allRecipients->every(function($recipient) {
             return $recipient->status === 'received';
-        })) {
+        });
+        if ($allReceived && $document->document_type === 'for_info') {
             $document->update(['status' => 'received']);
+        } else {
+            $document->update(['status' => 'in_review']);
         }
 
         return redirect()->back()->with('success', 'Document marked as received.');
