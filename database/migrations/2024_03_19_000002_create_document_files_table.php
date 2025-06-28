@@ -17,6 +17,7 @@ return new class extends Migration
             $table->unsignedBigInteger('file_size');
             $table->foreignId('uploaded_by')->constrained('users')->onDelete('cascade');
             $table->string('upload_type')->default('original');
+            $table->foreignId('document_recipient_id')->nullable()->constrained('document_recipients')->onDelete('set null');
             $table->timestamps();
         });
     }

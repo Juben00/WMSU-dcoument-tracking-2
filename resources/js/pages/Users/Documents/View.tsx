@@ -7,6 +7,7 @@ import ForwardModal from './components/ForwardModal';
 import { Download, FileText, FileCheck, Users, QrCode } from 'lucide-react';
 import Swal from 'sweetalert2';
 import ForwardOtherOfficeModal from './components/ForwardOtherOfficeModal';
+import { log } from 'console';
 
 interface DocumentFile {
     id: number;
@@ -35,6 +36,7 @@ interface DocumentRecipient {
         last_name: string;
     } | null;
     is_final_approver?: boolean;
+    response_file?: DocumentFile;
 }
 
 interface Document {
@@ -186,7 +188,6 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
         forward_to_id: null as number | null,
     });
 
-    console.log(document);
     // Check if current user is an active recipient
     const currentRecipient = document.recipients.find(
         (r: DocumentRecipient) => r.user.id === auth.user.id
@@ -285,12 +286,13 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
     // Use approval_chain if available, else fallback to recipients
     const approvalChain = (document as Document).approval_chain || document.recipients;
 
+    console.log('approvalChain', approvalChain);
+
     // Find through and to recipients for non-for_info documents
     const throughRecipient = document.document_type !== 'for_info' && approvalChain.length >= 1 ? approvalChain[0] : null;
 
-    console.log('document', document);
 
-    console.log('recepient id', document.final_recipient?.id);
+    console.log('responseFiles', responseFiles);
 
     return (
         <>
@@ -723,39 +725,85 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                             <div className="relative ml-4">
                                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-gray-200 rounded-full" style={{ zIndex: 0 }}></div>
                                 <div className="space-y-8">
-                                    {approvalChain.map((recipient: DocumentRecipient, idx: number) => (
-                                        <div key={recipient.id} className="relative flex items-start gap-4">
-                                            <div className="z-10">
-                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${getStatusColor(recipient.status)} bg-white`}></div>
-                                            </div>
-                                            <div className="flex-1 bg-gray-50 rounded-xl p-4 border border-gray-100">
-                                                <div className="flex items-center justify-between">
-                                                    <p className="text-base font-medium text-gray-900">
-                                                        {recipient.forwarded_by ? (
-                                                            <span>
-                                                                {recipient.forwarded_by.first_name} {recipient.forwarded_by.last_name} → {recipient.user.first_name} {recipient.user.last_name}
-                                                            </span>
-                                                        ) : (
-                                                            <span>
-                                                                {recipient.user.first_name} {recipient.user.last_name}
-                                                            </span>
-                                                        )}
-                                                    </p>
-                                                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(recipient.status)}`}>
-                                                        {recipient.status.charAt(0).toUpperCase() + recipient.status.slice(1)}
-                                                    </span>
+                                    {approvalChain.map((recipient: DocumentRecipient, idx: number) => {
+                                        // Find all response files uploaded by this recipient
+                                        const recipientResponseFiles = responseFiles.filter(
+                                            (file: any) => file.document_recipient_id === recipient.id
+                                        );
+
+                                        const status = recipient.status;
+
+                                        return (
+                                            <div key={recipient.id} className="relative flex items-start gap-4">
+                                                <div className="z-10">
+                                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${getStatusColor(recipient.status)} bg-white`}></div>
                                                 </div>
-                                                {recipient.comments && (
-                                                    <p className="text-sm text-gray-500 mt-2">{recipient.comments}</p>
-                                                )}
-                                                {recipient.responded_at && (
-                                                    <div className="text-sm text-gray-600 mt-2">
-                                                        Responded: {new Date(recipient.responded_at).toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
+                                                <div className="flex-1 bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                                    <div className="flex items-center justify-between">
+                                                        <p className="text-base font-medium text-gray-900">
+                                                            {recipient.forwarded_by ? (
+                                                                <span>
+                                                                    {recipient.forwarded_by.first_name} {recipient.forwarded_by.last_name} → {recipient.user.first_name} {recipient.user.last_name}
+                                                                </span>
+                                                            ) : (
+                                                                <span>
+                                                                    {recipient.user.first_name} {recipient.user.last_name}
+                                                                </span>
+                                                            )}
+                                                        </p>
+                                                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(recipient.status)}`}>
+                                                            {recipient.status.charAt(0).toUpperCase() + recipient.status.slice(1)}
+                                                        </span>
                                                     </div>
-                                                )}
+                                                    {/* Show all response files for this recipient, with preview and response type */}
+                                                    {recipientResponseFiles.length > 0 && (
+                                                        <div className="mt-2 space-y-2">
+                                                            {recipientResponseFiles.map((file: any) => {
+                                                                const isImage = file.original_filename.match(/\.(jpg|jpeg|png|gif)$/i);
+                                                                return (
+                                                                    <div key={file.id} className="flex items-center gap-3 p-2 bg-blue-50 rounded">
+                                                                        {isImage ? (
+                                                                            <img
+                                                                                src={file.file_path ? `/storage/${file.file_path}` : '#'}
+                                                                                alt={file.original_filename}
+                                                                                className="w-12 h-12 object-cover rounded border"
+                                                                            />
+                                                                        ) : (
+                                                                            <svg className="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                                            </svg>
+                                                                        )}
+                                                                        <div>
+                                                                            <div className="text-xs text-gray-700 font-semibold">
+                                                                                {recipient.status.charAt(0).toUpperCase() + recipient.status.slice(1)} Response
+                                                                            </div>
+                                                                            <a
+                                                                                href={file.file_path ? `/storage/${file.file_path}` : '#'}
+                                                                                target="_blank"
+                                                                                rel="noopener noreferrer"
+                                                                                className="underline hover:text-blue-800 text-sm"
+                                                                                download={file.original_filename}
+                                                                            >
+                                                                                {file.original_filename}
+                                                                            </a>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    )}
+                                                    {recipient.comments && (
+                                                        <p className="text-sm text-gray-500 mt-2">{recipient.comments}</p>
+                                                    )}
+                                                    {recipient.responded_at && (
+                                                        <div className="text-sm text-gray-600 mt-2">
+                                                            Responded: {new Date(recipient.responded_at).toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </div>

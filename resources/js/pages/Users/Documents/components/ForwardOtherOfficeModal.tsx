@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { X, FileText, Image as ImageIcon } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { useForm } from '@inertiajs/react';
 
@@ -30,6 +31,12 @@ interface FormData {
     [key: string]: any;
 }
 
+interface FileWithPreview {
+    file: File;
+    preview?: string;
+    id: string;
+}
+
 const ForwardOtherOfficeModal: React.FC<ForwardModalProps> = ({
     isOpen,
     onClose,
@@ -39,7 +46,7 @@ const ForwardOtherOfficeModal: React.FC<ForwardModalProps> = ({
 }) => {
     const [selectedUser, setSelectedUser] = useState<string>('');
     const [comments, setComments] = useState('');
-    const [files, setFiles] = useState<File[]>([]);
+    const [files, setFiles] = useState<FileWithPreview[]>([]);
 
     const { post, processing: isProcessing, setData, reset } = useForm<FormData>({
         forward_to_id: '',
@@ -52,19 +59,51 @@ const ForwardOtherOfficeModal: React.FC<ForwardModalProps> = ({
         setData({
             forward_to_id: selectedUser,
             comments: comments,
-            files: files
+            files: files.map(f => f.file)
         });
     }, [selectedUser, comments, files, setData]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const newFiles = Array.from(e.target.files) as File[];
-            setFiles(prevFiles => [...prevFiles, ...newFiles]);
+            const filesWithPreviews: FileWithPreview[] = newFiles.map(file => {
+                const fileWithPreview: FileWithPreview = {
+                    file,
+                    id: Math.random().toString(36).substr(2, 9)
+                };
+
+                // Create preview for image files
+                if (file.type.startsWith('image/')) {
+                    fileWithPreview.preview = URL.createObjectURL(file);
+                }
+
+                return fileWithPreview;
+            });
+
+            setFiles(prevFiles => [...prevFiles, ...filesWithPreviews]);
         }
     };
 
-    const removeFile = (index: number) => {
-        setFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
+    const removeFile = (id: string) => {
+        setFiles(prevFiles => {
+            const fileToRemove = prevFiles.find(f => f.id === id);
+            if (fileToRemove?.preview) {
+                URL.revokeObjectURL(fileToRemove.preview);
+            }
+            return prevFiles.filter(f => f.id !== id);
+        });
+    };
+
+    const formatFileSize = (bytes: number) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
+
+    const isImageFile = (file: File) => {
+        return file.type.startsWith('image/');
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -87,6 +126,12 @@ const ForwardOtherOfficeModal: React.FC<ForwardModalProps> = ({
                 reset();
                 setSelectedUser('');
                 setComments('');
+                // Clean up preview URLs
+                files.forEach(fileWithPreview => {
+                    if (fileWithPreview.preview) {
+                        URL.revokeObjectURL(fileWithPreview.preview);
+                    }
+                });
                 setFiles([]);
                 Swal.fire({
                     icon: 'success',
@@ -122,15 +167,32 @@ const ForwardOtherOfficeModal: React.FC<ForwardModalProps> = ({
             reset();
             setSelectedUser('');
             setComments('');
+            // Clean up preview URLs
+            files.forEach(fileWithPreview => {
+                if (fileWithPreview.preview) {
+                    URL.revokeObjectURL(fileWithPreview.preview);
+                }
+            });
             setFiles([]);
         }
     }, [isOpen, reset]);
 
+    // Cleanup preview URLs when component unmounts
+    useEffect(() => {
+        return () => {
+            files.forEach(fileWithPreview => {
+                if (fileWithPreview.preview) {
+                    URL.revokeObjectURL(fileWithPreview.preview);
+                }
+            });
+        };
+    }, []);
+
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Forward Document</DialogTitle>
+                    <DialogTitle>Forward Document to Other Office</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
@@ -168,23 +230,54 @@ const ForwardOtherOfficeModal: React.FC<ForwardModalProps> = ({
                         <Input
                             type="file"
                             multiple
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.gif"
                             onChange={handleFileChange}
                             className="cursor-pointer"
                         />
+
                         {files.length > 0 && (
-                            <div className="mt-2 space-y-2">
-                                {files.map((file, index) => (
-                                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
-                                        <span className="text-sm truncate flex-1">{file.name}</span>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => removeFile(index)}
-                                            className="ml-2"
-                                        >
-                                            Remove
-                                        </Button>
+                            <div className="mt-4 space-y-3">
+                                <h4 className="text-sm font-medium text-gray-700">Selected Files:</h4>
+                                {files.map((fileWithPreview) => (
+                                    <div key={fileWithPreview.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                                        <div className="flex-shrink-0">
+                                            {isImageFile(fileWithPreview.file) ? (
+                                                <ImageIcon className="h-8 w-8 text-blue-500" />
+                                            ) : (
+                                                <FileText className="h-8 w-8 text-gray-500" />
+                                            )}
+                                        </div>
+
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center justify-between">
+                                                <p className="text-sm font-medium text-gray-900 truncate">
+                                                    {fileWithPreview.file.name}
+                                                </p>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => removeFile(fileWithPreview.id)}
+                                                    className="ml-2 h-6 w-6 p-0"
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                            <p className="text-xs text-gray-500">
+                                                {formatFileSize(fileWithPreview.file.size)}
+                                            </p>
+
+                                            {/* Image Preview */}
+                                            {fileWithPreview.preview && (
+                                                <div className="mt-2">
+                                                    <img
+                                                        src={fileWithPreview.preview}
+                                                        alt={fileWithPreview.file.name}
+                                                        className="max-w-full h-32 object-cover rounded border"
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 ))}
                             </div>

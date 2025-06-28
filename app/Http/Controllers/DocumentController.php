@@ -49,7 +49,7 @@ class DocumentController extends Controller
         $request->validate([
             'forward_to_id' => 'required|exists:users,id',
             'comments' => 'nullable|string|max:1000',
-            'files.*' => 'nullable|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,jpg,jpeg,png', // 10MB max per file
+            'files.*' => 'nullable|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,jpg,jpeg,png,gif', // 10MB max per file
         ]);
 
         // Find the current active recipient (the one forwarding)
@@ -61,11 +61,14 @@ class DocumentController extends Controller
         if ($currentRecipient) {
             // Mark the current recipient as responded/forwarded and inactive
             $currentRecipient->update([
-                'status' => 'forwarded',
+                'status' => 'received',
                 'responded_at' => now(),
                 'is_active' => false,
             ]);
         }
+
+        // find the id of the user who forwarded the document
+        $forwardedById = Auth::id();
 
         // Get the final_recipient_id from existing recipient records
         $existingRecipient = DocumentRecipient::where('document_id', $document->id)
@@ -79,7 +82,7 @@ class DocumentController extends Controller
         DocumentRecipient::create([
             'document_id' => $document->id,
             'user_id' => $request->forward_to_id,
-            'forwarded_by' => $currentRecipient ? $currentRecipient->user_id : null,
+            'forwarded_by' => $forwardedById,
             'status' => 'pending',
             'comments' => $request->comments,
             'sequence' => $nextSequence,
@@ -88,6 +91,28 @@ class DocumentController extends Controller
             'final_recipient_id' => $finalRecipientId,
             'responded_at' => null
         ]);
+
+        // Get the newly created recipient (the one just forwarded to)
+        $newRecipient = DocumentRecipient::where('document_id', $document->id)
+            ->where('user_id', $request->forward_to_id)
+            ->where('sequence', $nextSequence)
+            ->first();
+
+        // Handle multiple file uploads if present
+        if ($request->hasFile('files')) {
+            foreach ($request->file('files') as $file) {
+                $filePath = $file->store('document-attachments', 'public');
+                $document->files()->create([
+                    'file_path' => $filePath,
+                    'original_filename' => $file->getClientOriginalName(),
+                    'mime_type' => $file->getMimeType(),
+                    'file_size' => $file->getSize(),
+                    'uploaded_by' => Auth::id(),
+                    'upload_type' => 'response',
+                    'document_recipient_id' => $newRecipient ? $newRecipient->id : null,
+                ]);
+            }
+        }
 
         // check if all of the recipients have received the document and if the document is for_info then update the document status to received
         $allRecipients = DocumentRecipient::where('document_id', $document->id)->get();
@@ -106,7 +131,7 @@ class DocumentController extends Controller
         $request->validate([
             'status' => 'required|in:approved,rejected,returned',
             'comments' => 'required|string',
-            'attachment_file' => 'nullable|file|max:10240',
+            'attachment_files.*' => 'nullable|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,jpg,jpeg,png,gif', // 10MB max per file
             'is_final_approver' => 'boolean'
         ]);
 
@@ -136,23 +161,8 @@ class DocumentController extends Controller
 
         $isFinalApprover = $currentSequenceRecipient->is_final_approver;
 
-        // Handle file upload if present
-        $fileRecord = null;
-        if ($request->hasFile('attachment_file')) {
-            $file = $request->file('attachment_file');
-            $filePath = $file->store('document-attachments', 'public');
-            $fileRecord = $document->files()->create([
-                'file_path' => $filePath,
-                'original_filename' => $file->getClientOriginalName(),
-                'mime_type' => $file->getMimeType(),
-                'file_size' => $file->getSize(),
-                'uploaded_by' => Auth::id(),
-                'upload_type' => 'response',
-            ]);
-        }
-
         // Create a new recipient record for the response
-        DocumentRecipient::create([
+        $newRecipient = DocumentRecipient::create([
             'document_id' => $document->id,
             'user_id' => Auth::id(),
             'forwarded_by' => null,
@@ -164,6 +174,22 @@ class DocumentController extends Controller
             'is_final_approver' => $recipient->is_final_approver,
             'final_recipient_id' => $recipient->final_recipient_id,
         ]);
+
+        // Handle multiple file uploads if present
+        if ($request->hasFile('attachment_files')) {
+            foreach ($request->file('attachment_files') as $file) {
+                $filePath = $file->store('document-attachments', 'public');
+                $document->files()->create([
+                    'file_path' => $filePath,
+                    'original_filename' => $file->getClientOriginalName(),
+                    'mime_type' => $file->getMimeType(),
+                    'file_size' => $file->getSize(),
+                    'uploaded_by' => Auth::id(),
+                    'upload_type' => 'response',
+                    'document_recipient_id' => $newRecipient ? $newRecipient->id : null,
+                ]);
+            }
+        }
 
         // Update document status based on all recipients' responses
         $allRecipients = DocumentRecipient::where('document_id', $document->id)->get();

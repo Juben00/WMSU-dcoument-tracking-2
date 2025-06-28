@@ -18,6 +18,7 @@ class DocumentFile extends Model
         'file_size',
         'uploaded_by',
         'upload_type',
+        'document_recipient_id',
     ];
 
     public function document(): BelongsTo
@@ -28,5 +29,10 @@ class DocumentFile extends Model
     public function uploader(): BelongsTo
     {
         return $this->belongsTo(User::class, 'uploaded_by');
+    }
+
+    public function documentRecipient(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\DocumentRecipient::class, 'document_recipient_id');
     }
 }
