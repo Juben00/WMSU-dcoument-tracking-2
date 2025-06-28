@@ -17,6 +17,11 @@ interface DocumentRecipient {
         first_name: string;
         last_name: string;
         department_id: number;
+        role: string;
+        department?: {
+            id: number;
+            name: string;
+        };
     };
     status: string;
     comments?: string;
@@ -253,7 +258,7 @@ const PublicView: React.FC<Props> = ({ document }) => {
                                         <div className="flex-1 bg-gray-50 rounded-xl p-4 border border-gray-100">
                                             <div className="flex items-center justify-between">
                                                 <p className="text-base font-medium text-gray-900">
-                                                    {recipient.user.first_name} {recipient.user.last_name}
+                                                    {recipient.user.first_name} {recipient.user.last_name} | {recipient.user.department?.name || 'No Department'} | {recipient.user.role.charAt(0).toUpperCase() + recipient.user.role.slice(1)}
                                                 </p>
                                                 <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(recipient.status)}`}>
                                                     {recipient.status.charAt(0).toUpperCase() + recipient.status.slice(1)}

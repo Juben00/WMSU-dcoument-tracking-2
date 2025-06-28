@@ -171,10 +171,17 @@ const CreateDocument = ({ auth, departments }: Props) => {
 
     const recipientOptions = departments
         .filter((department) => department.contact_person)
-        .map((department) => ({
-            value: department.contact_person!.id,
-            label: `${department.contact_person!.name} - ${department.name}`,
-        }));
+        .map((department) => {
+            const role = department.contact_person!.role;
+            const capitalizedRole = role.charAt(0).toUpperCase() + role.slice(1);
+            return {
+                value: department.contact_person!.id,
+                label: `${department.contact_person!.name} | ${department.name} | ${capitalizedRole}`,
+                name: department.contact_person!.name,
+                department: department.name,
+                role: capitalizedRole,
+            };
+        });
 
     const documentTypeOptions = [
         { value: 'special_order', label: 'Special Order' },
@@ -186,7 +193,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
     return (
         <>
             <Navbar />
-            <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-gray-100 py-12 px-2">
+            <div className="min-h-screen bg-gradient-to-br from-red-100 via-white to-gray-100 py-12 px-2">
                 <div className="max-w-3xl mx-auto">
                     <div className="mb-8 text-center">
                         <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight mb-2">Create New Document</h1>
@@ -222,7 +229,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                             setData('document_type', value)
                                         }
                                     >
-                                        <SelectTrigger className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition">
+                                        <SelectTrigger className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition truncate">
                                             <SelectValue placeholder="Select document type" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -284,13 +291,13 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                                         setSendThroughId(value && value !== '' ? parseInt(value) : null);
                                                     }}
                                                 >
-                                                    <SelectTrigger className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition">
+                                                    <SelectTrigger className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition truncate">
                                                         <SelectValue placeholder="Select optional through user" />
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         {recipientOptions.map((option) => (
                                                             <SelectItem key={option.value} value={option.value.toString()}>
-                                                                {option.label}
+                                                                <span>{option.label}</span>
                                                             </SelectItem>
                                                         ))}
                                                     </SelectContent>
@@ -307,13 +314,13 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                                         setSendToId(value ? parseInt(value) : null);
                                                     }}
                                                 >
-                                                    <SelectTrigger className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition">
+                                                    <SelectTrigger className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition truncate">
                                                         <SelectValue placeholder="Select main recipient" />
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         {recipientOptions.map((option) => (
                                                             <SelectItem key={option.value} value={option.value.toString()}>
-                                                                {option.label}
+                                                                <span>{option.label}</span>
                                                             </SelectItem>
                                                         ))}
                                                     </SelectContent>

@@ -25,6 +25,11 @@ interface DocumentRecipient {
         first_name: string;
         last_name: string;
         department_id: number;
+        role: string;
+        department?: {
+            id: number;
+            name: string;
+        };
     };
     status: string;
     comments?: string;
@@ -34,6 +39,11 @@ interface DocumentRecipient {
         id: number;
         first_name: string;
         last_name: string;
+        role: string;
+        department?: {
+            id: number;
+            name: string;
+        };
     } | null;
     is_final_approver?: boolean;
     response_file?: DocumentFile;
@@ -102,6 +112,10 @@ interface Props {
         last_name: string;
         department_id: number;
         role: string;
+        department?: {
+            id: number;
+            name: string;
+        };
     }>;
     otherDepartmentUsers?: Array<{
         id: number;
@@ -109,6 +123,10 @@ interface Props {
         last_name: string;
         department_id: number;
         role: string;
+        department?: {
+            id: number;
+            name: string;
+        };
     }>;
 }
 
@@ -731,8 +749,6 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                             (file: any) => file.document_recipient_id === recipient.id
                                         );
 
-                                        const status = recipient.status;
-
                                         return (
                                             <div key={recipient.id} className="relative flex items-start gap-4">
                                                 <div className="z-10">
@@ -742,12 +758,26 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                                     <div className="flex items-center justify-between">
                                                         <p className="text-base font-medium text-gray-900">
                                                             {recipient.forwarded_by ? (
-                                                                <span>
-                                                                    {recipient.forwarded_by.first_name} {recipient.forwarded_by.last_name} → {recipient.user.first_name} {recipient.user.last_name}
-                                                                </span>
+                                                                <div className="text-sm leading-relaxed">
+                                                                    <div>
+                                                                        <strong>Forwarded By:</strong> {recipient.forwarded_by.first_name} {recipient.forwarded_by.last_name}
+                                                                        &nbsp;| {recipient.forwarded_by.department?.name || 'No Department'}
+                                                                        &nbsp;| {recipient.forwarded_by.role
+                                                                            ? recipient.forwarded_by.role.charAt(0).toUpperCase() + recipient.forwarded_by.role.slice(1)
+                                                                            : 'Unknown'}
+                                                                    </div>
+                                                                    <div>
+                                                                        <strong>Recipient:</strong> {recipient.user.first_name} {recipient.user.last_name}
+                                                                        &nbsp;| {recipient.user.department?.name || 'No Department'}
+                                                                        &nbsp;| {recipient.user.role
+                                                                            ? recipient.user.role.charAt(0).toUpperCase() + recipient.user.role.slice(1)
+                                                                            : 'Unknown'}
+                                                                    </div>
+                                                                </div>
+
                                                             ) : (
                                                                 <span>
-                                                                    {recipient.user.first_name} {recipient.user.last_name}
+                                                                    {recipient.user.first_name} {recipient.user.last_name} | {recipient.user.department?.name || 'No Department'} | {recipient.user.role?.charAt(0).toUpperCase() + recipient.user.role?.slice(1) || 'Unknown'}
                                                                 </span>
                                                             )}
                                                         </p>

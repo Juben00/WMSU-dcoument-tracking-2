@@ -248,17 +248,18 @@ class DocumentController extends Controller
         // Get users from the same department as the current user, excluding the current user
         $users = User::where('department_id', Auth::user()->department_id)
             ->where('id', '!=', Auth::id())
+            ->with('department')
             ->get();
 
         // Get users from other departments (excluding current user's department and current user and the document owner), prioritizing 'receiver' or 'admin' roles
         $otherDepartments = Departments::where('id', '!=', Auth::user()->department_id)->get();
         $otherOfficeUsers = collect();
         foreach ($otherDepartments as $department) {
-            $receiver = $department->users()->where('role', 'receiver')->where('id', '!=', Auth::id())->where('id', '!=', $document->owner_id)->first();
+            $receiver = $department->users()->where('role', 'receiver')->where('id', '!=', Auth::id())->where('id', '!=', $document->owner_id)->with('department')->first();
             if ($receiver) {
                 $otherOfficeUsers->push($receiver);
             } else {
-                $admin = $department->users()->where('role', 'admin')->where('id', '!=', Auth::id())->where('id', '!=', $document->owner_id)->first();
+                $admin = $department->users()->where('role', 'admin')->where('id', '!=', Auth::id())->where('id', '!=', $document->owner_id)->with('department')->first();
                 if ($admin) {
                     $otherOfficeUsers->push($admin);
                 }
@@ -270,7 +271,7 @@ class DocumentController extends Controller
         $documentData['owner_id'] = $document->owner_id;
 
         // Approval chain: recipients ordered by sequence, with user and forwardedBy
-        $approvalChain = $document->recipients()->with(['user', 'forwardedBy', 'finalRecipient'])->orderBy('sequence')->get()->map(function($recipient) {
+        $approvalChain = $document->recipients()->with(['user.department', 'forwardedBy.department', 'finalRecipient.department'])->orderBy('sequence')->get()->map(function($recipient) {
             return [
                 'id' => $recipient->id,
                 'user' => $recipient->user,
@@ -434,7 +435,7 @@ class DocumentController extends Controller
     {
         $document = Document::where('public_token', $public_token)
             ->where('is_public', true)
-            ->with(['files', 'owner', 'recipients.user'])
+            ->with(['files', 'owner', 'recipients.user.department'])
             ->firstOrFail();
 
         $documentData = $document->toArray();

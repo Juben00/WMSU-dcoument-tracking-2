@@ -14,6 +14,10 @@ interface User {
     first_name: string;
     last_name: string;
     role: string;
+    department?: {
+        id: number;
+        name: string;
+    };
 }
 
 interface ForwardModalProps {
@@ -47,6 +51,7 @@ const ForwardModal: React.FC<ForwardModalProps> = ({
     const [selectedUser, setSelectedUser] = useState<string>('');
     const [comments, setComments] = useState('');
     const [files, setFiles] = useState<FileWithPreview[]>([]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { post, processing: isProcessing, setData, reset } = useForm<FormData>({
         forward_to_id: '',
@@ -109,6 +114,11 @@ const ForwardModal: React.FC<ForwardModalProps> = ({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
+        // Prevent multiple submissions
+        if (isSubmitting || processing) {
+            return;
+        }
+
         if (!selectedUser) {
             Swal.fire({
                 icon: 'error',
@@ -117,6 +127,9 @@ const ForwardModal: React.FC<ForwardModalProps> = ({
             });
             return;
         }
+
+        // Set submitting state to prevent multiple clicks
+        setIsSubmitting(true);
 
         post(route('documents.forward', documentId), {
             preserveScroll: true,
@@ -133,6 +146,7 @@ const ForwardModal: React.FC<ForwardModalProps> = ({
                     }
                 });
                 setFiles([]);
+                setIsSubmitting(false);
                 Swal.fire({
                     icon: 'success',
                     title: 'Success!',
@@ -142,6 +156,7 @@ const ForwardModal: React.FC<ForwardModalProps> = ({
                 });
             },
             onError: (errors: any) => {
+                setIsSubmitting(false);
                 let errorMessage = 'An error occurred while forwarding the document';
 
                 if (errors.message) {
@@ -167,6 +182,7 @@ const ForwardModal: React.FC<ForwardModalProps> = ({
             reset();
             setSelectedUser('');
             setComments('');
+            setIsSubmitting(false);
             // Clean up preview URLs
             files.forEach(fileWithPreview => {
                 if (fileWithPreview.preview) {
@@ -207,7 +223,7 @@ const ForwardModal: React.FC<ForwardModalProps> = ({
                             <SelectContent>
                                 {users.length > 0 ? users.map((user) => (
                                     <SelectItem key={user.id} value={user.id.toString()}>
-                                        {user.first_name} {user.last_name} ({user.role})
+                                        {user.first_name} {user.last_name} | {user.department?.name || 'No Department'} | {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                                     </SelectItem>
                                 )) : <SelectItem value="no-users">No users found</SelectItem>}
                             </SelectContent>
@@ -289,15 +305,15 @@ const ForwardModal: React.FC<ForwardModalProps> = ({
                             type="button"
                             variant="outline"
                             onClick={onClose}
-                            disabled={processing}
+                            disabled={processing || isSubmitting}
                         >
                             Cancel
                         </Button>
                         <Button
                             type="submit"
-                            disabled={!selectedUser || processing}
+                            disabled={!selectedUser || processing || isSubmitting}
                         >
-                            {processing ? 'Forwarding...' : 'Forward'}
+                            {processing || isSubmitting ? 'Forwarding...' : 'Forward'}
                         </Button>
                     </div>
                 </form>
