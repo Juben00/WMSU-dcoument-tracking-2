@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download, FileText, FileCheck, Users, QrCode } from 'lucide-react';
+import { Download, FileText, FileCheck, Users, BarChart3 } from 'lucide-react';
 
 interface DocumentFile {
     id: number;
@@ -41,6 +41,8 @@ interface Document {
     files: DocumentFile[];
     recipients: DocumentRecipient[];
     barcode_path?: string;
+    public_token?: string;
+    barcode_value?: string;
     department_id: number;
 }
 
@@ -127,11 +129,17 @@ const PublicView: React.FC<Props> = ({ document }) => {
                     {document.barcode_path && (
                         <div className="flex flex-col items-center justify-center bg-gray-50 rounded-xl p-6 border border-dashed border-gray-200">
                             <div className="flex items-center gap-2 mb-2">
-                                <QrCode className="w-5 h-5 text-gray-500" />
+                                <BarChart3 className="w-5 h-5 text-gray-500" />
                                 <h2 className="text-lg font-semibold text-gray-900">Scan to View</h2>
                             </div>
-                            <img src={`/storage/${document.barcode_path}`} alt="QR Code" className="w-40 h-40 mb-2" />
-                            <span className="text-xs text-gray-500">Scan this QR code to access the document online.</span>
+                            <img src={`/storage/${document.barcode_path}`} alt="Barcode" className="w-64 h-32 mb-3" />
+                            <div className="text-center">
+                                <p className="text-xs text-gray-500 mb-1">Barcode Value:</p>
+                                <p className="text-sm font-mono text-gray-700 bg-white px-3 py-1 rounded border">
+                                    {document.barcode_value || document.public_token}
+                                </p>
+                            </div>
+                            <span className="text-xs text-gray-500 mt-2">Scan this barcode to access the document online.</span>
                         </div>
                     )}
                 </div>

@@ -278,6 +278,7 @@ class AdminController extends Controller
                     'is_public' => $document->is_public,
                     'public_token' => $document->public_token,
                     'barcode_path' => $document->barcode_path,
+                    'barcode_value' => $document->barcode_value,
                     'created_at' => $document->created_at,
                     'owner' => [
                         'id' => $document->owner->id,
@@ -311,6 +312,7 @@ class AdminController extends Controller
             'is_public' => false,
             'public_token' => null,
             'barcode_path' => null,
+            'barcode_value' => null,
         ]);
 
         return redirect()->back()->with('success', 'Document unpublished successfully.');

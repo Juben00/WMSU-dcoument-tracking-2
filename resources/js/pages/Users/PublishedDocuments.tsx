@@ -16,7 +16,9 @@ import {
     Search,
     Calendar,
     Download,
-    QrCode
+    BarChart3,
+    User,
+    ArrowLeft
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -30,9 +32,12 @@ interface PublishedDocument {
     is_public: boolean;
     public_token: string;
     barcode_path?: string;
+    barcode_value?: string;
     created_at: string;
     files_count: number;
     public_url: string;
+    user_role: 'owner' | 'recipient';
+    owner_name: string;
 }
 
 interface Props {
@@ -66,7 +71,9 @@ export default function PublishedDocuments({ publishedDocuments, auth }: Props) 
 
     const filteredDocuments = publishedDocuments.filter(doc =>
         doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (doc.description && doc.description.toLowerCase().includes(searchTerm.toLowerCase()))
+        (doc.description && doc.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (doc.barcode_value && doc.barcode_value.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        doc.owner_name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const handleUnpublishDocument = (document: PublishedDocument) => {
@@ -104,11 +111,16 @@ export default function PublishedDocuments({ publishedDocuments, auth }: Props) 
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-gray-900">My Published Documents</h1>
+                        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Published Documents</h1>
                         <p className="text-muted-foreground mt-2">
-                            Manage your publicly accessible documents
+                            View all published documents you're involved with
                         </p>
                     </div>
+                    {/* back button */}
+                    <Button variant="outline" onClick={() => router.visit('/documents')}>
+                        <ArrowLeft className="h-4 w-4" />
+                        Back
+                    </Button>
                 </div>
 
                 {/* Statistics Card */}
@@ -123,19 +135,19 @@ export default function PublishedDocuments({ publishedDocuments, auth }: Props) 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="text-center">
                                 <div className="text-2xl font-bold text-blue-600">{publishedDocuments.length}</div>
-                                <div className="text-sm text-muted-foreground">Total Published</div>
+                                <div className="text-sm text-muted-foreground">Total Documents</div>
                             </div>
                             <div className="text-center">
                                 <div className="text-2xl font-bold text-green-600">
-                                    {publishedDocuments.filter(doc => doc.status === 'approved').length}
+                                    {publishedDocuments.filter(doc => doc.user_role === 'owner').length}
                                 </div>
-                                <div className="text-sm text-muted-foreground">Approved</div>
+                                <div className="text-sm text-muted-foreground">Owned by You</div>
                             </div>
                             <div className="text-center">
                                 <div className="text-2xl font-bold text-yellow-600">
-                                    {publishedDocuments.filter(doc => doc.status === 'pending').length}
+                                    {publishedDocuments.filter(doc => doc.user_role === 'recipient').length}
                                 </div>
-                                <div className="text-sm text-muted-foreground">Pending</div>
+                                <div className="text-sm text-muted-foreground">Received by You</div>
                             </div>
                         </div>
                     </CardContent>
@@ -146,7 +158,7 @@ export default function PublishedDocuments({ publishedDocuments, auth }: Props) 
                     <CardHeader>
                         <CardTitle>Search Documents</CardTitle>
                         <CardDescription>
-                            Find specific published documents by title or description
+                            Find specific published documents by title, description, barcode value, or owner name
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -155,7 +167,7 @@ export default function PublishedDocuments({ publishedDocuments, auth }: Props) 
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                                     <Input
-                                        placeholder="Search by title or description..."
+                                        placeholder="Search by title, description, barcode value, or owner name..."
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                         className="pl-10"
@@ -171,7 +183,7 @@ export default function PublishedDocuments({ publishedDocuments, auth }: Props) 
                     <CardHeader>
                         <CardTitle>Published Documents</CardTitle>
                         <CardDescription>
-                            Your documents currently available for public access
+                            All published documents you're involved with (as owner or recipient)
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -180,8 +192,10 @@ export default function PublishedDocuments({ publishedDocuments, auth }: Props) 
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Document</TableHead>
+                                        <TableHead>Owner</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead>Published Date</TableHead>
+                                        <TableHead>Barcode</TableHead>
                                         <TableHead>Files</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
@@ -200,6 +214,12 @@ export default function PublishedDocuments({ publishedDocuments, auth }: Props) 
                                                 </div>
                                             </TableCell>
                                             <TableCell>
+                                                <div className="flex items-center gap-2">
+                                                    <User className="h-4 w-4 text-muted-foreground" />
+                                                    <span>{document.owner_name}</span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
                                                 <Badge className={getStatusColor(document.status)}>
                                                     {document.status.charAt(0).toUpperCase() + document.status.slice(1)}
                                                 </Badge>
@@ -208,6 +228,14 @@ export default function PublishedDocuments({ publishedDocuments, auth }: Props) 
                                                 <div className="flex items-center gap-2">
                                                     <Calendar className="h-4 w-4 text-muted-foreground" />
                                                     <span>{format(new Date(document.created_at), 'MMM dd, yyyy')}</span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-2">
+                                                    <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                                                    <span className="font-mono text-sm">
+                                                        {document.barcode_value || document.public_token}
+                                                    </span>
                                                 </div>
                                             </TableCell>
                                             <TableCell>
@@ -236,14 +264,16 @@ export default function PublishedDocuments({ publishedDocuments, auth }: Props) 
                                                             <ExternalLink className="h-4 w-4" />
                                                         </a>
                                                     </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={() => handleUnpublishDocument(document)}
-                                                        title="Unpublish Document"
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
+                                                    {document.user_role === 'owner' && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => handleUnpublishDocument(document)}
+                                                            title="Unpublish Document"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -257,7 +287,7 @@ export default function PublishedDocuments({ publishedDocuments, auth }: Props) 
                                 <FileText className="mx-auto h-12 w-12 text-gray-400" />
                                 <h3 className="mt-2 text-sm font-medium text-gray-900">No documents found</h3>
                                 <p className="mt-1 text-sm text-gray-500">
-                                    {searchTerm ? 'Try adjusting your search terms.' : 'You haven\'t published any documents yet.'}
+                                    {searchTerm ? 'Try adjusting your search terms.' : 'You\'re not involved with any published documents yet.'}
                                 </p>
                             </div>
                         )}
@@ -285,6 +315,16 @@ export default function PublishedDocuments({ publishedDocuments, auth }: Props) 
                                 )}
 
                                 <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label className="text-sm font-medium text-muted-foreground">Owner</Label>
+                                        <p className="text-sm">{selectedDocument.owner_name}</p>
+                                    </div>
+                                    <div>
+                                        <Label className="text-sm font-medium text-muted-foreground">Your Role</Label>
+                                        <Badge className={selectedDocument.user_role === 'owner' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}>
+                                            {selectedDocument.user_role === 'owner' ? 'Owner' : 'Recipient'}
+                                        </Badge>
+                                    </div>
                                     <div>
                                         <Label className="text-sm font-medium text-muted-foreground">Status</Label>
                                         <Badge className={getStatusColor(selectedDocument.status)}>
@@ -314,13 +354,21 @@ export default function PublishedDocuments({ publishedDocuments, auth }: Props) 
 
                                 {selectedDocument.barcode_path && (
                                     <div>
-                                        <Label className="text-sm font-medium text-muted-foreground">QR Code</Label>
-                                        <div className="mt-2">
-                                            <img
-                                                src={`/storage/${selectedDocument.barcode_path}`}
-                                                alt="QR Code"
-                                                className="w-32 h-32 border rounded"
-                                            />
+                                        <Label className="text-sm font-medium text-muted-foreground">Barcode</Label>
+                                        <div className="mt-2 p-4 border rounded-lg bg-gray-50">
+                                            <div className="flex flex-col items-center gap-3">
+                                                <img
+                                                    src={`/storage/${selectedDocument.barcode_path}`}
+                                                    alt="Barcode"
+                                                    className="w-64 h-32 border rounded bg-white p-2"
+                                                />
+                                                <div className="text-center">
+                                                    <p className="text-xs text-gray-500 mb-1">Barcode Value:</p>
+                                                    <p className="text-sm font-mono text-gray-700 bg-white px-3 py-1 rounded border">
+                                                        {selectedDocument.barcode_value || selectedDocument.public_token}
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 )}

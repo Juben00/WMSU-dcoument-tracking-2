@@ -103,13 +103,13 @@ class UserController extends Controller
     {
         // Get documents where user is the owner
         $ownedDocuments = Document::where('owner_id', Auth::id())
-            ->select('id', 'title', 'document_type', 'status', 'created_at', 'owner_id', 'is_public')
+            ->select('id', 'title', 'document_type', 'status', 'created_at', 'owner_id', 'is_public', 'barcode_value')
             ->get();
 
         // Get documents where user is a recipient
         $receivedDocuments = Document::whereHas('recipients', function($query) {
             $query->where('user_id', Auth::id());
-        })->select('id', 'title', 'document_type', 'status', 'created_at', 'owner_id', 'is_public')->get();
+        })->select('id', 'title', 'document_type', 'status', 'created_at', 'owner_id', 'is_public', 'barcode_value')->get();
 
         // Merge the collections
         $documents = $ownedDocuments->concat($receivedDocuments);
@@ -387,7 +387,9 @@ class UserController extends Controller
         $totalDocuments = $allDocuments->count();
         $pendingDocuments = $allDocuments->where('status', 'pending')->count();
         $completedDocuments = $allDocuments->where('status', 'approved')->count();
-        $publishedDocuments = $ownedDocuments->where('is_public', true)->count();
+
+        // Count published documents where user is owner or recipient
+        $publishedDocuments = $allDocuments->where('is_public', true)->count();
 
         // Recent Activities: last 5 actions involving the user (owned or received)
         $recentActivities = DocumentRecipient::where('user_id', $userId)
@@ -417,10 +419,12 @@ class UserController extends Controller
     // User's Published Documents Management
     public function publishedDocuments()
     {
-        $publishedDocuments = Document::where('owner_id', Auth::id())
+        $userId = Auth::id();
+
+        // Get documents where user is the owner
+        $ownedDocuments = Document::where('owner_id', $userId)
             ->where('is_public', true)
-            ->with(['files'])
-            ->orderByDesc('created_at')
+            ->with(['files', 'owner'])
             ->get()
             ->map(function($document) {
                 return [
@@ -431,11 +435,45 @@ class UserController extends Controller
                     'is_public' => $document->is_public,
                     'public_token' => $document->public_token,
                     'barcode_path' => $document->barcode_path,
+                    'barcode_value' => $document->barcode_value,
                     'created_at' => $document->created_at,
                     'files_count' => $document->files->count(),
                     'public_url' => route('documents.public_view', ['public_token' => $document->public_token]),
+                    'user_role' => 'owner',
+                    'owner_name' => $document->owner->first_name . ' ' . $document->owner->last_name,
                 ];
             });
+
+        // Get documents where user is a recipient
+        $receivedDocuments = Document::whereHas('recipients', function($query) use ($userId) {
+            $query->where('user_id', $userId);
+        })
+        ->where('is_public', true)
+        ->where('owner_id', '!=', $userId) // Exclude documents where user is also the owner
+        ->with(['files', 'owner'])
+        ->get()
+        ->map(function($document) {
+            return [
+                'id' => $document->id,
+                'title' => $document->title,
+                'description' => $document->description,
+                'status' => $document->status,
+                'is_public' => $document->is_public,
+                'public_token' => $document->public_token,
+                'barcode_path' => $document->barcode_path,
+                'barcode_value' => $document->barcode_value,
+                'created_at' => $document->created_at,
+                'files_count' => $document->files->count(),
+                'public_url' => route('documents.public_view', ['public_token' => $document->public_token]),
+                'user_role' => 'recipient',
+                'owner_name' => $document->owner->first_name . ' ' . $document->owner->last_name,
+            ];
+        });
+
+        // Merge and sort by creation date
+        $publishedDocuments = $ownedDocuments->concat($receivedDocuments)
+            ->sortByDesc('created_at')
+            ->values();
 
         return Inertia::render('Users/PublishedDocuments', [
             'publishedDocuments' => $publishedDocuments,
@@ -457,6 +495,7 @@ class UserController extends Controller
             'is_public' => false,
             'public_token' => null,
             'barcode_path' => null,
+            'barcode_value' => null,
         ]);
 
         return redirect()->route('users.published-documents')->with('success', 'Document unpublished successfully.');

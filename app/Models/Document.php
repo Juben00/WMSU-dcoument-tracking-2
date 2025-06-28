@@ -23,6 +23,7 @@ class Document extends Model
         'is_public',
         'public_token',
         'barcode_path',
+        'barcode_value',
     ];
 
     protected $casts = [

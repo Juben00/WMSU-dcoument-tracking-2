@@ -78,7 +78,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/documents/{document}/received', [DocumentController::class, 'markAsReceived'])->name('documents.received');
     Route::get('/documents/{document}/chain', [DocumentController::class, 'getDocumentChain'])->name('documents.chain');
     Route::post('/documents/{document}/publish', [DocumentController::class, 'publishDocument'])->name('documents.publish');
-    Route::get('/public/documents/{public_token}', [DocumentController::class, 'publicView'])->name('documents.public_view');
+    Route::get('/documents/public', [DocumentController::class, 'publicDocuments'])->name('documents.public');
+    Route::get('/documents/public/{public_token}', [DocumentController::class, 'publicView'])->name('documents.public_view');
     Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
 
     Route::get('/dashboard/data', [UserController::class, 'dashboardData'])->name('dashboard.data');

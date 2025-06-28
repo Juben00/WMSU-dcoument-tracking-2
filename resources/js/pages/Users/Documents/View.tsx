@@ -4,7 +4,7 @@ import { Link, useForm } from '@inertiajs/react';
 import ApproveModal from './components/ApproveModal';
 import RejectModal from './components/RejectModal';
 import ForwardModal from './components/ForwardModal';
-import { Download, FileText, FileCheck, Users, QrCode } from 'lucide-react';
+import { Download, FileText, FileCheck, Users, BarChart3, Copy, ExternalLink } from 'lucide-react';
 import Swal from 'sweetalert2';
 import ForwardOtherOfficeModal from './components/ForwardOtherOfficeModal';
 import { log } from 'console';
@@ -69,6 +69,8 @@ interface Document {
     owner_id: number;
     is_public: boolean;
     barcode_path?: string;
+    public_token?: string;
+    barcode_value?: string;
     department_id: number;
     final_recipient?: {
         id: number;
@@ -198,6 +200,7 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
     const [comments, setComments] = useState('');
     const [revisionFile, setRevisionFile] = useState<File | null>(null);
     const [approveFile, setApproveFile] = useState<File | null>(null);
+    const [copied, setCopied] = useState(false);
 
     const { post, delete: destroy, processing, setData } = useForm({
         status: '',
@@ -312,6 +315,21 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
 
     console.log('responseFiles', responseFiles);
 
+    const copyToClipboard = async (text: string) => {
+        try {
+            await navigator.clipboard.writeText(text);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+        }
+    };
+
+    const getPublicDocumentUrl = () => {
+        const token = document.barcode_value || document.public_token;
+        return route('documents.public_view', { public_token: token });
+    };
+
     return (
         <>
             <Navbar />
@@ -392,15 +410,56 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                 )}
                             </dl>
                         </div>
-                        {/* QR Code Section */}
+                        {/* Barcode Section */}
                         {document.is_public && document.barcode_path && (
                             <div className="flex flex-col items-center justify-center bg-gray-50 rounded-xl p-6 border border-dashed border-gray-200">
                                 <div className="flex items-center gap-2 mb-2">
-                                    <QrCode className="w-5 h-5 text-gray-500" />
+                                    <BarChart3 className="w-5 h-5 text-gray-500" />
                                     <h2 className="text-lg font-semibold text-gray-900">Scan to View</h2>
                                 </div>
-                                <img src={`/storage/${document.barcode_path}`} alt="QR Code" className="w-40 h-40 mb-2" />
-                                <span className="text-xs text-gray-500">Scan this QR code to access the document online.</span>
+                                <img src={`/storage/${document.barcode_path}`} alt="Barcode" className="w-64 h-32 mb-3" />
+                                <div className="text-center">
+                                    <p className="text-xs text-gray-500 mb-1">Barcode Value:</p>
+                                    <p className="text-sm font-mono text-gray-700 bg-white px-3 py-1 rounded border">
+                                        {document.barcode_value || document.public_token}
+                                    </p>
+                                </div>
+                                <span className="text-xs text-gray-500 mt-2">Scan this barcode to access the document online.</span>
+
+                                {/* Direct Link Section */}
+                                <div className="w-full mt-6 pt-6 border-t border-gray-200">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <ExternalLink className="w-4 h-4 text-gray-500" />
+                                        <h3 className="text-sm font-semibold text-gray-900">Direct Link</h3>
+                                    </div>
+                                    <div className="flex items-center gap-2 bg-white rounded-lg border border-gray-200 p-2">
+                                        <input
+                                            type="text"
+                                            value={getPublicDocumentUrl()}
+                                            readOnly
+                                            className="flex-1 text-xs font-mono text-gray-700 bg-transparent border-none outline-none"
+                                        />
+                                        <button
+                                            onClick={() => copyToClipboard(getPublicDocumentUrl())}
+                                            className="flex items-center gap-1 px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+                                        >
+                                            <Copy className="w-3 h-3" />
+                                            {copied ? 'Copied!' : 'Copy'}
+                                        </button>
+                                        <a
+                                            href={getPublicDocumentUrl()}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-1 px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
+                                        >
+                                            <ExternalLink className="w-3 h-3" />
+                                            Open
+                                        </a>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-2 text-center">
+                                        Share this link for easy access to the document
+                                    </p>
+                                </div>
                             </div>
                         )}
                     </div>

@@ -11,10 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
-use BaconQrCode\Renderer\ImageRenderer;
-use BaconQrCode\Renderer\RendererStyle\RendererStyle;
-use BaconQrCode\Renderer\Image\SvgImageBackEnd;
-use BaconQrCode\Writer;
+use Picqer\Barcode\BarcodeGeneratorSVG;
 use Illuminate\Support\Str;
 use App\Models\Departments;
 
@@ -409,23 +406,30 @@ class DocumentController extends Controller
         // Generate public URL
         $publicUrl = route('documents.public_view', ['public_token' => $publicToken], false);
 
-        // Generate QR code SVG
-        $renderer = new ImageRenderer(
-            new RendererStyle(300),
-            new SvgImageBackEnd()
-        );
-        $writer = new Writer($renderer);
-        $qrSvg = $writer->writeString(url($publicUrl));
+        // Get current user and department information
+        $currentUser = Auth::user();
+        $department = $currentUser->department;
+        $departmentCode = $department ? $department->code : 'NOCODE';
+        $timestamp = now()->format('YmdHis'); // Format: YYYYMMDDHHMMSS
+        $userId = $currentUser->id;
+
+        // Generate unique barcode value: Department Code + Timestamp + User ID
+        $barcodeValue = $departmentCode . $timestamp . $userId;
+
+        // Generate barcode SVG
+        $generator = new BarcodeGeneratorSVG();
+        $barcodeSvg = $generator->getBarcode($barcodeValue, $generator::TYPE_CODE_128);
 
         // Save SVG to storage
         $barcodePath = 'barcodes/document_' . $document->id . '_' . $publicToken . '.svg';
-        Storage::disk('public')->put($barcodePath, $qrSvg);
+        Storage::disk('public')->put($barcodePath, $barcodeSvg);
 
         // Update document
         $document->update([
             'is_public' => true,
             'public_token' => $publicToken,
             'barcode_path' => $barcodePath,
+            'barcode_value' => $barcodeValue,
         ]);
 
         return redirect()->back()->with('success', 'Document published publicly.');
@@ -433,10 +437,20 @@ class DocumentController extends Controller
 
     public function publicView($public_token)
     {
-        $document = Document::where('public_token', $public_token)
-            ->where('is_public', true)
-            ->with(['files', 'owner', 'recipients.user.department'])
-            ->firstOrFail();
+        $document = Document::where(function($query) use ($public_token) {
+            $query->where('public_token', $public_token)
+                  ->orWhere('barcode_value', $public_token);
+        })
+        ->where('is_public', true)
+        ->with(['files', 'owner', 'recipients.user.department'])
+        ->first();
+
+        if (!$document) {
+            // If no document found, show the search page
+            return Inertia::render('Users/Documents/PublicSearch', [
+                'searchToken' => $public_token,
+            ]);
+        }
 
         $documentData = $document->toArray();
         $documentData['owner_id'] = $document->owner_id;
@@ -444,6 +458,56 @@ class DocumentController extends Controller
         // You may want to return a special Inertia/Blade view for public documents
         return Inertia::render('Users/Documents/PublicView', [
             'document' => $documentData,
+        ]);
+    }
+
+    public function publicDocuments()
+    {
+        $search = request()->get('search');
+
+        $query = Document::where('is_public', true)
+            ->with(['files', 'owner', 'recipients.user.department']);
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', '%' . $search . '%')
+                  ->orWhere('description', 'like', '%' . $search . '%')
+                  ->orWhere('barcode_value', 'like', '%' . $search . '%')
+                  ->orWhere('public_token', 'like', '%' . $search . '%')
+                  ->orWhereHas('owner', function($ownerQuery) use ($search) {
+                      $ownerQuery->where('first_name', 'like', '%' . $search . '%')
+                                ->orWhere('last_name', 'like', '%' . $search . '%');
+                  });
+            });
+        }
+
+        $documents = $query->orderByDesc('created_at')
+            ->get()
+            ->map(function($document) {
+                return [
+                    'id' => $document->id,
+                    'title' => $document->title,
+                    'description' => $document->description,
+                    'status' => $document->status,
+                    'is_public' => $document->is_public,
+                    'public_token' => $document->public_token,
+                    'barcode_path' => $document->barcode_path,
+                    'barcode_value' => $document->barcode_value,
+                    'created_at' => $document->created_at,
+                    'owner' => [
+                        'id' => $document->owner->id,
+                        'name' => $document->owner->first_name . ' ' . $document->owner->last_name,
+                        'email' => $document->owner->email,
+                        'department' => $document->owner->department->name ?? 'No Department',
+                    ],
+                    'files_count' => $document->files->count(),
+                    'public_url' => route('documents.public_view', ['public_token' => $document->public_token]),
+                ];
+            });
+
+        return Inertia::render('Users/Documents/PublicSearch', [
+            'documents' => $documents,
+            'search' => $search,
         ]);
     }
 

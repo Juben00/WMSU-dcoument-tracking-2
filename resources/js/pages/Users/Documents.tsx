@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import Navbar from '@/components/User/navbar';
 import { Link } from '@inertiajs/react';
-import { Eye, Download, Search, FileCheck2, Clock, XCircle, Undo2, FileSearch, Filter } from 'lucide-react';
+import { Eye, Download, Search, FileCheck2, Clock, XCircle, Undo2, FileSearch, Filter, BarChart3 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 interface Document {
     id: number;
@@ -10,6 +11,7 @@ interface Document {
     status: string;
     created_at: string;
     owner_id: number;
+    barcode_value?: string;
     files?: { id: number }[];
 }
 
@@ -94,7 +96,8 @@ const Documents = ({ documents, auth }: Props) => {
         if (search.trim()) {
             filtered = filtered.filter(doc =>
                 doc.title.toLowerCase().includes(search.toLowerCase()) ||
-                doc.id.toString().includes(search)
+                doc.id.toString().includes(search) ||
+                (doc.barcode_value && doc.barcode_value.toLowerCase().includes(search.toLowerCase()))
             );
         }
 
@@ -122,7 +125,7 @@ const Documents = ({ documents, auth }: Props) => {
         const filtered = filterDocs(docs);
         return filtered.length === 0 ? (
             <tr>
-                <td colSpan={6} className="py-10 text-center text-gray-400 text-lg">No documents found.</td>
+                <td colSpan={7} className="py-10 text-center text-gray-400 text-lg">No documents found.</td>
             </tr>
         ) : (
             filtered.map((doc) => (
@@ -145,6 +148,16 @@ const Documents = ({ documents, auth }: Props) => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(doc.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {doc.barcode_value ? (
+                            <div className="flex items-center gap-2">
+                                <BarChart3 className="h-4 w-4 text-gray-400" />
+                                <span className="font-mono text-xs">{doc.barcode_value}</span>
+                            </div>
+                        ) : (
+                            <span className="text-gray-400">Not Published</span>
+                        )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium flex gap-2">
                         <Link
@@ -221,10 +234,10 @@ const Documents = ({ documents, auth }: Props) => {
                         <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                             <Search className="w-5 h-5 text-gray-400" />
                         </span>
-                        <input
+                        <Input
                             type="text"
                             className="block w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 text-sm"
-                            placeholder="Search by title or ID..."
+                            placeholder="Search by title, ID, or barcode value..."
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                         />
@@ -304,6 +317,7 @@ const Documents = ({ documents, auth }: Props) => {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Submitted</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Barcode</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
