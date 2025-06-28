@@ -113,6 +113,7 @@ export default function Departments({ departments, auth }: Props) {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Name</TableHead>
+                                <TableHead>Code</TableHead>
                                 <TableHead>Description</TableHead>
                                 <TableHead>Type</TableHead>
                                 <TableHead>Created At</TableHead>
@@ -123,6 +124,7 @@ export default function Departments({ departments, auth }: Props) {
                             {departments.map((department) => (
                                 <TableRow key={department.id}>
                                     <TableCell>{department.name}</TableCell>
+                                    <TableCell>{department.code}</TableCell>
                                     <TableCell>{department.description}</TableCell>
                                     <TableCell>{department.type}</TableCell>
                                     <TableCell>{format(new Date(department.created_at), 'MMM d, yyyy')}</TableCell>
@@ -171,6 +173,10 @@ export default function Departments({ departments, auth }: Props) {
                                 <div>
                                     <Label>Department Name</Label>
                                     <p className="text-sm">{selectedOffice.name}</p>
+                                </div>
+                                <div>
+                                    <Label>Department Code</Label>
+                                    <p className="text-sm">{selectedOffice.code}</p>
                                 </div>
                                 <div>
                                     <Label>Description</Label>

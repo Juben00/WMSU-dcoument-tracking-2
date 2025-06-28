@@ -102,12 +102,14 @@ class UserController extends Controller
     public function documents()
     {
         // Get documents where user is the owner
-        $ownedDocuments = Auth::user()->documents;
+        $ownedDocuments = Document::where('owner_id', Auth::id())
+            ->select('id', 'title', 'document_type', 'status', 'created_at', 'owner_id', 'is_public')
+            ->get();
 
         // Get documents where user is a recipient
         $receivedDocuments = Document::whereHas('recipients', function($query) {
             $query->where('user_id', Auth::id());
-        })->get();
+        })->select('id', 'title', 'document_type', 'status', 'created_at', 'owner_id', 'is_public')->get();
 
         // Merge the collections
         $documents = $ownedDocuments->concat($receivedDocuments);

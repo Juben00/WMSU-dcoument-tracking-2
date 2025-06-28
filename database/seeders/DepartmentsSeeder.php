@@ -15,18 +15,21 @@ class DepartmentsSeeder extends Seeder
     {
         Departments::create([
             'name' => 'Office of the President',
+            'code' => 'OP',
             'description' => 'Office of the President',
             'type' => 'office',
         ]);
 
         Departments::create([
             'name' => 'Office of the Vice President',
+            'code' => 'OVP',
             'description' => 'Office of the Vice President',
             'type' => 'office',
         ]);
 
         Departments::create([
             'name' => 'College of Computing Studies',
+            'code' => 'CCS',
             'description' => 'College of Computing Studies',
             'type' => 'college',
         ]);

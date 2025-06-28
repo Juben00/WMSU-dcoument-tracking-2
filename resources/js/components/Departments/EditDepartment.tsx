@@ -17,6 +17,7 @@ interface Props {
 export default function EditDepartment({ department, setIsEditDialogOpen }: Props) {
     const { data, setData, put, processing, errors, reset } = useForm({
         name: department.name,
+        code: department.code,
         description: department.description,
         type: department.type,
     });
@@ -50,6 +51,18 @@ export default function EditDepartment({ department, setIsEditDialogOpen }: Prop
             </div>
 
             <div className="space-y-2">
+                <Label htmlFor="code">Department Code</Label>
+                <Input
+                    id="code"
+                    value={data.code}
+                    onChange={(e) => setData('code', e.target.value)}
+                    placeholder="Enter department code"
+                    required
+                />
+                <InputError message={errors.code} />
+            </div>
+
+            <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
                 <Textarea
                     id="description"
@@ -75,6 +88,7 @@ export default function EditDepartment({ department, setIsEditDialogOpen }: Prop
                         <SelectItem value="college">College</SelectItem>
                     </SelectContent>
                 </Select>
+                <InputError message={errors.type} />
             </div>
 
             <div className="flex justify-end gap-2">

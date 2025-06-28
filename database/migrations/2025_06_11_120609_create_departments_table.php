@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('departments', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('code')->unique();
             $table->string('description')->nullable();
             $table->enum('type', ['office', 'college'])->default('office');
             $table->timestamps();

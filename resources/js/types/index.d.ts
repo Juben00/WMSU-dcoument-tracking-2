@@ -68,6 +68,7 @@ export interface Admin {
 export interface Departments {
     id: number;
     name: string;
+    code: string;
     description: string | null;
     type: 'office' | 'college';
     created_at: string;
