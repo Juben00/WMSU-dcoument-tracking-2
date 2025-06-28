@@ -164,6 +164,7 @@ class UserController extends Controller
 
         $user = User::find(Auth::id());
         $user->password = Hash::make($validated['password']);
+        $user->markPasswordAsChanged();
         $user->save();
 
         return back()->with('success', 'Password updated successfully.');

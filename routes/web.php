@@ -7,12 +7,13 @@ use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\DepartmentsController;
+use App\Http\Controllers\FirstTimePasswordController;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'require_password_change'])->group(function () {
     Route::get('dashboard', function () {
         if (Auth::user()->role === 'superadmin') {
             return app(AdminController::class)->dashboard();
@@ -20,6 +21,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             return Inertia::render('Users/Dashboard');
         }
     })->name('dashboard');
+
+    // First-time password change routes
+    Route::get('/password/change', [FirstTimePasswordController::class, 'show'])->name('password.change');
+    Route::post('/password/change', [FirstTimePasswordController::class, 'update'])->name('password.update');
 
     // Admin and Office Management Routes - Superadmin Only
         // Admin Management Routes
