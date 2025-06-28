@@ -52,16 +52,41 @@ class DocumentController extends Controller
             'files.*' => 'nullable|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,jpg,jpeg,png', // 10MB max per file
         ]);
 
+        // Find the current active recipient (the one forwarding)
+        $currentRecipient = DocumentRecipient::where('document_id', $document->id)
+            ->where('is_active', true)
+            ->orderByDesc('sequence')
+            ->first();
+
+        if ($currentRecipient) {
+            // Mark the current recipient as responded/forwarded and inactive
+            $currentRecipient->update([
+                'status' => 'forwarded',
+                'responded_at' => now(),
+                'is_active' => false,
+            ]);
+        }
+
+        // Get the final_recipient_id from existing recipient records
+        $existingRecipient = DocumentRecipient::where('document_id', $document->id)
+            ->whereNotNull('final_recipient_id')
+            ->first();
+        $finalRecipientId = $existingRecipient ? $existingRecipient->final_recipient_id : null;
+
+        // Determine the next sequence number
+        $nextSequence = DocumentRecipient::where('document_id', $document->id)->max('sequence') + 1;
+
         DocumentRecipient::create([
             'document_id' => $document->id,
             'user_id' => $request->forward_to_id,
-            'forwarded_by' => Auth::id(),
-            'status' => 'forwarded',
+            'forwarded_by' => $currentRecipient ? $currentRecipient->user_id : null,
+            'status' => 'pending',
             'comments' => $request->comments,
-            'sequence' => DocumentRecipient::where('document_id', $document->id)->max('sequence') + 1,
+            'sequence' => $nextSequence,
             'is_active' => true,
             'is_final_approver' => User::find($request->forward_to_id)->role === 'admin' ? true : false,
-            'responded_at' => now()
+            'final_recipient_id' => $finalRecipientId,
+            'responded_at' => null
         ]);
 
         // check if all of the recipients have received the document and if the document is for_info then update the document status to received
@@ -85,10 +110,12 @@ class DocumentController extends Controller
             'is_final_approver' => 'boolean'
         ]);
 
-        // Check if user is a recipient and hasn't responded yet
         $recipient = DocumentRecipient::where('document_id', $document->id)
-            ->where('user_id', Auth::id())
-            ->whereIn('status', ['pending', 'forwarded']) // Allow response if status is pending or forwarded
+            ->where(function ($query) {
+                $query->where('user_id', Auth::id())
+                    ->orWhere('final_recipient_id', Auth::id());
+            })
+            ->whereIn('status', ['pending', 'forwarded'])
             ->first();
 
         if (!$recipient) {
@@ -97,11 +124,23 @@ class DocumentController extends Controller
             ]);
         }
 
+        $currentSequence = DocumentRecipient::where('document_id', $document->id)->max('sequence');
+
+        // Mark the current sequence to received
+        $currentSequenceRecipient = DocumentRecipient::where('document_id', $document->id)->where('sequence', $currentSequence)->first();
+        $currentSequenceRecipient->update([
+            'status' => 'received',
+            'responded_at' => now(),
+            'is_active' => false,
+        ]);
+
+        $isFinalApprover = $currentSequenceRecipient->is_final_approver;
+
+        // Handle file upload if present
         $fileRecord = null;
         if ($request->hasFile('attachment_file')) {
             $file = $request->file('attachment_file');
             $filePath = $file->store('document-attachments', 'public');
-            // Save file info to DocumentFile
             $fileRecord = $document->files()->create([
                 'file_path' => $filePath,
                 'original_filename' => $file->getClientOriginalName(),
@@ -112,46 +151,43 @@ class DocumentController extends Controller
             ]);
         }
 
-        // Use the recipient's is_final_approver from DB
-        $isFinalApprover = $recipient->is_final_approver;
-
-        // Update recipient status
-        $recipient->update([
+        // Create a new recipient record for the response
+        DocumentRecipient::create([
+            'document_id' => $document->id,
+            'user_id' => Auth::id(),
+            'forwarded_by' => null,
             'status' => $request->status,
             'comments' => $request->comments,
             'responded_at' => now(),
-            'is_final_approver' => $isFinalApprover,
+            'is_active' => false,
+            'sequence' => $currentSequence + 1,
+            'is_final_approver' => $recipient->is_final_approver,
+            'final_recipient_id' => $recipient->final_recipient_id,
         ]);
 
         // Update document status based on all recipients' responses
         $allRecipients = DocumentRecipient::where('document_id', $document->id)->get();
-
-        // Count responses by status
         $totalRecipients = $allRecipients->count();
         $approvedCount = $allRecipients->where('status', 'approved')->count();
         $rejectedCount = $allRecipients->where('status', 'rejected')->count();
         $returnedCount = $allRecipients->where('status', 'returned')->count();
         $pendingCount = $allRecipients->whereIn('status', ['pending', 'forwarded'])->count();
 
-        // Determine document status based on responses
         if ($rejectedCount > 0) {
             $document->update(['status' => 'rejected']);
         } elseif ($returnedCount > 0) {
             $document->update(['status' => 'returned']);
         } elseif ($pendingCount === 0 && $approvedCount === $totalRecipients) {
-            // All recipients have approved
             $document->update(['status' => 'approved']);
         } elseif ($pendingCount > 0) {
-            // Some recipients still need to respond
             $document->update(['status' => 'in_review']);
         } else {
-            // Mixed responses (some approved, some other statuses)
             $document->update(['status' => 'in_review']);
         }
 
-        // if the final approver approves the document then update the document status to approved
+        // If the final approver responds, update document status accordingly
         if ($isFinalApprover && $request->status === 'approved') {
-            $document->update(attributes: ['status' => 'approved']);
+            $document->update(['status' => 'approved']);
         } elseif ($isFinalApprover && $request->status === 'rejected') {
             $document->update(['status' => 'rejected']);
         } elseif ($isFinalApprover && $request->status === 'returned') {
@@ -188,15 +224,15 @@ class DocumentController extends Controller
             ->where('id', '!=', Auth::id())
             ->get();
 
-        // Get users from other departments (excluding current user's department and current user), prioritizing 'receiver' or 'admin' roles
+        // Get users from other departments (excluding current user's department and current user and the document owner), prioritizing 'receiver' or 'admin' roles
         $otherDepartments = Departments::where('id', '!=', Auth::user()->department_id)->get();
         $otherOfficeUsers = collect();
         foreach ($otherDepartments as $department) {
-            $receiver = $department->users()->where('role', 'receiver')->where('id', '!=', Auth::id())->first();
+            $receiver = $department->users()->where('role', 'receiver')->where('id', '!=', Auth::id())->where('id', '!=', $document->owner_id)->first();
             if ($receiver) {
                 $otherOfficeUsers->push($receiver);
             } else {
-                $admin = $department->users()->where('role', 'admin')->where('id', '!=', Auth::id())->first();
+                $admin = $department->users()->where('role', 'admin')->where('id', '!=', Auth::id())->where('id', '!=', $document->owner_id)->first();
                 if ($admin) {
                     $otherOfficeUsers->push($admin);
                 }

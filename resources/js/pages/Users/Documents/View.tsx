@@ -64,6 +64,7 @@ interface Document {
         last_name: string;
         department_id: number;
     } | null;
+    approval_chain: DocumentRecipient[];
 }
 
 interface Department {
@@ -282,15 +283,10 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
     const responseFiles = document.files.filter(file => file.upload_type === 'response');
 
     // Use approval_chain if available, else fallback to recipients
-    const approvalChain = (document as any).approval_chain || document.recipients;
+    const approvalChain = (document as Document).approval_chain || document.recipients;
 
     // Find through and to recipients for non-for_info documents
     const throughRecipient = document.document_type !== 'for_info' && approvalChain.length >= 1 ? approvalChain[0] : null;
-
-    // The 'to' user is not yet a recipient if approvalChain.length < 2
-    const toRecipientUserId = (document as any).to_user_id; // You may need to pass this from backend or infer from context
-    const toRecipientExists = approvalChain.length >= 2;
-    const isThroughUser = throughRecipient && throughRecipient.user.id === auth.user.id;
 
     console.log('document', document);
 
@@ -553,7 +549,7 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                     }}
                                     className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-semibold shadow"
                                 >
-                                    Received
+                                    Receive Document
                                 </button>
                             )}
 
@@ -615,12 +611,14 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
 
                             {/* Forward to Other Office Button */}
                             {canForwardToOtherOffice() && (
-                                <button
-                                    onClick={() => setIsForwardOtherOfficeModalOpen(true)}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                                >
-                                    Forward to other office
-                                </button>
+                                <>
+                                    <button
+                                        onClick={() => setIsForwardOtherOfficeModalOpen(true)}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                                    >
+                                        Forward to other office
+                                    </button>
+                                </>
                             )}
                         </div>
 
@@ -733,9 +731,14 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                             <div className="flex-1 bg-gray-50 rounded-xl p-4 border border-gray-100">
                                                 <div className="flex items-center justify-between">
                                                     <p className="text-base font-medium text-gray-900">
-                                                        {recipient.user.first_name} {recipient.user.last_name}
-                                                        {recipient.forwarded_by && (
-                                                            <span className="ml-2 text-xs text-gray-500">(Sent through: {recipient.forwarded_by.first_name} {recipient.forwarded_by.last_name})</span>
+                                                        {recipient.forwarded_by ? (
+                                                            <span>
+                                                                {recipient.forwarded_by.first_name} {recipient.forwarded_by.last_name} → {recipient.user.first_name} {recipient.user.last_name}
+                                                            </span>
+                                                        ) : (
+                                                            <span>
+                                                                {recipient.user.first_name} {recipient.user.last_name}
+                                                            </span>
                                                         )}
                                                     </p>
                                                     <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(recipient.status)}`}>
@@ -747,7 +750,6 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                                 )}
                                                 {recipient.responded_at && (
                                                     <div className="text-sm text-gray-600 mt-2">
-                                                        {/* display date and time in the format of dd/mm/yyyy hh:mm AM/PM */}
                                                         Responded: {new Date(recipient.responded_at).toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
                                                     </div>
                                                 )}
