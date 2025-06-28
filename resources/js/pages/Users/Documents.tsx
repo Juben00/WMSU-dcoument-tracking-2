@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 
 interface Document {
     id: number;
-    title: string;
+    subject: string;
     document_type: 'special_order' | 'order' | 'memorandum' | 'for_info';
     status: string;
     created_at: string;
@@ -95,7 +95,7 @@ const Documents = ({ documents, auth }: Props) => {
         // Filter by search
         if (search.trim()) {
             filtered = filtered.filter(doc =>
-                doc.title.toLowerCase().includes(search.toLowerCase()) ||
+                doc.subject.toLowerCase().includes(search.toLowerCase()) ||
                 doc.id.toString().includes(search) ||
                 (doc.barcode_value && doc.barcode_value.toLowerCase().includes(search.toLowerCase()))
             );
@@ -134,7 +134,7 @@ const Documents = ({ documents, auth }: Props) => {
                     className="transition hover:bg-gray-50 group"
                 >
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">#{doc.id}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{doc.title}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{doc.subject}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 inline-flex items-center text-xs leading-5 font-semibold rounded-full ${getDocumentTypeColor(doc.document_type)}`}>
                             {getDocumentTypeDisplayName(doc.document_type)}
@@ -237,7 +237,7 @@ const Documents = ({ documents, auth }: Props) => {
                         <Input
                             type="text"
                             className="block w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 text-sm"
-                            placeholder="Search by title, ID, or barcode value..."
+                            placeholder="Search by Subject, ID, or barcode value..."
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                         />
@@ -313,7 +313,7 @@ const Documents = ({ documents, auth }: Props) => {
                         <thead className="bg-gray-50">
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Document ID</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Submitted</th>

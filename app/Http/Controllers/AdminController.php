@@ -146,7 +146,7 @@ class AdminController extends Controller
             ->map(function($activity) {
                 return [
                     'id' => $activity->id,
-                    'document_title' => $activity->document->title ?? 'Untitled',
+                    'document_title' => $activity->document->subject ?? 'Untitled',
                     'document_owner' => $activity->document->owner->first_name . ' ' . $activity->document->owner->last_name,
                     'recipient' => $activity->user->first_name . ' ' . $activity->user->last_name,
                     'status' => $activity->status,
@@ -272,7 +272,7 @@ class AdminController extends Controller
             ->map(function($document) {
                 return [
                     'id' => $document->id,
-                    'title' => $document->title,
+                    'subject' => $document->subject,
                     'description' => $document->description,
                     'status' => $document->status,
                     'is_public' => $document->is_public,

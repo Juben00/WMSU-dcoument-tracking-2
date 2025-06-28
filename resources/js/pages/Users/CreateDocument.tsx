@@ -15,7 +15,7 @@ import { MultiSelect } from '@/components/ui/multi-select';
 import Swal from 'sweetalert2';
 
 type FormData = {
-    title: string;
+    subject: string;
     document_type: 'special_order' | 'order' | 'memorandum' | 'for_info';
     description: string;
     files: File[];
@@ -53,7 +53,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
     const [sendToId, setSendToId] = useState<number | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { data, setData, post, processing, errors } = useForm<FormData>({
-        title: '',
+        subject: '',
         document_type: 'for_info',
         description: '',
         files: [],
@@ -98,6 +98,12 @@ const CreateDocument = ({ auth, departments }: Props) => {
                 },
                 onError: () => {
                     setIsSubmitting(false);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Failed to Submit Document',
+                        text: 'Failed to submit document. Please try again.',
+                        confirmButtonColor: '#b91c1c',
+                    });
                 }
             });
         } else {
@@ -113,7 +119,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
             }
 
             const formData = new FormData();
-            formData.append('title', data.title);
+            formData.append('subject', data.subject);
             formData.append('document_type', data.document_type);
             formData.append('description', data.description);
             formData.append('status', 'pending');
@@ -139,6 +145,12 @@ const CreateDocument = ({ auth, departments }: Props) => {
                 },
                 onError: () => {
                     setIsSubmitting(false);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Failed to Submit Document',
+                        text: 'Failed to submit document. Please try again.',
+                        confirmButtonColor: '#b91c1c',
+                    });
                 }
             });
         }
@@ -204,19 +216,19 @@ const CreateDocument = ({ auth, departments }: Props) => {
                         <form id="create-doc-form" onSubmit={handleSubmit} className="space-y-8">
                             <div className="grid grid-cols-1 gap-8">
                                 <div>
-                                    <label htmlFor="title" className="block text-sm font-semibold text-gray-700 mb-1">
-                                        Title <span className="text-red-500">*</span>
+                                    <label htmlFor="subject" className="block text-sm font-semibold text-gray-700 mb-1">
+                                        Subject <span className="text-red-500">*</span>
                                     </label>
                                     <Input
                                         type="text"
-                                        name="title"
-                                        id="title"
+                                        name="subject"
+                                        id="subject"
                                         required
                                         className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition"
-                                        value={data.title}
-                                        onChange={e => setData('title', e.target.value)}
+                                        value={data.subject}
+                                        onChange={e => setData('subject', e.target.value)}
                                     />
-                                    {errors.title && <div className="text-red-500 text-xs mt-1">{errors.title}</div>}
+                                    {errors.subject && <div className="text-red-500 text-xs mt-1">{errors.subject}</div>}
                                 </div>
 
                                 <div>

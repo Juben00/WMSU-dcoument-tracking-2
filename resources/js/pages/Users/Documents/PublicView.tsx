@@ -30,7 +30,7 @@ interface DocumentRecipient {
 
 interface Document {
     id: number;
-    title: string;
+    subject: string;
     description?: string;
     status: string;
     created_at: string;
@@ -97,8 +97,8 @@ const PublicView: React.FC<Props> = ({ document }) => {
                         </div>
                         <dl className="space-y-5">
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Title</dt>
-                                <dd className="mt-1 text-base text-gray-900 font-semibold">{document.title}</dd>
+                                <dt className="text-sm font-medium text-gray-500">Subject</dt>
+                                <dd className="mt-1 text-base text-gray-900 font-semibold">{document.subject}</dd>
                             </div>
                             <div>
                                 <dt className="text-sm font-medium text-gray-500">Status</dt>

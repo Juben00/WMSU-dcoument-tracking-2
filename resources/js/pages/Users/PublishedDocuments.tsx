@@ -26,7 +26,7 @@ import Swal from 'sweetalert2';
 
 interface PublishedDocument {
     id: number;
-    title: string;
+    subject: string;
     description?: string;
     status: string;
     is_public: boolean;
@@ -70,7 +70,7 @@ export default function PublishedDocuments({ publishedDocuments, auth }: Props) 
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
     const filteredDocuments = publishedDocuments.filter(doc =>
-        doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        doc.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (doc.description && doc.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (doc.barcode_value && doc.barcode_value.toLowerCase().includes(searchTerm.toLowerCase())) ||
         doc.owner_name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -79,7 +79,7 @@ export default function PublishedDocuments({ publishedDocuments, auth }: Props) 
     const handleUnpublishDocument = (document: PublishedDocument) => {
         Swal.fire({
             title: 'Are you sure?',
-            text: `Are you sure you want to unpublish "${document.title}"? This will remove it from public access.`,
+            text: `Are you sure you want to unpublish "${document.subject}"? This will remove it from public access.`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
@@ -158,7 +158,7 @@ export default function PublishedDocuments({ publishedDocuments, auth }: Props) 
                     <CardHeader>
                         <CardTitle>Search Documents</CardTitle>
                         <CardDescription>
-                            Find specific published documents by title, description, barcode value, or owner name
+                            Find specific published documents by Subject, description, barcode value, or owner name
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -167,7 +167,7 @@ export default function PublishedDocuments({ publishedDocuments, auth }: Props) 
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                                     <Input
-                                        placeholder="Search by title, description, barcode value, or owner name..."
+                                        placeholder="Search by Subject, description, barcode value, or owner name..."
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                         className="pl-10"
@@ -205,7 +205,7 @@ export default function PublishedDocuments({ publishedDocuments, auth }: Props) 
                                         <TableRow key={document.id}>
                                             <TableCell>
                                                 <div>
-                                                    <div className="font-medium">{document.title}</div>
+                                                    <div className="font-medium">{document.subject}</div>
                                                     {document.description && (
                                                         <div className="text-sm text-muted-foreground truncate max-w-xs">
                                                             {document.description}
@@ -303,8 +303,8 @@ export default function PublishedDocuments({ publishedDocuments, auth }: Props) 
                         {selectedDocument && (
                             <div className="space-y-6">
                                 <div>
-                                    <Label className="text-sm font-medium text-muted-foreground">Title</Label>
-                                    <p className="text-lg font-semibold">{selectedDocument.title}</p>
+                                    <Label className="text-sm font-medium text-muted-foreground">Subject</Label>
+                                    <p className="text-lg font-semibold">{selectedDocument.subject}</p>
                                 </div>
 
                                 {selectedDocument.description && (

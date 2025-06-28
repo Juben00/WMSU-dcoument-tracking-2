@@ -470,7 +470,7 @@ class DocumentController extends Controller
 
         if ($search) {
             $query->where(function($q) use ($search) {
-                $q->where('title', 'like', '%' . $search . '%')
+                $q->where('subject', 'like', '%' . $search . '%')
                   ->orWhere('description', 'like', '%' . $search . '%')
                   ->orWhere('barcode_value', 'like', '%' . $search . '%')
                   ->orWhere('public_token', 'like', '%' . $search . '%')
@@ -486,7 +486,7 @@ class DocumentController extends Controller
             ->map(function($document) {
                 return [
                     'id' => $document->id,
-                    'title' => $document->title,
+                    'subject' => $document->subject,
                     'description' => $document->description,
                     'status' => $document->status,
                     'is_public' => $document->is_public,

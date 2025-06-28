@@ -16,7 +16,7 @@ class Document extends Model
 
     protected $fillable = [
         'owner_id',
-        'title',
+        'subject',
         'document_type',
         'status',
         'description',

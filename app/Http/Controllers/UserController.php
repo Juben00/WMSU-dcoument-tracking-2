@@ -103,13 +103,13 @@ class UserController extends Controller
     {
         // Get documents where user is the owner
         $ownedDocuments = Document::where('owner_id', Auth::id())
-            ->select('id', 'title', 'document_type', 'status', 'created_at', 'owner_id', 'is_public', 'barcode_value')
+            ->select('id', 'subject', 'document_type', 'status', 'created_at', 'owner_id', 'is_public', 'barcode_value')
             ->get();
 
         // Get documents where user is a recipient
         $receivedDocuments = Document::whereHas('recipients', function($query) {
             $query->where('user_id', Auth::id());
-        })->select('id', 'title', 'document_type', 'status', 'created_at', 'owner_id', 'is_public', 'barcode_value')->get();
+        })->select('id', 'subject', 'document_type', 'status', 'created_at', 'owner_id', 'is_public', 'barcode_value')->get();
 
         // Merge the collections
         $documents = $ownedDocuments->concat($receivedDocuments);
@@ -202,7 +202,7 @@ class UserController extends Controller
     public function sendDocument(Request $request)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
+            'subject' => 'required|string|max:255',
             'document_type' => 'required|in:special_order,order,memorandum,for_info',
             'description' => 'nullable|string',
             'files' => 'required|array',
@@ -215,7 +215,7 @@ class UserController extends Controller
         // Create the document
         $document = Document::create([
             'owner_id' => Auth::id(),
-            'title' => $validated['title'],
+            'subject' => $validated['subject'],
             'document_type' => $validated['document_type'],
             'description' => $validated['description'],
             'status' => 'pending'
@@ -300,7 +300,7 @@ class UserController extends Controller
         // $document = Auth::user()->documents()->findOrFail($document);
 
         // $validated = $request->validate([
-        //     'title' => 'required|string|max:255',
+        //     'subject' => 'required|string|max:255',
         //     'description' => 'nullable|string',
         //     'file' => 'nullable|file|max:10240', // 10MB max
         //     'type' => 'required|string|in:personal,academic,professional',
@@ -401,7 +401,7 @@ class UserController extends Controller
             ->map(function($activity) {
                 return [
                     'document_id' => $activity->document_id,
-                    'title' => $activity->document->title ?? 'Untitled',
+                    'subject' => $activity->document->subject ?? 'Untitled',
                     'status' => $activity->status,
                     'responded_at' => $activity->responded_at,
                     'comments' => $activity->comments,
@@ -430,7 +430,7 @@ class UserController extends Controller
             ->map(function($document) {
                 return [
                     'id' => $document->id,
-                    'title' => $document->title,
+                    'subject' => $document->subject,
                     'description' => $document->description,
                     'status' => $document->status,
                     'is_public' => $document->is_public,
@@ -456,7 +456,7 @@ class UserController extends Controller
         ->map(function($document) {
             return [
                 'id' => $document->id,
-                'title' => $document->title,
+                'subject' => $document->subject,
                 'description' => $document->description,
                 'status' => $document->status,
                 'is_public' => $document->is_public,

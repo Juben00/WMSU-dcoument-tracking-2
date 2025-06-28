@@ -51,7 +51,7 @@ interface DocumentRecipient {
 
 interface Document {
     id: number;
-    title: string;
+    subject: string;
     document_type: 'special_order' | 'order' | 'memorandum' | 'for_info';
     description?: string;
     status: string;
@@ -385,8 +385,8 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                     </>
                                 )}
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Title</dt>
-                                    <dd className="mt-1 text-base text-gray-900 font-semibold">{document.title}</dd>
+                                    <dt className="text-sm font-medium text-gray-500">Subject</dt>
+                                    <dd className="mt-1 text-base text-gray-900 font-semibold">{document.subject}</dd>
                                 </div>
                                 <div>
                                     <dt className="text-sm font-medium text-gray-500">Status</dt>
