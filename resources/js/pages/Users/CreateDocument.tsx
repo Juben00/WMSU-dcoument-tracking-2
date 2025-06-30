@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { MultiSelect } from '@/components/ui/multi-select';
 import Swal from 'sweetalert2';
+import { FileText, FileCheck, Users, Hash, User as UserIcon, Building, Calendar, Upload, ArrowLeft } from 'lucide-react';
 
 type FormData = {
     subject: string;
@@ -238,193 +239,258 @@ const CreateDocument = ({ auth, departments }: Props) => {
         { value: 'for_info', label: 'For Info' },
     ];
 
+    const getDocumentTypeColor = (documentType: string) => {
+        switch (documentType) {
+            case 'special_order':
+                return 'bg-purple-100 text-purple-800 border-purple-200';
+            case 'order':
+                return 'bg-blue-100 text-blue-800 border-blue-200';
+            case 'memorandum':
+                return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+            case 'for_info':
+                return 'bg-gray-100 text-gray-800 border-gray-200';
+            default:
+                return 'bg-gray-100 text-gray-800 border-gray-200';
+        }
+    };
+
     return (
         <>
             <Navbar />
-            <div className="min-h-screen bg-gradient-to-br from-red-100 via-white to-gray-100 py-12 px-2">
-                <div className="max-w-3xl mx-auto">
-                    <div className="mb-8 text-center">
-                        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight mb-2">Create New Document</h1>
-                        <p className="text-gray-500 text-base">Fill out the form below to send a new document to one or more offices.</p>
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    {/* Header Section */}
+                    <div className="mb-8">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-lg">
+                                    <FileText className="w-8 h-8 text-white" />
+                                </div>
+                                <div>
+                                    <h1 className="text-3xl font-bold text-gray-900">Create New Document</h1>
+                                    <p className="text-gray-600 mt-1">Fill out the form below to send a new document</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => window.history.back()}
+                                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-gray-700 hover:text-gray-900 font-semibold rounded-lg border border-gray-200 hover:border-gray-300 shadow-sm hover:shadow-md transition-all duration-200"
+                            >
+                                <ArrowLeft className="w-4 h-4" />
+                                Back
+                            </button>
+                        </div>
                     </div>
 
-                    <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-                        <form id="create-doc-form" onSubmit={handleSubmit} className="space-y-8">
-                            <div className="grid grid-cols-1 gap-8">
-                                <div>
-                                    <label htmlFor="subject" className="block text-sm font-semibold text-gray-700 mb-1">
-                                        Subject <span className="text-red-500">*</span>
-                                    </label>
+                    {/* Document Information Card */}
+                    <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
+                        <div className="p-8">
+                            <div className="flex items-center gap-3 mb-8">
+                                <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
+                                    <FileCheck className="w-5 h-5 text-white" />
+                                </div>
+                                <h2 className="text-2xl font-bold text-gray-900">Document Information</h2>
+                            </div>
+
+                            <form id="create-doc-form" onSubmit={handleSubmit} className="space-y-8">
+                                {/* Document Type and Order Number */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                        <label htmlFor="document_type" className="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
+                                            Document Type <span className="text-red-500">*</span>
+                                        </label>
+                                        <Select
+                                            value={data.document_type}
+                                            onValueChange={(value: 'special_order' | 'order' | 'memorandum' | 'for_info') =>
+                                                setData('document_type', value)
+                                            }
+                                        >
+                                            <SelectTrigger className="mt-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition truncate bg-white">
+                                                <SelectValue placeholder="Select document type" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {documentTypeOptions.map((option) => (
+                                                    <SelectItem key={option.value} value={option.value}>
+                                                        {option.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        {errors.document_type && <div className="text-red-500 text-xs mt-1">{errors.document_type}</div>}
+                                    </div>
+
+                                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                        <label htmlFor="order_number" className="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
+                                            Order Number <span className="text-red-500">*</span>
+                                        </label>
+                                        <Input
+                                            type="text"
+                                            name="order_number"
+                                            id="order_number"
+                                            required
+                                            className="mt-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition bg-white"
+                                            value={data.order_number}
+                                            onChange={e => setData('order_number', e.target.value)}
+                                        />
+                                        {errors.order_number && <div className="text-red-500 text-xs mt-1">{errors.order_number}</div>}
+                                    </div>
+                                </div>
+
+                                {/* Subject */}
+                                <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                    <label htmlFor="subject" className="text-sm font-semibold text-gray-600 mb-2">Subject <span className="text-red-500">*</span></label>
                                     <Input
                                         type="text"
                                         name="subject"
                                         id="subject"
                                         required
-                                        className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition"
+                                        className="mt-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition bg-white"
                                         value={data.subject}
                                         onChange={e => setData('subject', e.target.value)}
                                     />
                                     {errors.subject && <div className="text-red-500 text-xs mt-1">{errors.subject}</div>}
                                 </div>
-                                <div>
-                                    <label htmlFor="order_number" className="block text-sm font-semibold text-gray-700 mb-1">
-                                        Order Number <span className="text-red-500">*</span>
-                                    </label>
-                                    <Input
-                                        type="text"
-                                        name="order_number"
-                                        id="order_number"
-                                        required
-                                        className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition"
-                                        value={data.order_number}
-                                        onChange={e => setData('order_number', e.target.value)}
-                                    />
-                                    {errors.order_number && <div className="text-red-500 text-xs mt-1">{errors.order_number}</div>}
-                                </div>
 
-                                <div>
-                                    <label htmlFor="document_type" className="block text-sm font-semibold text-gray-700 mb-1">
-                                        Document Type <span className="text-red-500">*</span>
-                                    </label>
-                                    <Select
-                                        value={data.document_type}
-                                        onValueChange={(value: 'special_order' | 'order' | 'memorandum' | 'for_info') =>
-                                            setData('document_type', value)
-                                        }
-                                    >
-                                        <SelectTrigger className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition truncate">
-                                            <SelectValue placeholder="Select document type" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {documentTypeOptions.map((option) => (
-                                                <SelectItem key={option.value} value={option.value}>
-                                                    {option.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    {errors.document_type && <div className="text-red-500 text-xs mt-1">{errors.document_type}</div>}
-                                </div>
-
-                                <div>
-                                    <label htmlFor="description" className="block text-sm font-semibold text-gray-700 mb-1">
-                                        Description <span className="text-red-500">*</span>
-                                    </label>
+                                {/* Description */}
+                                <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                    <label htmlFor="description" className="text-sm font-semibold text-gray-600 mb-2">Description <span className="text-red-500">*</span></label>
                                     <Textarea
                                         name="description"
                                         id="description"
                                         rows={4}
-                                        className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition"
+                                        className="mt-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition bg-white"
                                         value={data.description}
                                         onChange={e => setData('description', e.target.value)}
                                     />
                                     {errors.description && <div className="text-red-500 text-xs mt-1">{errors.description}</div>}
                                 </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    {/* Recipients Section */}
+                    <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
+                        <div className="p-8">
+                            <div className="flex items-center gap-3 mb-8">
+                                <div className="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg">
+                                    <Users className="w-5 h-5 text-white" />
+                                </div>
+                                <h2 className="text-2xl font-bold text-gray-900">Recipients</h2>
                             </div>
 
-                            <div className="grid grid-cols-1  gap-8">
-                                <div>
-                                    {data.document_type === 'for_info' ? (
-                                        <>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                                Send To <span className="text-red-500">*</span>
-                                            </label>
-                                            <MultiSelect
-                                                options={recipientOptions}
-                                                selected={data.recipient_ids}
-                                                onChange={(selected) => {
-                                                    setData('recipient_ids', selected);
-                                                    setData('initial_recipient_id', selected[0] ?? null);
-                                                }}
-                                                placeholder="Select recipients"
-                                            />
-                                            {errors.recipient_ids && (
-                                                <div className="text-red-500 text-xs mt-1">{errors.recipient_ids}</div>
-                                            )}
-                                        </>
-                                    ) : (
-                                        <div className='grid grid-cols-1 gap-8'>
-                                            <div className='grid grid-cols-1'>
-                                                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                                    Send To <span className="text-red-500">*</span>
-                                                </label>
-                                                <Select
-                                                    value={sendToId ? sendToId.toString() : ''}
-                                                    onValueChange={(value) => {
-                                                        setSendToId(value ? parseInt(value) : null);
-                                                    }}
-                                                >
-                                                    <SelectTrigger className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition truncate">
-                                                        <SelectValue placeholder="Select main recipient" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {recipientOptions.map((option) => (
-                                                            <SelectItem key={option.value} value={option.value.toString()}>
-                                                                <span>{option.label}</span>
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                                {!sendToId && (
-                                                    <div className="text-red-500 text-xs mt-1">Main recipient is required.</div>
-                                                )}
-                                            </div>
-
-                                            <div className='grid grid-cols-1'>
-                                                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                                    Send Through <span className="text-gray-400">(optional)</span>
-                                                </label>
-                                                <MultiSelect
-                                                    options={recipientOptions}
-                                                    selected={data.through_user_ids}
-                                                    onChange={(selected) => {
-                                                        setData('through_user_ids', selected);
-                                                    }}
-                                                    placeholder="Select optional through users"
-                                                />
-                                                <p className="text-xs text-gray-500 mt-1">
-                                                    Document will be sent to the first selected through user, then to the main recipient.
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
-
+                            {data.document_type === 'for_info' ? (
+                                <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                                    <label className="text-sm font-semibold text-blue-700 mb-2 flex items-center gap-2">
+                                        <Users className="w-4 h-4" />
+                                        Send To <span className="text-red-500">*</span>
+                                    </label>
+                                    <MultiSelect
+                                        options={recipientOptions}
+                                        selected={data.recipient_ids}
+                                        onChange={(selected) => {
+                                            setData('recipient_ids', selected);
+                                            setData('initial_recipient_id', selected[0] ?? null);
+                                        }}
+                                        placeholder="Select recipients"
+                                    />
                                     {errors.recipient_ids && (
                                         <div className="text-red-500 text-xs mt-1">{errors.recipient_ids}</div>
                                     )}
                                 </div>
+                            ) : (
+                                <div className="space-y-6">
+                                    <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                                        <label className="text-sm font-semibold text-blue-700 mb-2 flex items-center gap-2">
+                                            <UserIcon className="w-4 h-4" />
+                                            Send To <span className="text-red-500">*</span>
+                                        </label>
+                                        <Select
+                                            value={sendToId ? sendToId.toString() : ''}
+                                            onValueChange={(value) => {
+                                                setSendToId(value ? parseInt(value) : null);
+                                            }}
+                                        >
+                                            <SelectTrigger className="mt-2 block w-full rounded-lg border-blue-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition truncate bg-white">
+                                                <SelectValue placeholder="Select main recipient" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {recipientOptions.map((option) => (
+                                                    <SelectItem key={option.value} value={option.value.toString()}>
+                                                        <span>{option.label}</span>
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        {!sendToId && (
+                                            <div className="text-red-500 text-xs mt-1">Main recipient is required.</div>
+                                        )}
+                                    </div>
 
-                                <div>
-                                    <label htmlFor="files" className="block text-sm font-semibold text-gray-700 mb-1">
-                                        Upload Documents <span className="text-red-500">*</span>
-                                    </label>
-                                    <Input
-                                        type="file"
-                                        name="files"
-                                        id="files"
-                                        multiple
-                                        required
-                                        className="mt-1 block w-full text-sm text-gray-500 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-200 transition"
-                                        onChange={handleFileChange}
-                                    />
-                                    {errors.files && <div className="text-red-500 text-xs mt-1">{errors.files}</div>}
+                                    <div className="bg-amber-50 rounded-xl p-4 border border-amber-100">
+                                        <label className="text-sm font-semibold text-amber-700 mb-2 flex items-center gap-2">
+                                            <Users className="w-4 h-4" />
+                                            Send Through <span className="text-gray-400">(optional)</span>
+                                        </label>
+                                        <MultiSelect
+                                            options={recipientOptions}
+                                            selected={data.through_user_ids}
+                                            onChange={(selected) => {
+                                                setData('through_user_ids', selected);
+                                            }}
+                                            placeholder="Select optional through users"
+                                        />
+                                        <p className="text-xs text-amber-600 mt-2">
+                                            Document will be sent to the first selected through user, then to the main recipient.
+                                        </p>
+                                    </div>
                                 </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Files Section */}
+                    <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
+                        <div className="p-8">
+                            <div className="flex items-center gap-3 mb-8">
+                                <div className="p-2 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg">
+                                    <Upload className="w-5 h-5 text-white" />
+                                </div>
+                                <h2 className="text-2xl font-bold text-gray-900">Upload Documents</h2>
+                            </div>
+
+                            <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                <label htmlFor="files" className="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
+                                    <Upload className="w-4 h-4" />
+                                    Select Files <span className="text-red-500">*</span>
+                                </label>
+                                <Input
+                                    type="file"
+                                    name="files"
+                                    id="files"
+                                    multiple
+                                    required
+                                    className="mt-2 block w-full text-sm text-gray-500 file:px-4 file:py-2 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-200 transition bg-white"
+                                    onChange={handleFileChange}
+                                />
+                                {errors.files && <div className="text-red-500 text-xs mt-1">{errors.files}</div>}
                             </div>
 
                             {/* File Previews */}
                             {filePreviews.length > 0 && (
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">File Previews</label>
+                                <div className="mt-6">
+                                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                        File Previews
+                                    </h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                                         {filePreviews.map((preview, index) => (
                                             preview && (
-                                                <div key={index} className="relative group rounded-lg overflow-hidden shadow border border-gray-200 bg-gray-50">
+                                                <div key={index} className="relative group rounded-xl overflow-hidden shadow-lg border border-gray-200 bg-white hover:shadow-xl transition-all duration-200">
                                                     <img
                                                         src={preview}
                                                         alt={`Preview ${index + 1}`}
-                                                        className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-200"
+                                                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-200"
                                                     />
-                                                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white px-3 py-2 text-xs truncate">
+                                                    <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white px-4 py-3 text-sm font-medium">
                                                         {data.files[index]?.name}
                                                     </div>
                                                 </div>
@@ -433,25 +499,38 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                     </div>
                                 </div>
                             )}
+                        </div>
+                    </div>
 
-                            <div className="flex flex-col sm:flex-row justify-end gap-4 pt-4">
+                    {/* Actions Section */}
+                    <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
+                        <div className="p-8">
+                            <div className="flex items-center gap-3 mb-8">
+                                <div className="p-2 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg">
+                                    <FileCheck className="w-5 h-5 text-white" />
+                                </div>
+                                <h2 className="text-2xl font-bold text-gray-900">Submit Document</h2>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row justify-end gap-4">
                                 <button
                                     type="button"
                                     onClick={() => window.history.back()}
                                     disabled={isSubmitting || processing}
-                                    className="px-5 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="px-6 py-3 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
+                                    form="create-doc-form"
                                     disabled={isSubmitting || processing}
-                                    className="px-6 py-2 rounded-lg shadow text-sm font-semibold text-white bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center transition"
+                                    className="px-8 py-3 rounded-lg shadow-lg text-sm font-semibold text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center transition-all duration-200 transform hover:scale-105"
                                 >
                                     {isSubmitting || processing ? (<><span>Submitting...</span><Spinner /></>) : 'Submit Document'}
                                 </button>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
             </div>

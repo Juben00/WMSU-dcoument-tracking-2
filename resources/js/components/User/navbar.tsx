@@ -5,6 +5,7 @@ import WmsuLogo from '../WmsuLogo';
 import { NavMain } from '../nav-main';
 import { usePage } from '@inertiajs/react';
 import { PageProps as InertiaPageProps } from '@inertiajs/core';
+import { FileText, Users, User, LogOut, Building } from 'lucide-react';
 
 interface AuthUser {
     role?: string;
@@ -14,6 +15,7 @@ interface NavItem {
     label: string;
     href: string;
     method?: string;
+    icon?: React.ReactNode;
 }
 
 interface PageProps extends InertiaPageProps {
@@ -34,19 +36,23 @@ const Navbar = () => {
         {
             label: 'Dashboard',
             href: '/dashboard',
+            icon: <FileText className="w-4 h-4" />,
         },
         {
             label: 'Documents',
             href: '/documents',
+            icon: <FileText className="w-4 h-4" />,
         },
         {
             label: 'Profile',
             href: '/profile',
+            icon: <User className="w-4 h-4" />,
         },
         {
             label: 'Logout',
             href: route('logout'),
             method: 'post',
+            icon: <LogOut className="w-4 h-4" />,
         },
     ];
 
@@ -54,6 +60,7 @@ const Navbar = () => {
         {
             label: 'Departments',
             href: '/departments',
+            icon: <Building className="w-4 h-4" />,
         },
         ...NavItems,
     ];
@@ -61,33 +68,44 @@ const Navbar = () => {
     const currentNavItems = role === 'admin' ? AdminNavItems : NavItems;
 
     return (
-        <nav className="shadow-md bg-white sticky top-0 z-50">
+        <nav className="bg-white shadow-lg border-b border-gray-200 sticky top-0 z-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-16">
+                <div className="flex items-center justify-between h-20">
                     {/* Logo and Title */}
                     <div className="flex items-center">
-                        <Link href="/dashboard" className="flex items-center hover:opacity-80 transition-opacity">
-                            <WmsuLogo className="h-10 w-10 mr-3" />
-                            <span className="font-bold text-xl tracking-wide text-gray-800">WMSU DMTS</span>
+                        <Link
+                            href="/dashboard"
+                            className="flex items-center gap-4 hover:opacity-80 transition-all duration-200 group"
+                        >
+                            <div className="rounded-xl p-2 transition-all duration-200">
+                                <WmsuLogo className="h-12 w-12 text-white" />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="font-bold text-xl tracking-wide text-gray-900">WMSU DMTS</span>
+                                <span className="text-sm text-gray-600 font-medium">Document Management</span>
+                            </div>
                         </Link>
                     </div>
 
                     {/* Desktop Menu */}
-                    <div className="hidden md:flex space-x-2 items-center">
+                    <div className="hidden md:flex items-center gap-2">
                         {currentNavItems.map((item, index) => {
                             const isActive = currentUrl === item.href || (item.href !== route('logout') && currentUrl.startsWith(item.href));
+                            const isLogout = item.label === 'Logout';
+
                             return (
                                 <Link
                                     key={index}
                                     href={item.href}
                                     {...(item.method ? { method: item.method as any } : {})}
-                                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${item.label === 'Logout'
-                                        ? 'text-white bg-red-700 hover:bg-red-800'
+                                    className={`flex items-center gap-2 px-2 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${isLogout
+                                        ? 'text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 shadow-lg hover:shadow-xl transform hover:scale-105'
                                         : isActive
-                                            ? 'text-red-700 font-bold bg-red-50'
-                                            : 'text-gray-600 hover:bg-red-50 hover:text-red-700'
+                                            ? 'text-red-700 bg-gradient-to-r from-red-50 to-red-100 border border-red-200 shadow-sm'
+                                            : 'text-gray-700 hover:text-red-700 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 border border-transparent hover:border-red-200'
                                         }`}
                                 >
+                                    {item.icon}
                                     {item.label}
                                 </Link>
                             );
@@ -98,7 +116,7 @@ const Navbar = () => {
                     <div className="md:hidden flex items-center">
                         <button
                             onClick={() => setMenuOpen(!menuOpen)}
-                            className="p-2 rounded-md text-gray-600 hover:text-red-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-red-500"
+                            className="p-3 rounded-xl text-gray-600 hover:text-red-700 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200"
                             aria-expanded={menuOpen}
                             aria-controls="mobile-menu"
                             aria-label="Toggle menu"
@@ -119,23 +137,26 @@ const Navbar = () => {
             <div
                 id="mobile-menu"
                 className={`md:hidden transition-all duration-300 ease-in-out ${menuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-                    } overflow-hidden`}
+                    } overflow-hidden bg-white border-t border-gray-200`}
             >
-                <div className="px-2 pt-2 pb-3 space-y-1 bg-white shadow-lg">
+                <div className="px-4 py-6 space-y-3">
                     {currentNavItems.map((item, index) => {
                         const isActive = currentUrl === item.href || (item.href !== route('logout') && currentUrl.startsWith(item.href));
+                        const isLogout = item.label === 'Logout';
+
                         return (
                             <Link
                                 key={index}
                                 href={item.href}
                                 {...(item.method ? { method: item.method as any } : {})}
-                                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${item.label === 'Logout'
-                                    ? 'text-white bg-red-700 hover:bg-red-800'
+                                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold transition-all duration-200 ${isLogout
+                                    ? 'text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 shadow-lg'
                                     : isActive
-                                        ? 'text-red-700 font-bold bg-red-100'
-                                        : 'text-gray-600 hover:bg-red-50 hover:text-red-700'
+                                        ? 'text-red-700 bg-gradient-to-r from-red-50 to-red-100 border border-red-200'
+                                        : 'text-gray-700 hover:text-red-700 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100'
                                     }`}
                             >
+                                {item.icon}
                                 {item.label}
                             </Link>
                         );

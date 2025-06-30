@@ -10,7 +10,7 @@ interface TabsProps {
 
 const MinimalTabs: React.FC<TabsProps> = ({ tabs, current, onChange, className }) => {
     return (
-        <div className={cn("w-full max-w-2xl mx-auto", className)}>
+        <div className={cn("w-full max-w-2xl ", className)}>
             <nav className="flex space-x-12" aria-label="Tabs">
                 {tabs.map((tab, idx) => (
                     <button

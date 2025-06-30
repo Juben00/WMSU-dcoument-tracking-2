@@ -73,7 +73,7 @@ Route::middleware(['auth', 'verified', 'require_password_change'])->group(functi
     Route::delete('/users/documents/{document}', [UserController::class, 'destroyDocument'])->name('users.documents.destroy');
 
     // User's Published Documents Management
-    Route::get('/users/published-documents', [UserController::class, 'publishedDocuments'])->name('users.published-documents');
+    Route::get('/published-documents', [UserController::class, 'publishedDocuments'])->name('users.published-documents');
     Route::delete('/users/published-documents/{document}', [UserController::class, 'unpublishDocument'])->name('users.unpublish-document');
 
     // Document routes
