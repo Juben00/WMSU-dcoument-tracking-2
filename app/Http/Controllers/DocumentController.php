@@ -217,13 +217,25 @@ class DocumentController extends Controller
             abort(403, 'Unauthorized access to document');
         }
 
-        $document->load(['files', 'owner', 'recipients.user', 'recipients.forwardedBy', 'recipients.finalRecipient']);
+        $document->load(['files', 'owner.department', 'recipients.user', 'recipients.forwardedBy', 'recipients.finalRecipient']);
 
         // Get users from the same department as the current user, excluding the current user
         $users = User::where('department_id', Auth::user()->department_id)
             ->where('id', '!=', Auth::id())
             ->with('department')
             ->get();
+
+        // Initialize throughUsers as empty collection
+        $throughUsers = collect();
+
+        // Ensure all users in through_user_ids are included
+        $throughUserIds = $document->through_user_ids ?? [];
+
+        if (!empty($throughUserIds)) {
+            $throughUsers = User::whereIn('id', $throughUserIds)->with('department')->get();
+            // Merge and remove duplicates by id
+            $users = $users->merge($throughUsers)->unique('id')->values();
+        }
 
         // Get users from other departments (excluding current user's department and current user and the document owner), prioritizing 'receiver' or 'admin' roles
         $otherDepartments = Departments::where('id', '!=', Auth::user()->department_id)->get();
@@ -261,7 +273,7 @@ class DocumentController extends Controller
         $documentData['approval_chain'] = $approvalChain;
 
         // Get the final recipient information from the first recipient record
-        $firstRecipient = $document->recipients()->with('finalRecipient')->first();
+        $firstRecipient = $document->recipients()->with('finalRecipient.department')->first();
         $documentData['final_recipient'] = $firstRecipient ? $firstRecipient->finalRecipient : null;
 
         // Check if current user is a recipient and can respond
@@ -279,7 +291,8 @@ class DocumentController extends Controller
                 'user' => Auth::user()
             ],
             'users' => $users,
-            'otherDepartmentUsers' => $otherOfficeUsers
+            'otherDepartmentUsers' => $otherOfficeUsers,
+            'throughUsers' => $throughUsers
         ]);
     }
 

@@ -21,6 +21,7 @@ class Document extends Model
         'document_type',
         'status',
         'description',
+        'through_user_ids',
         'is_public',
         'public_token',
         'barcode_path',
@@ -29,6 +30,7 @@ class Document extends Model
 
     protected $casts = [
         'is_public' => 'boolean',
+        'through_user_ids' => 'array',
     ];
 
     public function owner(): BelongsTo

@@ -35,7 +35,7 @@ class UserSeeder extends Seeder
             'middle_name' => '',
             'suffix' => 'Suffix',
             'gender' => 'Male',
-            'position' => 'Position',
+            'position' => 'University President',
             'department_id' => 1,
             'role' => 'admin',
             'avatar' => 'https://ui-avatars.com/api/?name=Joe+Doe',
@@ -49,11 +49,25 @@ class UserSeeder extends Seeder
             'middle_name' => '',
             'suffix' => 'Suffix',
             'gender' => 'Female',
-            'position' => 'Position',
+            'position' => 'University Vice President',
             'department_id' => 2,
             'role' => 'admin',
             'avatar' => 'https://ui-avatars.com/api/?name=Joe+Doe',
             'email' => 'joevinansoc871@gmail.com',
+            'password' => Hash::make('password'),
+        ]);
+
+        User::factory()->create([
+            'first_name' => 'Joreen',
+            'last_name' => 'Jeay',
+            'middle_name' => '',
+            'suffix' => 'Suffix',
+            'gender' => 'Female',
+            'position' => 'University Vice President for Research and Development',
+            'department_id' => 3,
+            'role' => 'admin',
+            'avatar' => 'https://ui-avatars.com/api/?name=Joe+Doe',
+            'email' => 'joevinansoc872@gmail.com',
             'password' => Hash::make('password'),
         ]);
 
@@ -63,11 +77,11 @@ class UserSeeder extends Seeder
             'middle_name' => '',
             'suffix' => 'Suffix',
             'gender' => 'Male',
-            'position' => 'Position',
-            'department_id' => 3,
+            'position' => 'CCS Dean',
+            'department_id' => 4,
             'role' => 'admin',
             'avatar' => 'https://ui-avatars.com/api/?name=Joe+Doe',
-            'email' => 'joevinansoc872@gmail.com',
+            'email' => 'joevinansoc873@gmail.com',
             'password' => Hash::make('password'),
         ]);
     }

@@ -26,6 +26,15 @@ interface ForwardModalProps {
     processing: boolean;
     users: User[];
     documentId: number;
+    nextThroughUser?: {
+        user: {
+            id: number;
+            first_name: string;
+            last_name: string;
+            department_id: number;
+        };
+        id: number;
+    } | null;
 }
 
 interface FormData {
@@ -46,7 +55,8 @@ const ForwardModal: React.FC<ForwardModalProps> = ({
     onClose,
     processing,
     users,
-    documentId
+    documentId,
+    nextThroughUser
 }) => {
     const [selectedUser, setSelectedUser] = useState<string>('');
     const [comments, setComments] = useState('');
@@ -190,8 +200,11 @@ const ForwardModal: React.FC<ForwardModalProps> = ({
                 }
             });
             setFiles([]);
+        } else if (nextThroughUser) {
+            // Pre-select the next through user if available
+            setSelectedUser(nextThroughUser.user.id.toString());
         }
-    }, [isOpen, reset]);
+    }, [isOpen, reset, nextThroughUser]);
 
     // Cleanup preview URLs when component unmounts
     useEffect(() => {

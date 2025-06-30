@@ -28,6 +28,13 @@ class DepartmentsSeeder extends Seeder
         ]);
 
         Departments::create([
+            'name' => 'Office of the Vice President for Research and Development',
+            'code' => 'OVP-R&D',
+            'description' => 'Office of the Vice President for Research and Development',
+            'type' => 'office',
+        ]);
+
+        Departments::create([
             'name' => 'College of Computing Studies',
             'code' => 'CCS',
             'description' => 'College of Computing Studies',

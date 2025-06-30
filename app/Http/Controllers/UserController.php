@@ -204,14 +204,16 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'subject' => 'required|string|max:255',
-            'order_number' => 'required|string|max:255',
+            'order_number' => 'required|string|max:255|unique:documents,order_number',
             'document_type' => 'required|in:special_order,order,memorandum,for_info',
             'description' => 'nullable|string',
             'files' => 'required|array',
             'files.*' => 'required|file|max:10240', // 10MB max per file
             'recipient_ids' => 'required|array|min:1',
             'recipient_ids.*' => 'exists:users,id',
-            'initial_recipient_id' => 'nullable|exists:users,id'
+            'initial_recipient_id' => 'nullable|exists:users,id',
+            'through_user_ids' => 'nullable|array',
+            'through_user_ids.*' => 'exists:users,id'
         ]);
 
         // Create the document
@@ -221,7 +223,15 @@ class UserController extends Controller
             'order_number' => $validated['order_number'],
             'document_type' => $validated['document_type'],
             'description' => $validated['description'],
+            'through_user_ids' => $request->input('through_user_ids', []),
             'status' => 'pending'
+        ]);
+
+        // Log the through_user_ids for debugging
+        Log::info('Document created with through_user_ids', [
+            'document_id' => $document->id,
+            'through_user_ids' => $request->input('through_user_ids', []),
+            'document_through_user_ids' => $document->through_user_ids
         ]);
 
         // Handle multiple file uploads
@@ -260,16 +270,19 @@ class UserController extends Controller
             }
         } else {
             // For memorandum, order, special_order documents
-            $sendThroughId = $request->input('initial_recipient_id');
             $sendToId = $request->input('recipient_ids')[0];
+            $throughUserIds = $request->input('through_user_ids', []);
 
             // Get the sendtoId's office admin
             $officeAdmin = User::where('department_id', User::find($sendToId)->department_id)->where('role', 'admin')->first();
 
+            // Determine the initial recipient (first through user if any, otherwise the main recipient)
+            $initialRecipientId = !empty($throughUserIds) ? $throughUserIds[0] : $sendToId;
+
             // Always create a recipient record with the final recipient as the "send to" user
             DocumentRecipient::create([
                 'document_id' => $document->id,
-                'user_id' => $sendThroughId ? $sendThroughId : $sendToId, // Initially send to "through" user or directly to "to" user
+                'user_id' => $initialRecipientId, // Initially send to first through user or directly to main recipient
                 'final_recipient_id' => $officeAdmin->id, // Final destination is always the "send to" user
                 'status' => 'pending',
                 'sequence' => 1,

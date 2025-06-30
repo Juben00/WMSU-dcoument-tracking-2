@@ -23,6 +23,7 @@ type FormData = {
     status: 'pending' | 'in_review' | 'approved' | 'rejected' | 'returned';
     recipient_ids: number[];
     initial_recipient_id: number | null;
+    through_user_ids: number[];
 }
 
 interface Props {
@@ -50,7 +51,6 @@ const Spinner = () => (
 
 const CreateDocument = ({ auth, departments }: Props) => {
     const [filePreviews, setFilePreviews] = useState<string[]>([]);
-    const [sendThroughId, setSendThroughId] = useState<number | null>(null);
     const [sendToId, setSendToId] = useState<number | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { data, setData, post, processing, errors } = useForm<FormData>({
@@ -61,7 +61,8 @@ const CreateDocument = ({ auth, departments }: Props) => {
         files: [],
         status: 'pending',
         recipient_ids: [],
-        initial_recipient_id: null
+        initial_recipient_id: null,
+        through_user_ids: []
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -119,6 +120,18 @@ const CreateDocument = ({ auth, departments }: Props) => {
                 setIsSubmitting(false);
                 return;
             }
+
+            // Check if through users include the main recipient
+            if (data.through_user_ids.includes(sendToId)) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Invalid Selection',
+                    text: 'The main recipient cannot be selected as a through user.',
+                    confirmButtonColor: '#b91c1c',
+                });
+                setIsSubmitting(false);
+                return;
+            }
         }
 
         // Always use FormData for submission
@@ -141,8 +154,12 @@ const CreateDocument = ({ auth, departments }: Props) => {
         } else {
             // Only one recipient for these types
             formData.append('recipient_ids[0]', sendToId!.toString());
-            if (sendThroughId) {
-                formData.append('initial_recipient_id', sendThroughId.toString());
+            if (data.through_user_ids.length > 0) {
+                formData.append('initial_recipient_id', data.through_user_ids[0].toString());
+                // Add all through user IDs to the form data
+                data.through_user_ids.forEach((id, idx) => {
+                    formData.append(`through_user_ids[${idx}]`, id.toString());
+                });
             }
         }
 
@@ -329,29 +346,6 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                         <div className='grid grid-cols-1 gap-8'>
                                             <div className='grid grid-cols-1'>
                                                 <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                                    Send Through <span className="text-gray-400">(optional)</span>
-                                                </label>
-                                                <Select
-                                                    value={sendThroughId ? sendThroughId.toString() : ''}
-                                                    onValueChange={(value) => {
-                                                        setSendThroughId(value && value !== '' ? parseInt(value) : null);
-                                                    }}
-                                                >
-                                                    <SelectTrigger className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition truncate">
-                                                        <SelectValue placeholder="Select optional through user" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {recipientOptions.map((option) => (
-                                                            <SelectItem key={option.value} value={option.value.toString()}>
-                                                                <span>{option.label}</span>
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-
-                                            <div className='grid grid-cols-1'>
-                                                <label className="block text-sm font-semibold text-gray-700 mb-1">
                                                     Send To <span className="text-red-500">*</span>
                                                 </label>
                                                 <Select
@@ -374,6 +368,23 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                                 {!sendToId && (
                                                     <div className="text-red-500 text-xs mt-1">Main recipient is required.</div>
                                                 )}
+                                            </div>
+
+                                            <div className='grid grid-cols-1'>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                                    Send Through <span className="text-gray-400">(optional)</span>
+                                                </label>
+                                                <MultiSelect
+                                                    options={recipientOptions}
+                                                    selected={data.through_user_ids}
+                                                    onChange={(selected) => {
+                                                        setData('through_user_ids', selected);
+                                                    }}
+                                                    placeholder="Select optional through users"
+                                                />
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    Document will be sent to the first selected through user, then to the main recipient.
+                                                </p>
                                             </div>
                                         </div>
                                     )}
