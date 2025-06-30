@@ -15,6 +15,7 @@ use App\Models\Departments;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Log;
+use Picqer\Barcode\BarcodeGeneratorSVG;
 
 class UserController extends Controller
 {
@@ -203,6 +204,7 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'subject' => 'required|string|max:255',
+            'order_number' => 'required|string|max:255',
             'document_type' => 'required|in:special_order,order,memorandum,for_info',
             'description' => 'nullable|string',
             'files' => 'required|array',
@@ -216,6 +218,7 @@ class UserController extends Controller
         $document = Document::create([
             'owner_id' => Auth::id(),
             'subject' => $validated['subject'],
+            'order_number' => $validated['order_number'],
             'document_type' => $validated['document_type'],
             'description' => $validated['description'],
             'status' => 'pending'
@@ -275,6 +278,31 @@ class UserController extends Controller
                 'forwarded_by' => null,
             ]);
         }
+
+         // Generate barcode at the moment the document is sent
+        $currentUser = Auth::user();
+        $department = $currentUser->department;
+        $departmentCode = $department ? $department->code : 'NOCODE';
+        $timestamp = now()->format('YmdHis'); // Format: YYYYMMDDHHMMSS
+        $userId = $currentUser->id;
+
+        // Generate unique barcode value: Department Code + Timestamp + User ID
+        $barcodeValue = $departmentCode . $timestamp . $userId;
+
+        // Generate barcode SVG
+        $generator = new BarcodeGeneratorSVG();
+        $barcodeSvg = $generator->getBarcode($barcodeValue, $generator::TYPE_CODE_128);
+
+        // Save SVG to storage
+        $barcodePath = 'barcodes/document_' . $document->id . '_' . $barcodeValue . '.svg';
+        Storage::disk('public')->put($barcodePath, $barcodeSvg);
+
+        // Save to document
+        $document->update([
+            'barcode_path' => $barcodePath,
+            'barcode_value' => $barcodeValue,
+        ]);
+
 
         return redirect()->route('users.documents')->with('success', 'Document sent successfully.');
     }

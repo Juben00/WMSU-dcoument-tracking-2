@@ -17,29 +17,6 @@ use App\Models\Departments;
 
 class DocumentController extends Controller
 {
-    public function sendToRecipients(Request $request, Document $document)
-    {
-        $request->validate([
-            'recipient_ids' => 'required|array',
-            'recipient_ids.*' => 'exists:users,id',
-            'initial_recipient_id' => 'required|exists:users,id'
-        ]);
-
-        // Create the initial recipient
-        DocumentRecipient::create([
-            'document_id' => $document->id,
-            'user_id' => $request->initial_recipient_id,
-            'status' => 'pending',
-            'sequence' => 1,
-            'is_active' => true
-        ]);
-
-        $document->update(['status' => 'pending']);
-
-        return response()->json([
-            'message' => 'Document sent to initial recipient successfully'
-        ]);
-    }
 
     public function forwardDocument(Request $request, Document $document)
     {
@@ -127,7 +104,7 @@ class DocumentController extends Controller
     {
         $request->validate([
             'status' => 'required|in:approved,rejected,returned',
-            'comments' => 'required|string',
+            'comments' => 'nullable|string|max:1000',
             'attachment_files.*' => 'nullable|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,jpg,jpeg,png,gif', // 10MB max per file
             'is_final_approver' => 'boolean'
         ]);
@@ -406,30 +383,12 @@ class DocumentController extends Controller
         // Generate public URL
         $publicUrl = route('documents.public_view', ['public_token' => $publicToken], false);
 
-        // Get current user and department information
-        $currentUser = Auth::user();
-        $department = $currentUser->department;
-        $departmentCode = $department ? $department->code : 'NOCODE';
-        $timestamp = now()->format('YmdHis'); // Format: YYYYMMDDHHMMSS
-        $userId = $currentUser->id;
-
-        // Generate unique barcode value: Department Code + Timestamp + User ID
-        $barcodeValue = $departmentCode . $timestamp . $userId;
-
-        // Generate barcode SVG
-        $generator = new BarcodeGeneratorSVG();
-        $barcodeSvg = $generator->getBarcode($barcodeValue, $generator::TYPE_CODE_128);
-
-        // Save SVG to storage
-        $barcodePath = 'barcodes/document_' . $document->id . '_' . $publicToken . '.svg';
-        Storage::disk('public')->put($barcodePath, $barcodeSvg);
+        // No barcode generation here; it is now done when the document is sent
 
         // Update document
         $document->update([
             'is_public' => true,
             'public_token' => $publicToken,
-            'barcode_path' => $barcodePath,
-            'barcode_value' => $barcodeValue,
         ]);
 
         return redirect()->back()->with('success', 'Document published publicly.');
@@ -486,6 +445,7 @@ class DocumentController extends Controller
             ->map(function($document) {
                 return [
                     'id' => $document->id,
+                    'order_number' => $document->order_number,
                     'subject' => $document->subject,
                     'description' => $document->description,
                     'status' => $document->status,

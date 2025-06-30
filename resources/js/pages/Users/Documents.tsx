@@ -125,7 +125,7 @@ const Documents = ({ documents, auth }: Props) => {
         const filtered = filterDocs(docs);
         return filtered.length === 0 ? (
             <tr>
-                <td colSpan={7} className="py-10 text-center text-gray-400 text-lg">No documents found.</td>
+                <td colSpan={6} className="py-10 text-center text-gray-400 text-lg">No documents found.</td>
             </tr>
         ) : (
             filtered.map((doc) => (
@@ -133,7 +133,16 @@ const Documents = ({ documents, auth }: Props) => {
                     key={doc.id}
                     className="transition hover:bg-gray-50 group"
                 >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">#{doc.id}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">
+                        {doc.barcode_value ? (
+                            <div className="flex items-center gap-2">
+                                <BarChart3 className="h-4 w-4 text-gray-400" />
+                                <span className="font-mono text-xs">{doc.barcode_value}</span>
+                            </div>
+                        ) : (
+                            <span className="text-gray-400">No Barcode</span>
+                        )}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{doc.subject}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 inline-flex items-center text-xs leading-5 font-semibold rounded-full ${getDocumentTypeColor(doc.document_type)}`}>
@@ -148,16 +157,6 @@ const Documents = ({ documents, auth }: Props) => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(doc.created_at).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {doc.barcode_value ? (
-                            <div className="flex items-center gap-2">
-                                <BarChart3 className="h-4 w-4 text-gray-400" />
-                                <span className="font-mono text-xs">{doc.barcode_value}</span>
-                            </div>
-                        ) : (
-                            <span className="text-gray-400">Not Published</span>
-                        )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium flex gap-2">
                         <Link
@@ -312,12 +311,11 @@ const Documents = ({ documents, auth }: Props) => {
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Document ID</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Barcode</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Submitted</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Barcode</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>

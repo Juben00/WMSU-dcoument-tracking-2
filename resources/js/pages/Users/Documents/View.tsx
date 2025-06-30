@@ -79,6 +79,7 @@ interface Document {
         department_id: number;
     } | null;
     approval_chain: DocumentRecipient[];
+    order_number: string;
 }
 
 interface Department {
@@ -342,7 +343,7 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
 
                 {/* Document Information Card */}
                 <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-100">
-                    <div className={`p-8 ${document.is_public && document.barcode_path ? 'grid grid-cols-1 md:grid-cols-2 gap-8' : ''}`}>
+                    <div className={`p-8 ${document.is_public || document.barcode_path ? 'grid grid-cols-1 md:grid-cols-2 gap-8' : ''}`}>
                         <div>
                             <div className="flex items-center gap-2 mb-4">
                                 <FileCheck className="w-5 h-5 text-gray-500" />
@@ -385,6 +386,10 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                     </>
                                 )}
                                 <div>
+                                    <dt className="text-sm font-medium text-gray-500">Order Number</dt>
+                                    <dd className="mt-1 text-base text-gray-900 font-semibold">{document.order_number}</dd>
+                                </div>
+                                <div>
                                     <dt className="text-sm font-medium text-gray-500">Subject</dt>
                                     <dd className="mt-1 text-base text-gray-900 font-semibold">{document.subject}</dd>
                                 </div>
@@ -411,57 +416,62 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                             </dl>
                         </div>
                         {/* Barcode Section */}
-                        {document.is_public && document.barcode_path && (
-                            <div className="flex flex-col items-center justify-center bg-gray-50 rounded-xl p-6 border border-dashed border-gray-200">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <BarChart3 className="w-5 h-5 text-gray-500" />
-                                    <h2 className="text-lg font-semibold text-gray-900">Scan to View</h2>
-                                </div>
-                                <img src={`/storage/${document.barcode_path}`} alt="Barcode" className="w-64 h-32 mb-3" />
-                                <div className="text-center">
-                                    <p className="text-xs text-gray-500 mb-1">Barcode Value:</p>
-                                    <p className="text-sm font-mono text-gray-700 bg-white px-3 py-1 rounded border">
-                                        {document.barcode_value || document.public_token}
-                                    </p>
-                                </div>
-                                <span className="text-xs text-gray-500 mt-2">Scan this barcode to access the document online.</span>
+                        <div className="flex flex-col items-center justify-center bg-gray-50 rounded-xl p-6 border border-dashed border-gray-200">
+                            {document.barcode_path && (
+                                <>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <BarChart3 className="w-5 h-5 text-gray-500" />
+                                        <h2 className="text-lg font-semibold text-gray-900">Scan to View</h2>
+                                    </div>
+                                    <img src={`/storage/${document.barcode_path}`} alt="Barcode" className="w-64 h-32 mb-3" />
+                                    <div className="text-center">
+                                        <p className="text-xs text-gray-500 mb-1">Barcode Value:</p>
+                                        <p className="text-sm font-mono text-gray-700 bg-white px-3 py-1 rounded border">
+                                            {document.barcode_value || document.public_token}
+                                        </p>
+                                    </div>
+                                    <span className="text-xs text-gray-500 mt-2">Scan this barcode to access the document</span>
+                                </>
+                            )}
+                            {document.is_public && (
+                                <>
+                                    <div className="w-full mt-6 pt-6 border-t border-gray-200">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <ExternalLink className="w-4 h-4 text-gray-500" />
+                                            <h3 className="text-sm font-semibold text-gray-900">Direct Link</h3>
+                                        </div>
+                                        <div className="flex items-center gap-2 bg-white rounded-lg border border-gray-200 p-2">
+                                            <input
+                                                type="text"
+                                                value={getPublicDocumentUrl()}
+                                                readOnly
+                                                className="flex-1 text-xs font-mono text-gray-700 bg-transparent border-none outline-none"
+                                            />
+                                            <button
+                                                onClick={() => copyToClipboard(getPublicDocumentUrl())}
+                                                className="flex items-center gap-1 px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+                                            >
+                                                <Copy className="w-3 h-3" />
+                                                {copied ? 'Copied!' : 'Copy'}
+                                            </button>
+                                            <a
+                                                href={getPublicDocumentUrl()}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-1 px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
+                                            >
+                                                <ExternalLink className="w-3 h-3" />
+                                                Open
+                                            </a>
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-2 text-center">
+                                            Share this link for easy access to the document
+                                        </p>
+                                    </div>
+                                </>
+                            )}
+                        </div>
 
-                                {/* Direct Link Section */}
-                                <div className="w-full mt-6 pt-6 border-t border-gray-200">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <ExternalLink className="w-4 h-4 text-gray-500" />
-                                        <h3 className="text-sm font-semibold text-gray-900">Direct Link</h3>
-                                    </div>
-                                    <div className="flex items-center gap-2 bg-white rounded-lg border border-gray-200 p-2">
-                                        <input
-                                            type="text"
-                                            value={getPublicDocumentUrl()}
-                                            readOnly
-                                            className="flex-1 text-xs font-mono text-gray-700 bg-transparent border-none outline-none"
-                                        />
-                                        <button
-                                            onClick={() => copyToClipboard(getPublicDocumentUrl())}
-                                            className="flex items-center gap-1 px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
-                                        >
-                                            <Copy className="w-3 h-3" />
-                                            {copied ? 'Copied!' : 'Copy'}
-                                        </button>
-                                        <a
-                                            href={getPublicDocumentUrl()}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center gap-1 px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
-                                        >
-                                            <ExternalLink className="w-3 h-3" />
-                                            Open
-                                        </a>
-                                    </div>
-                                    <p className="text-xs text-gray-500 mt-2 text-center">
-                                        Share this link for easy access to the document
-                                    </p>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </div>
 

@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('documents', function (Blueprint $table) {
             $table->id();
             $table->foreignId('owner_id')->constrained('users')->onDelete('cascade');
+            $table->string('order_number');
             $table->string('subject');
             $table->enum('status', ['draft', 'pending', 'in_review', 'approved', 'rejected', 'returned', 'cancelled', 'received'])->default('draft');
             $table->text('description')->nullable();

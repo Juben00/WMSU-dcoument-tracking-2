@@ -16,6 +16,7 @@ import Swal from 'sweetalert2';
 
 type FormData = {
     subject: string;
+    order_number: string;
     document_type: 'special_order' | 'order' | 'memorandum' | 'for_info';
     description: string;
     files: File[];
@@ -54,6 +55,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { data, setData, post, processing, errors } = useForm<FormData>({
         subject: '',
+        order_number: '',
         document_type: 'for_info',
         description: '',
         files: [],
@@ -70,8 +72,30 @@ const CreateDocument = ({ auth, departments }: Props) => {
             return;
         }
 
+        // Validate required fields
+        if (!data.subject || !data.order_number || !data.document_type || !data.description) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Missing Required Fields',
+                text: 'Please fill out all required fields.',
+                confirmButtonColor: '#b91c1c',
+            });
+            return;
+        }
+
+        if (data.files.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'No Files Selected',
+                text: 'Please upload at least one file.',
+                confirmButtonColor: '#b91c1c',
+            });
+            return;
+        }
+
         setIsSubmitting(true);
 
+        // For 'for_info', must have at least one recipient
         if (data.document_type === 'for_info') {
             if (data.recipient_ids.length === 0) {
                 Swal.fire({
@@ -83,30 +107,8 @@ const CreateDocument = ({ auth, departments }: Props) => {
                 setIsSubmitting(false);
                 return;
             }
-            setData('status', 'pending');
-            post(route('users.documents.send'), {
-                forceFormData: true,
-                onSuccess: () => {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Document Submitted!',
-                        text: 'Your document has been sent successfully.',
-                        confirmButtonColor: '#b91c1c',
-                    }).then(() => {
-                        window.location.href = '/documents';
-                    });
-                },
-                onError: () => {
-                    setIsSubmitting(false);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Failed to Submit Document',
-                        text: 'Failed to submit document. Please try again.',
-                        confirmButtonColor: '#b91c1c',
-                    });
-                }
-            });
         } else {
+            // For other types, must have a main recipient
             if (!sendToId) {
                 Swal.fire({
                     icon: 'warning',
@@ -117,43 +119,60 @@ const CreateDocument = ({ auth, departments }: Props) => {
                 setIsSubmitting(false);
                 return;
             }
+        }
 
-            const formData = new FormData();
-            formData.append('subject', data.subject);
-            formData.append('document_type', data.document_type);
-            formData.append('description', data.description);
-            formData.append('status', 'pending');
-            formData.append('recipient_ids[0]', sendToId.toString());
+        // Always use FormData for submission
+        const formData = new FormData();
+        formData.append('subject', data.subject);
+        formData.append('order_number', data.order_number);
+        formData.append('document_type', data.document_type);
+        formData.append('description', data.description);
+        formData.append('status', 'pending');
+
+        // Recipients
+        if (data.document_type === 'for_info') {
+            data.recipient_ids.forEach((id, idx) => {
+                formData.append(`recipient_ids[${idx}]`, id.toString());
+            });
+            // Set initial_recipient_id if available
+            if (data.initial_recipient_id) {
+                formData.append('initial_recipient_id', data.initial_recipient_id.toString());
+            }
+        } else {
+            // Only one recipient for these types
+            formData.append('recipient_ids[0]', sendToId!.toString());
             if (sendThroughId) {
                 formData.append('initial_recipient_id', sendThroughId.toString());
             }
-            data.files.forEach((file, idx) => {
-                formData.append(`files[${idx}]`, file);
-            });
-
-            router.post(route('users.documents.send'), formData, {
-                forceFormData: true,
-                onSuccess: () => {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Document Submitted!',
-                        text: 'Your document has been sent successfully.',
-                        confirmButtonColor: '#b91c1c',
-                    }).then(() => {
-                        window.location.href = '/documents';
-                    });
-                },
-                onError: () => {
-                    setIsSubmitting(false);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Failed to Submit Document',
-                        text: 'Failed to submit document. Please try again.',
-                        confirmButtonColor: '#b91c1c',
-                    });
-                }
-            });
         }
+
+        // Files
+        data.files.forEach((file, idx) => {
+            formData.append(`files[${idx}]`, file);
+        });
+
+        router.post(route('users.documents.send'), formData, {
+            forceFormData: true,
+            onSuccess: () => {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Document Submitted!',
+                    text: 'Your document has been sent successfully.',
+                    confirmButtonColor: '#b91c1c',
+                }).then(() => {
+                    window.location.href = '/documents';
+                });
+            },
+            onError: () => {
+                setIsSubmitting(false);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Failed to Submit Document',
+                    text: 'Failed to submit document. Please try again.',
+                    confirmButtonColor: '#b91c1c',
+                });
+            }
+        });
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -229,6 +248,21 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                         onChange={e => setData('subject', e.target.value)}
                                     />
                                     {errors.subject && <div className="text-red-500 text-xs mt-1">{errors.subject}</div>}
+                                </div>
+                                <div>
+                                    <label htmlFor="order_number" className="block text-sm font-semibold text-gray-700 mb-1">
+                                        Order Number <span className="text-red-500">*</span>
+                                    </label>
+                                    <Input
+                                        type="text"
+                                        name="order_number"
+                                        id="order_number"
+                                        required
+                                        className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition"
+                                        value={data.order_number}
+                                        onChange={e => setData('order_number', e.target.value)}
+                                    />
+                                    {errors.order_number && <div className="text-red-500 text-xs mt-1">{errors.order_number}</div>}
                                 </div>
 
                                 <div>
