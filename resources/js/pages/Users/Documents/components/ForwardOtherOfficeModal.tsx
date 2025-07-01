@@ -26,15 +26,6 @@ interface ForwardModalProps {
     processing: boolean;
     users: User[];
     documentId: number;
-    nextThroughUser?: {
-        user: {
-            id: number;
-            first_name: string;
-            last_name: string;
-            department_id: number;
-        };
-        id: number;
-    } | null;
 }
 
 interface FormData {
@@ -50,13 +41,12 @@ interface FileWithPreview {
     id: string;
 }
 
-const ForwardModal: React.FC<ForwardModalProps> = ({
+const ForwardOtherOfficeModal: React.FC<ForwardModalProps> = ({
     isOpen,
     onClose,
     processing,
     users,
-    documentId,
-    nextThroughUser
+    documentId
 }) => {
     const [selectedUser, setSelectedUser] = useState<string>('');
     const [comments, setComments] = useState('');
@@ -200,11 +190,8 @@ const ForwardModal: React.FC<ForwardModalProps> = ({
                 }
             });
             setFiles([]);
-        } else if (nextThroughUser) {
-            // Pre-select the next through user if available
-            setSelectedUser(nextThroughUser.user.id.toString());
         }
-    }, [isOpen, reset, nextThroughUser]);
+    }, [isOpen, reset]);
 
     // Cleanup preview URLs when component unmounts
     useEffect(() => {
@@ -221,7 +208,7 @@ const ForwardModal: React.FC<ForwardModalProps> = ({
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Forward Document</DialogTitle>
+                    <DialogTitle>Forward Document to Other Office</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
@@ -335,4 +322,4 @@ const ForwardModal: React.FC<ForwardModalProps> = ({
     );
 };
 
-export default ForwardModal;
+export default ForwardOtherOfficeModal;

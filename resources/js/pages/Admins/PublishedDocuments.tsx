@@ -19,10 +19,11 @@ import {
     User,
     Building,
     Download,
-    QrCode
+    BarChart3
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import Swal from 'sweetalert2';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -39,6 +40,7 @@ interface PublishedDocument {
     is_public: boolean;
     public_token: string;
     barcode_path?: string;
+    barcode_value?: string;
     created_at: string;
     owner: {
         id: number;
@@ -62,20 +64,31 @@ export default function PublishedDocuments({ publishedDocuments }: Props) {
     const filteredDocuments = publishedDocuments.filter(doc =>
         doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         doc.owner.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        doc.owner.office.toLowerCase().includes(searchTerm.toLowerCase())
+        doc.owner.office.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (doc.barcode_value && doc.barcode_value.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     const handleUnpublishDocument = (document: PublishedDocument) => {
-        if (confirm(`Are you sure you want to unpublish "${document.title}"? This will remove it from public access.`)) {
-            router.delete(route('admin.unpublish-document', document.id), {
-                onSuccess: () => {
-                    toast.success('Document unpublished successfully');
-                },
-                onError: (errors) => {
-                    toast.error('Failed to unpublish document. Please try again.');
-                }
-            });
-        }
+        Swal.fire({
+            title: 'Are you sure?',
+            text: `Are you sure you want to unpublish "${document.title}"? This will remove it from public access.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, unpublish it!',
+            cancelButtonText: 'Cancel',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                router.delete(route('admin.unpublish-document', document.id), {
+                    onSuccess: () => {
+                        toast.success('Document unpublished successfully');
+                    },
+                    onError: (errors) => {
+                        toast.error('Failed to unpublish document. Please try again.');
+                    }
+                });
+            }
+        });
     };
 
     const handleViewDocument = (document: PublishedDocument) => {
@@ -166,7 +179,7 @@ export default function PublishedDocuments({ publishedDocuments }: Props) {
                     <CardHeader>
                         <CardTitle>Search Documents</CardTitle>
                         <CardDescription>
-                            Find specific published documents by title, author, or office
+                            Find specific published documents by title, author, office, or barcode value
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -175,7 +188,7 @@ export default function PublishedDocuments({ publishedDocuments }: Props) {
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                                     <Input
-                                        placeholder="Search by title, author, or office..."
+                                        placeholder="Search by title, author, office, or barcode value..."
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                         className="pl-10"
@@ -204,6 +217,7 @@ export default function PublishedDocuments({ publishedDocuments }: Props) {
                                         <TableHead>Office</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead>Published Date</TableHead>
+                                        <TableHead>Barcode</TableHead>
                                         <TableHead>Files</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
@@ -242,6 +256,14 @@ export default function PublishedDocuments({ publishedDocuments }: Props) {
                                                 <div className="flex items-center gap-2">
                                                     <Calendar className="h-4 w-4 text-muted-foreground" />
                                                     <span>{format(new Date(document.created_at), 'MMM d, yyyy')}</span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-2">
+                                                    <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                                                    <span className="font-mono text-sm">
+                                                        {document.barcode_value || document.public_token}
+                                                    </span>
                                                 </div>
                                             </TableCell>
                                             <TableCell>
@@ -357,11 +379,24 @@ export default function PublishedDocuments({ publishedDocuments }: Props) {
 
                                 {selectedDocument.barcode_path && (
                                     <div>
-                                        <Label className="text-sm font-medium text-muted-foreground">QR Code</Label>
+                                        <Label className="text-sm font-medium text-muted-foreground">Barcode</Label>
                                         <div className="mt-2 p-4 border rounded-lg bg-gray-50">
-                                            <div className="flex items-center gap-2">
-                                                <QrCode className="h-5 w-5 text-gray-600" />
-                                                <span className="text-sm text-gray-600">QR code available for this document</span>
+                                            <div className="flex flex-col items-center gap-3">
+                                                <div className="flex items-center gap-2">
+                                                    <BarChart3 className="h-5 w-5 text-gray-600" />
+                                                    <span className="text-sm text-gray-600">Barcode available for this document</span>
+                                                </div>
+                                                <img
+                                                    src={`/storage/${selectedDocument.barcode_path}`}
+                                                    alt="Barcode"
+                                                    className="w-64 h-32 border rounded bg-white p-2"
+                                                />
+                                                <div className="text-center">
+                                                    <p className="text-xs text-gray-500 mb-1">Barcode Value:</p>
+                                                    <p className="text-sm font-mono text-gray-700 bg-white px-3 py-1 rounded border">
+                                                        {selectedDocument.barcode_value || selectedDocument.public_token}
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

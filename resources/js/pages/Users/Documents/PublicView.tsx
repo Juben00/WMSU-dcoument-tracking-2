@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download, FileText, FileCheck, Users, QrCode } from 'lucide-react';
+import { Download, FileText, FileCheck, Users, BarChart3 } from 'lucide-react';
 
 interface DocumentFile {
     id: number;
@@ -16,7 +16,12 @@ interface DocumentRecipient {
         id: number;
         first_name: string;
         last_name: string;
-        office_id: number;
+        department_id: number;
+        role: string;
+        department?: {
+            id: number;
+            name: string;
+        };
     };
     status: string;
     comments?: string;
@@ -25,7 +30,7 @@ interface DocumentRecipient {
 
 interface Document {
     id: number;
-    title: string;
+    subject: string;
     description?: string;
     status: string;
     created_at: string;
@@ -36,6 +41,9 @@ interface Document {
     files: DocumentFile[];
     recipients: DocumentRecipient[];
     barcode_path?: string;
+    public_token?: string;
+    barcode_value?: string;
+    department_id: number;
 }
 
 interface Props {
@@ -89,8 +97,8 @@ const PublicView: React.FC<Props> = ({ document }) => {
                         </div>
                         <dl className="space-y-5">
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Title</dt>
-                                <dd className="mt-1 text-base text-gray-900 font-semibold">{document.title}</dd>
+                                <dt className="text-sm font-medium text-gray-500">Subject</dt>
+                                <dd className="mt-1 text-base text-gray-900 font-semibold">{document.subject}</dd>
                             </div>
                             <div>
                                 <dt className="text-sm font-medium text-gray-500">Status</dt>
@@ -121,11 +129,17 @@ const PublicView: React.FC<Props> = ({ document }) => {
                     {document.barcode_path && (
                         <div className="flex flex-col items-center justify-center bg-gray-50 rounded-xl p-6 border border-dashed border-gray-200">
                             <div className="flex items-center gap-2 mb-2">
-                                <QrCode className="w-5 h-5 text-gray-500" />
+                                <BarChart3 className="w-5 h-5 text-gray-500" />
                                 <h2 className="text-lg font-semibold text-gray-900">Scan to View</h2>
                             </div>
-                            <img src={`/storage/${document.barcode_path}`} alt="QR Code" className="w-40 h-40 mb-2" />
-                            <span className="text-xs text-gray-500">Scan this QR code to access the document online.</span>
+                            <img src={`/storage/${document.barcode_path}`} alt="Barcode" className="w-64 h-32 mb-3" />
+                            <div className="text-center">
+                                <p className="text-xs text-gray-500 mb-1">Barcode Value:</p>
+                                <p className="text-sm font-mono text-gray-700 bg-white px-3 py-1 rounded border">
+                                    {document.barcode_value || document.public_token}
+                                </p>
+                            </div>
+                            <span className="text-xs text-gray-500 mt-2">Scan this barcode to access the document online.</span>
                         </div>
                     )}
                 </div>
@@ -252,7 +266,7 @@ const PublicView: React.FC<Props> = ({ document }) => {
                                         <div className="flex-1 bg-gray-50 rounded-xl p-4 border border-gray-100">
                                             <div className="flex items-center justify-between">
                                                 <p className="text-base font-medium text-gray-900">
-                                                    {recipient.user.first_name} {recipient.user.last_name}
+                                                    {recipient.user.first_name} {recipient.user.last_name} | {recipient.user.department?.name || 'No Department'} | {recipient.user.role.charAt(0).toUpperCase() + recipient.user.role.slice(1)}
                                                 </p>
                                                 <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(recipient.status)}`}>
                                                     {recipient.status.charAt(0).toUpperCase() + recipient.status.slice(1)}

@@ -21,10 +21,11 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import InputError from '../input-error';
 
-interface Office {
+interface Department {
     id: number;
     name: string;
     description: string;
+    type: 'office' | 'college';
 }
 
 interface FormData {
@@ -35,7 +36,7 @@ interface FormData {
     suffix: string | null;
     gender: string;
     position: string;
-    office_id: string | null;
+    department_id: string | null;
     avatar: File | null;
     email: string;
     role: string;
@@ -43,7 +44,7 @@ interface FormData {
     password_confirmation: string;
 }
 
-const AddNewAdmin = ({ setIsCreateDialogOpen, offices }: { setIsCreateDialogOpen: (isOpen: boolean) => void, offices: Office[] }) => {
+const AddNewAdmin = ({ setIsCreateDialogOpen, departments }: { setIsCreateDialogOpen: (isOpen: boolean) => void, departments: Department[] }) => {
     const { data, setData, post, processing, errors, reset } = useForm<FormData>({
         first_name: '',
         last_name: '',
@@ -51,7 +52,7 @@ const AddNewAdmin = ({ setIsCreateDialogOpen, offices }: { setIsCreateDialogOpen
         suffix: null,
         gender: '',
         position: '',
-        office_id: null,
+        department_id: null,
         avatar: null,
         email: '',
         role: 'admin',
@@ -157,25 +158,25 @@ const AddNewAdmin = ({ setIsCreateDialogOpen, offices }: { setIsCreateDialogOpen
                     </div>
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="office">Office</Label>
+                    <Label htmlFor="department">Department</Label>
                     <Select
-                        value={data.office_id || ''}
-                        onValueChange={value => setData('office_id', value || null)}
+                        value={data.department_id || ''}
+                        onValueChange={value => setData('department_id', value || null)}
                         required
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder="Select office" />
+                            <SelectValue placeholder="Select department" />
                         </SelectTrigger>
                         <SelectContent>
-                            {offices.map((office) => (
-                                <SelectItem key={office.id} value={office.id.toString()}>
-                                    {office.name}
+                            {departments.map((department) => (
+                                <SelectItem key={department.id} value={department.id.toString()}>
+                                    {department.name}
                                 </SelectItem>
                             ))}
                             <SelectItem value=" ">None</SelectItem>
                         </SelectContent>
                     </Select>
-                    <InputError message={errors.office_id} />
+                    <InputError message={errors.department_id} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="position">Position</Label>

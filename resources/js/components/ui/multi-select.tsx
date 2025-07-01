@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 interface Option {
     value: number;
     label: string;
+    name?: string;
+    department?: string;
+    role?: string;
 }
 
 interface MultiSelectProps {
@@ -13,6 +16,8 @@ interface MultiSelectProps {
     selected: number[];
     onChange: (selected: number[]) => void;
     placeholder?: string;
+    renderOption?: (option: Option) => React.ReactNode;
+    renderSelected?: (option: Option) => React.ReactNode;
 }
 
 export const MultiSelect: React.FC<MultiSelectProps> = ({
@@ -20,6 +25,8 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
     selected,
     onChange,
     placeholder = "Select recipients",
+    renderOption,
+    renderSelected,
 }) => {
     const handleToggle = (value: number) => {
         if (selected.includes(value)) {
@@ -41,8 +48,12 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
                             ? placeholder
                             : options
                                 .filter((opt) => selected.includes(opt.value))
-                                .map((opt) => opt.label)
-                                .join(", ")}
+                                .map((opt, idx) => (
+                                    <span key={opt.value} className="inline-block mr-1 align-middle">
+                                        {renderSelected ? renderSelected(opt) : opt.label}
+                                        {idx < selected.length - 1 ? ', ' : ''}
+                                    </span>
+                                ))}
                     </span>
                 </Button>
             </PopoverPrimitive.Trigger>
@@ -58,7 +69,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
                                 onCheckedChange={() => handleToggle(option.value)}
                                 id={`multi-select-${option.value}`}
                             />
-                            <span>{option.label}</span>
+                            <span>{renderOption ? renderOption(option) : option.label}</span>
                         </label>
                     ))}
                 </div>

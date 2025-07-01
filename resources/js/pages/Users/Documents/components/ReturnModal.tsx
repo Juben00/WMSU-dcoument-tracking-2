@@ -6,11 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { X, FileText, Image as ImageIcon } from 'lucide-react';
 import { useForm } from '@inertiajs/react';
-import { toast } from 'sonner';
 import { usePage } from '@inertiajs/react';
 import Swal from 'sweetalert2';
 
-interface ApproveModalProps {
+interface ReturnModalProps {
     isOpen: boolean;
     onClose: () => void;
     documentId: number;
@@ -40,23 +39,22 @@ interface PageProps {
     [key: string]: any;
 }
 
-const ApproveModal: React.FC<ApproveModalProps> = ({ isOpen, onClose, documentId }) => {
+const ReturnModal: React.FC<ReturnModalProps> = ({ isOpen, onClose, documentId }) => {
     const [comments, setComments] = useState('');
     const [files, setFiles] = useState<FileWithPreview[]>([]);
     const { auth } = usePage<PageProps>().props;
 
     const { post, processing, setData, reset } = useForm<FormData>({
-        status: 'approved',
+        status: 'returned',
         comments: '',
         attachment_files: [],
         forward_to_id: null,
         is_final_approver: auth.user.role === 'admin' ? true : false
     });
 
-    // Update form data whenever state changes
     useEffect(() => {
         setData({
-            status: 'approved',
+            status: 'returned',
             comments: comments,
             attachment_files: files.map(f => f.file),
             forward_to_id: null,
@@ -72,15 +70,11 @@ const ApproveModal: React.FC<ApproveModalProps> = ({ isOpen, onClose, documentId
                     file,
                     id: Math.random().toString(36).substr(2, 9)
                 };
-
-                // Create preview for image files
                 if (file.type.startsWith('image/')) {
                     fileWithPreview.preview = URL.createObjectURL(file);
                 }
-
                 return fileWithPreview;
             });
-
             setFiles(prevFiles => [...prevFiles, ...filesWithPreviews]);
         }
     };
@@ -109,7 +103,6 @@ const ApproveModal: React.FC<ApproveModalProps> = ({ isOpen, onClose, documentId
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-
         post(route('documents.respond', documentId), {
             preserveScroll: true,
             forceFormData: true,
@@ -117,7 +110,6 @@ const ApproveModal: React.FC<ApproveModalProps> = ({ isOpen, onClose, documentId
                 onClose();
                 reset();
                 setComments('');
-                // Clean up preview URLs
                 files.forEach(fileWithPreview => {
                     if (fileWithPreview.preview) {
                         URL.revokeObjectURL(fileWithPreview.preview);
@@ -126,7 +118,7 @@ const ApproveModal: React.FC<ApproveModalProps> = ({ isOpen, onClose, documentId
                 setFiles([]);
                 Swal.fire({
                     icon: 'success',
-                    title: 'Document approved successfully',
+                    title: 'Document returned successfully',
                     timer: 1500,
                     showConfirmButton: false
                 });
@@ -135,18 +127,16 @@ const ApproveModal: React.FC<ApproveModalProps> = ({ isOpen, onClose, documentId
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
-                    text: errors.message || 'An error occurred while approving the document',
+                    text: errors.message || 'An error occurred while returning the document',
                 });
             }
         });
     };
 
-    // Reset form when modal closes
     useEffect(() => {
         if (!isOpen) {
             reset();
             setComments('');
-            // Clean up preview URLs
             files.forEach(fileWithPreview => {
                 if (fileWithPreview.preview) {
                     URL.revokeObjectURL(fileWithPreview.preview);
@@ -156,7 +146,6 @@ const ApproveModal: React.FC<ApproveModalProps> = ({ isOpen, onClose, documentId
         }
     }, [isOpen, reset]);
 
-    // Cleanup preview URLs when component unmounts
     useEffect(() => {
         return () => {
             files.forEach(fileWithPreview => {
@@ -173,7 +162,6 @@ const ApproveModal: React.FC<ApproveModalProps> = ({ isOpen, onClose, documentId
             onClose={() => {
                 onClose();
                 setComments('');
-                // Clean up preview URLs
                 files.forEach(fileWithPreview => {
                     if (fileWithPreview.preview) {
                         URL.revokeObjectURL(fileWithPreview.preview);
@@ -186,7 +174,7 @@ const ApproveModal: React.FC<ApproveModalProps> = ({ isOpen, onClose, documentId
             <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
             <div className="fixed inset-0 flex items-center justify-center p-4">
                 <Dialog.Panel className="mx-auto max-w-md rounded bg-white p-6 max-h-[90vh] overflow-y-auto">
-                    <Dialog.Title className="text-lg font-medium mb-4">Document Approval Form</Dialog.Title>
+                    <Dialog.Title className="text-lg font-medium mb-4">Return Document Form</Dialog.Title>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
                             <Label>Comments</Label>
@@ -195,10 +183,9 @@ const ApproveModal: React.FC<ApproveModalProps> = ({ isOpen, onClose, documentId
                                 onChange={(e) => setComments(e.target.value)}
                                 className="mt-1"
                                 rows={3}
-                                placeholder="Please provide a comment..."
+                                placeholder="Please provide a reason for returning the document..."
                             />
                         </div>
-
                         <div>
                             <Label>Response Attachments (Optional)</Label>
                             <p className="text-sm text-gray-500 mb-2">These files will be added as response attachments to the document.</p>
@@ -209,7 +196,6 @@ const ApproveModal: React.FC<ApproveModalProps> = ({ isOpen, onClose, documentId
                                 onChange={handleFileChange}
                                 className="cursor-pointer"
                             />
-
                             {files.length > 0 && (
                                 <div className="mt-4 space-y-3">
                                     <h4 className="text-sm font-medium text-gray-700">Selected Files:</h4>
@@ -222,7 +208,6 @@ const ApproveModal: React.FC<ApproveModalProps> = ({ isOpen, onClose, documentId
                                                     <FileText className="h-8 w-8 text-gray-500" />
                                                 )}
                                             </div>
-
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center justify-between">
                                                     <p className="text-sm font-medium text-gray-900 truncate">
@@ -241,8 +226,6 @@ const ApproveModal: React.FC<ApproveModalProps> = ({ isOpen, onClose, documentId
                                                 <p className="text-xs text-gray-500">
                                                     {formatFileSize(fileWithPreview.file.size)}
                                                 </p>
-
-                                                {/* Image Preview */}
                                                 {fileWithPreview.preview && (
                                                     <div className="mt-2">
                                                         <img
@@ -258,31 +241,12 @@ const ApproveModal: React.FC<ApproveModalProps> = ({ isOpen, onClose, documentId
                                 </div>
                             )}
                         </div>
-
-                        <div className="flex justify-end space-x-3">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => {
-                                    onClose();
-                                    setComments('');
-                                    // Clean up preview URLs
-                                    files.forEach(fileWithPreview => {
-                                        if (fileWithPreview.preview) {
-                                            URL.revokeObjectURL(fileWithPreview.preview);
-                                        }
-                                    });
-                                    setFiles([]);
-                                }}
-                            >
+                        <div className="flex justify-end gap-2 mt-6">
+                            <Button type="button" variant="secondary" onClick={onClose} disabled={processing}>
                                 Cancel
                             </Button>
-                            <Button
-                                type="submit"
-                                disabled={processing}
-                                className="bg-green-600 hover:bg-green-700"
-                            >
-                                {processing ? 'Processing...' : 'Approve'}
+                            <Button type="submit" variant="default" disabled={processing || !comments.trim()}>
+                                Return Document
                             </Button>
                         </div>
                     </form>
@@ -292,4 +256,4 @@ const ApproveModal: React.FC<ApproveModalProps> = ({ isOpen, onClose, documentId
     );
 };
 
-export default ApproveModal;
+export default ReturnModal;

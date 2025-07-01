@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\Office;
+use App\Models\Departments;
 use App\Models\Document;
 use App\Models\DocumentRecipient;
 use Illuminate\Http\Request;
@@ -18,12 +18,15 @@ class AdminController extends Controller
 {
     public function index()
     {
-        $admins = User::where('role', 'admin')->with('office')->get();
-        $offices = Office::all();
+        $admins = User::where('role', 'admin')->with('department')->get();
+        // get all departments where there is no existing admin
+        $departments = Departments::whereDoesntHave('users', function($query) {
+            $query->where('role', 'admin');
+        })->get();
 
-        return Inertia::render('Admins/admins', [
+        return Inertia::render('Admins/User', [
             'admins' => $admins,
-            'offices' => $offices
+            'departments' => $departments
         ]);
     }
 
@@ -36,7 +39,7 @@ class AdminController extends Controller
             'suffix' => ['nullable', 'string', 'max:255'],
             'gender' => ['required', 'string', 'in:Male,Female'],
             'position' => ['required', 'string', 'max:255'],
-            'office_id' => ['nullable', 'exists:offices,id'],
+            'department_id' => ['nullable', 'exists:departments,id'],
             'role' => ['required', 'string', 'in:admin,user'],
             'avatar' => ['nullable', 'image', 'max:2048'], // 2MB max
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
@@ -55,7 +58,7 @@ class AdminController extends Controller
             'suffix' => $request->suffix,
             'gender' => $request->gender,
             'position' => $request->position,
-            'office_id' => $request->office_id,
+            'department_id' => $request->department_id,
             'role' => $request->role,
             'avatar' => $avatarPath,
             'email' => $request->email,
@@ -90,7 +93,7 @@ class AdminController extends Controller
             'suffix' => ['nullable', 'string', 'max:255'],
             'gender' => ['required', 'string', 'in:Male,Female'],
             'position' => ['required', 'string', 'max:255'],
-            'office_id' => ['required', 'exists:offices,id'],
+            'department_id' => ['required', 'exists:departments,id'],
             'avatar' => ['nullable', 'image', 'max:2048'], // 2MB max
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $admin->id],
         ]);
@@ -130,9 +133,9 @@ class AdminController extends Controller
         $cancelledDocuments = Document::where('status', 'cancelled')->count();
         $publicDocuments = Document::where('is_public', true)->count();
 
-        // Office Statistics
-        $totalOffices = Office::count();
-        $officesWithUsers = Office::has('users')->count();
+        // Department Statistics
+        $totalDepartments = Departments::count();
+        $departmentsWithUsers = Departments::has('users')->count();
 
         // Recent Activities (last 10 document activities)
         $recentActivities = DocumentRecipient::with(['document.owner', 'user'])
@@ -143,7 +146,7 @@ class AdminController extends Controller
             ->map(function($activity) {
                 return [
                     'id' => $activity->id,
-                    'document_title' => $activity->document->title ?? 'Untitled',
+                    'document_title' => $activity->document->subject ?? 'Untitled',
                     'document_owner' => $activity->document->owner->first_name . ' ' . $activity->document->owner->last_name,
                     'recipient' => $activity->user->first_name . ' ' . $activity->user->last_name,
                     'status' => $activity->status,
@@ -176,26 +179,26 @@ class AdminController extends Controller
             ]);
         }
 
-        // Top Offices by Document Count
-        $topOffices = DB::table('offices')
-            ->leftJoin('users', 'offices.id', '=', 'users.office_id')
+        // Top Departments by Document Count
+        $topDepartments = DB::table('departments')
+            ->leftJoin('users', 'departments.id', '=', 'users.department_id')
             ->leftJoin('documents', 'users.id', '=', 'documents.owner_id')
             ->select(
-                'offices.id',
-                'offices.name',
+                'departments.id',
+                'departments.name',
                 DB::raw('COUNT(DISTINCT users.id) as user_count'),
                 DB::raw('COUNT(DISTINCT documents.id) as document_count')
             )
-            ->groupBy('offices.id', 'offices.name')
+            ->groupBy('departments.id', 'departments.name')
             ->orderByDesc('document_count')
             ->take(5)
             ->get()
-            ->map(function($office) {
+            ->map(function($department) {
                 return [
-                    'id' => $office->id,
-                    'name' => $office->name,
-                    'user_count' => $office->user_count,
-                    'document_count' => $office->document_count,
+                    'id' => $department->id,
+                    'name' => $department->name,
+                    'user_count' => $department->user_count,
+                    'document_count' => $department->document_count,
                 ];
             });
 
@@ -211,7 +214,7 @@ class AdminController extends Controller
         ];
 
         // Recent Users (last 5 registered users)
-        $recentUsers = User::with('office')
+        $recentUsers = User::with('department')
             ->orderByDesc('created_at')
             ->take(5)
             ->get()
@@ -221,7 +224,7 @@ class AdminController extends Controller
                     'name' => $user->first_name . ' ' . $user->last_name,
                     'email' => $user->email,
                     'role' => $user->role,
-                    'office' => $user->office->name ?? 'No Office',
+                    'department' => $user->department->name ?? 'No Department',
                     'is_active' => $user->is_active,
                     'created_at' => $user->created_at,
                 ];
@@ -247,14 +250,14 @@ class AdminController extends Controller
                     'cancelled' => $cancelledDocuments,
                     'public' => $publicDocuments,
                 ],
-                'offices' => [
-                    'total' => $totalOffices,
-                    'with_users' => $officesWithUsers,
+                'departments' => [
+                    'total' => $totalDepartments,
+                    'with_users' => $departmentsWithUsers,
                 ],
             ],
             'recentActivities' => $recentActivities,
             'monthlyTrends' => $monthlyTrends,
-            'topOffices' => $topOffices,
+            'topDepartments' => $topDepartments,
             'statusDistribution' => $statusDistribution,
             'recentUsers' => $recentUsers,
         ]);
@@ -269,25 +272,26 @@ class AdminController extends Controller
             ->map(function($document) {
                 return [
                     'id' => $document->id,
-                    'title' => $document->title,
+                    'subject' => $document->subject,
                     'description' => $document->description,
                     'status' => $document->status,
                     'is_public' => $document->is_public,
                     'public_token' => $document->public_token,
                     'barcode_path' => $document->barcode_path,
+                    'barcode_value' => $document->barcode_value,
                     'created_at' => $document->created_at,
                     'owner' => [
                         'id' => $document->owner->id,
                         'name' => $document->owner->first_name . ' ' . $document->owner->last_name,
                         'email' => $document->owner->email,
-                        'office' => $document->owner->office->name ?? 'No Office',
+                        'department' => $document->owner->department->name ?? 'No Department',
                     ],
                     'files_count' => $document->files->count(),
                     'public_url' => route('documents.public_view', ['public_token' => $document->public_token]),
                 ];
             });
 
-        return Inertia::render('Admin/PublishedDocuments', [
+        return Inertia::render('Admins/PublishedDocuments', [
             'publishedDocuments' => $publishedDocuments,
         ]);
     }
@@ -308,6 +312,7 @@ class AdminController extends Controller
             'is_public' => false,
             'public_token' => null,
             'barcode_path' => null,
+            'barcode_value' => null,
         ]);
 
         return redirect()->back()->with('success', 'Document unpublished successfully.');

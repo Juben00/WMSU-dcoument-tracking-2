@@ -11,57 +11,91 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
-use BaconQrCode\Renderer\ImageRenderer;
-use BaconQrCode\Renderer\RendererStyle\RendererStyle;
-use BaconQrCode\Renderer\Image\SvgImageBackEnd;
-use BaconQrCode\Writer;
+use Picqer\Barcode\BarcodeGeneratorSVG;
 use Illuminate\Support\Str;
+use App\Models\Departments;
 
 class DocumentController extends Controller
 {
-    public function sendToRecipients(Request $request, Document $document)
-    {
-        $request->validate([
-            'recipient_ids' => 'required|array',
-            'recipient_ids.*' => 'exists:users,id',
-            'initial_recipient_id' => 'required|exists:users,id'
-        ]);
-
-        // Create the initial recipient
-        DocumentRecipient::create([
-            'document_id' => $document->id,
-            'user_id' => $request->initial_recipient_id,
-            'status' => 'pending',
-            'sequence' => 1,
-            'is_active' => true
-        ]);
-
-        $document->update(['status' => 'pending']);
-
-        return response()->json([
-            'message' => 'Document sent to initial recipient successfully'
-        ]);
-    }
 
     public function forwardDocument(Request $request, Document $document)
     {
         $request->validate([
             'forward_to_id' => 'required|exists:users,id',
             'comments' => 'nullable|string|max:1000',
-            'files.*' => 'nullable|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,jpg,jpeg,png', // 10MB max per file
+            'files.*' => 'nullable|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,jpg,jpeg,png,gif', // 10MB max per file
         ]);
+
+        // Find the current active recipient (the one forwarding)
+        $currentRecipient = DocumentRecipient::where('document_id', $document->id)
+            ->where('is_active', true)
+            ->orderByDesc('sequence')
+            ->first();
+
+        if ($currentRecipient) {
+            // Mark the current recipient as responded/forwarded and inactive
+            $currentRecipient->update([
+                'status' => 'received',
+                'responded_at' => now(),
+                'is_active' => false,
+            ]);
+        }
+
+        // find the id of the user who forwarded the document
+        $forwardedById = Auth::id();
+
+        // Get the final_recipient_id from existing recipient records
+        $existingRecipient = DocumentRecipient::where('document_id', $document->id)
+            ->whereNotNull('final_recipient_id')
+            ->first();
+        $finalRecipientId = $existingRecipient ? $existingRecipient->final_recipient_id : null;
+
+        // Determine the next sequence number
+        $nextSequence = DocumentRecipient::where('document_id', $document->id)->max('sequence') + 1;
 
         DocumentRecipient::create([
             'document_id' => $document->id,
             'user_id' => $request->forward_to_id,
-            'forwarded_by' => Auth::id(),
-            'status' => 'forwarded',
+            'forwarded_by' => $forwardedById,
+            'status' => 'pending',
             'comments' => $request->comments,
-            'sequence' => DocumentRecipient::where('document_id', $document->id)->max('sequence') + 1,
+            'sequence' => $nextSequence,
             'is_active' => true,
             'is_final_approver' => User::find($request->forward_to_id)->role === 'admin' ? true : false,
-            'responded_at' => now()
+            'final_recipient_id' => $finalRecipientId,
+            'responded_at' => null
         ]);
+
+        // Get the newly created recipient (the one just forwarded to)
+        $newRecipient = DocumentRecipient::where('document_id', $document->id)
+            ->where('user_id', $request->forward_to_id)
+            ->where('sequence', $nextSequence)
+            ->first();
+
+        // Handle multiple file uploads if present
+        if ($request->hasFile('files')) {
+            foreach ($request->file('files') as $file) {
+                $filePath = $file->store('document-attachments', 'public');
+                $document->files()->create([
+                    'file_path' => $filePath,
+                    'original_filename' => $file->getClientOriginalName(),
+                    'mime_type' => $file->getMimeType(),
+                    'file_size' => $file->getSize(),
+                    'uploaded_by' => Auth::id(),
+                    'upload_type' => 'response',
+                    'document_recipient_id' => $newRecipient ? $newRecipient->id : null,
+                ]);
+            }
+        }
+
+        // check if all of the recipients have received the document and if the document is for_info then update the document status to received
+        $allRecipients = DocumentRecipient::where('document_id', $document->id)->get();
+        $allReceived = $allRecipients->every(function($recipient) {
+            return $recipient->status === 'received';
+        });
+        if ($allReceived && $document->document_type === 'for_info') {
+            $document->update(['status' => 'received']);
+        }
 
         return redirect()->route('documents.view', $document->id)->with('success', 'Document forwarded successfully');
     }
@@ -70,73 +104,94 @@ class DocumentController extends Controller
     {
         $request->validate([
             'status' => 'required|in:approved,rejected,returned',
-            'comments' => 'required|string',
-            'attachment_file' => 'nullable|file|max:10240',
+            'comments' => 'nullable|string|max:1000',
+            'attachment_files.*' => 'nullable|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,jpg,jpeg,png,gif', // 10MB max per file
             'is_final_approver' => 'boolean'
         ]);
 
-        // Check if user is a recipient and hasn't responded yet
         $recipient = DocumentRecipient::where('document_id', $document->id)
-            ->where('user_id', Auth::id())
-            ->whereIn('status', ['pending', 'forwarded']) // Allow response if status is pending or forwarded
+            ->where(function ($query) {
+                $query->where('user_id', Auth::id())
+                    ->orWhere('final_recipient_id', Auth::id());
+            })
+            ->whereIn('status', ['pending', 'forwarded'])
             ->first();
 
-        if (!$recipient) {
+        if (!$recipient && $request->status !== 'returned') {
             return redirect()->back()->withErrors([
                 'message' => 'You are not authorized to approve this document or you have already responded.'
             ]);
         }
 
-        $fileRecord = null;
-        if ($request->hasFile('attachment_file')) {
-            $file = $request->file('attachment_file');
-            $filePath = $file->store('document-attachments', 'public');
-            // Save file info to DocumentFile
-            $fileRecord = $document->files()->create([
-                'file_path' => $filePath,
-                'original_filename' => $file->getClientOriginalName(),
-                'mime_type' => $file->getMimeType(),
-                'file_size' => $file->getSize(),
-                'uploaded_by' => Auth::id(),
-                'upload_type' => 'response',
-            ]);
-        }
+        $currentSequence = DocumentRecipient::where('document_id', $document->id)->max('sequence');
 
-        // Use the recipient's is_final_approver from DB
-        $isFinalApprover = $recipient->is_final_approver;
+        // Mark the current sequence to received
+        $currentSequenceRecipient = DocumentRecipient::where('document_id', $document->id)->where('sequence', $currentSequence)->first();
+        $currentSequenceRecipient?->update([
+            'status' => 'received',
+            'responded_at' => now(),
+            'is_active' => false,
+        ]);
 
-        // Update recipient status
-        $recipient->update([
+        $isFinalApprover = $currentSequenceRecipient ? $currentSequenceRecipient->is_final_approver : false;
+
+        // Create a new recipient record for the response
+        $newRecipient = DocumentRecipient::create([
+            'document_id' => $document->id,
+            'user_id' => Auth::id(),
+            'forwarded_by' => null,
             'status' => $request->status,
             'comments' => $request->comments,
             'responded_at' => now(),
-            'is_final_approver' => $isFinalApprover,
+            'is_active' => false,
+            'sequence' => $currentSequence + 1,
+            'is_final_approver' => $recipient ? $recipient->is_final_approver : false,
+            'final_recipient_id' => $recipient ? $recipient->final_recipient_id : null,
         ]);
+
+        // Handle multiple file uploads if present
+        if ($request->hasFile('attachment_files')) {
+            foreach ($request->file('attachment_files') as $file) {
+                $filePath = $file->store('document-attachments', 'public');
+                $document->files()->create([
+                    'file_path' => $filePath,
+                    'original_filename' => $file->getClientOriginalName(),
+                    'mime_type' => $file->getMimeType(),
+                    'file_size' => $file->getSize(),
+                    'uploaded_by' => Auth::id(),
+                    'upload_type' => 'response',
+                    'document_recipient_id' => $newRecipient ? $newRecipient->id : null,
+                ]);
+            }
+        }
 
         // Update document status based on all recipients' responses
         $allRecipients = DocumentRecipient::where('document_id', $document->id)->get();
-
-        // Count responses by status
         $totalRecipients = $allRecipients->count();
         $approvedCount = $allRecipients->where('status', 'approved')->count();
         $rejectedCount = $allRecipients->where('status', 'rejected')->count();
         $returnedCount = $allRecipients->where('status', 'returned')->count();
         $pendingCount = $allRecipients->whereIn('status', ['pending', 'forwarded'])->count();
 
-        // Determine document status based on responses
         if ($rejectedCount > 0) {
             $document->update(['status' => 'rejected']);
         } elseif ($returnedCount > 0) {
             $document->update(['status' => 'returned']);
         } elseif ($pendingCount === 0 && $approvedCount === $totalRecipients) {
-            // All recipients have approved
             $document->update(['status' => 'approved']);
         } elseif ($pendingCount > 0) {
-            // Some recipients still need to respond
             $document->update(['status' => 'in_review']);
         } else {
-            // Mixed responses (some approved, some other statuses)
             $document->update(['status' => 'in_review']);
+        }
+
+        // If the final approver responds, update document status accordingly
+        if ($isFinalApprover && $request->status === 'approved') {
+            $document->update(['status' => 'approved']);
+        } elseif ($isFinalApprover && $request->status === 'rejected') {
+            $document->update(['status' => 'rejected']);
+        } elseif ($isFinalApprover && $request->status === 'returned') {
+            $document->update(['status' => 'returned']);
         }
 
         return redirect()->back()->with('success', 'Response recorded successfully');
@@ -162,16 +217,64 @@ class DocumentController extends Controller
             abort(403, 'Unauthorized access to document');
         }
 
-        $document->load(['files', 'owner', 'recipients.user']);
+        $document->load(['files', 'owner.department', 'recipients.user', 'recipients.forwardedBy', 'recipients.finalRecipient']);
 
-        // Get users from the same office as the current user, excluding the current user
-        $users = User::where('office_id', Auth::user()->office_id)
+        // Get users from the same department as the current user, excluding the current user
+        $users = User::where('department_id', Auth::user()->department_id)
             ->where('id', '!=', Auth::id())
+            ->with('department')
             ->get();
+
+        // Initialize throughUsers as empty collection
+        $throughUsers = collect();
+
+        // Ensure all users in through_user_ids are included
+        $throughUserIds = $document->through_user_ids ?? [];
+
+        if (!empty($throughUserIds)) {
+            $throughUsers = User::whereIn('id', $throughUserIds)->with('department')->get();
+            // Merge and remove duplicates by id
+            $users = $users->merge($throughUsers)->unique('id')->values();
+        }
+
+        // Get users from other departments (excluding current user's department and current user and the document owner), prioritizing 'receiver' or 'admin' roles
+        $otherDepartments = Departments::where('id', '!=', Auth::user()->department_id)->get();
+        $otherOfficeUsers = collect();
+        foreach ($otherDepartments as $department) {
+            $receiver = $department->users()->where('role', 'receiver')->where('id', '!=', Auth::id())->where('id', '!=', $document->owner_id)->with('department')->first();
+            if ($receiver) {
+                $otherOfficeUsers->push($receiver);
+            } else {
+                $admin = $department->users()->where('role', 'admin')->where('id', '!=', Auth::id())->where('id', '!=', $document->owner_id)->with('department')->first();
+                if ($admin) {
+                    $otherOfficeUsers->push($admin);
+                }
+            }
+        }
 
         // Add is_final_approver to the document data
         $documentData = $document->toArray();
         $documentData['owner_id'] = $document->owner_id;
+
+        // Approval chain: recipients ordered by sequence, with user and forwardedBy
+        $approvalChain = $document->recipients()->with(['user.department', 'forwardedBy.department', 'finalRecipient.department'])->orderBy('sequence')->get()->map(function($recipient) {
+            return [
+                'id' => $recipient->id,
+                'user' => $recipient->user,
+                'status' => $recipient->status,
+                'comments' => $recipient->comments,
+                'responded_at' => $recipient->responded_at,
+                'sequence' => $recipient->sequence,
+                'forwarded_by' => $recipient->forwardedBy,
+                'is_final_approver' => $recipient->is_final_approver,
+                'final_recipient' => $recipient->finalRecipient,
+            ];
+        });
+        $documentData['approval_chain'] = $approvalChain;
+
+        // Get the final recipient information from the first recipient record
+        $firstRecipient = $document->recipients()->with('finalRecipient.department')->first();
+        $documentData['final_recipient'] = $firstRecipient ? $firstRecipient->finalRecipient : null;
 
         // Check if current user is a recipient and can respond
         $currentRecipient = $document->recipients()
@@ -187,8 +290,32 @@ class DocumentController extends Controller
             'auth' => [
                 'user' => Auth::user()
             ],
-            'users' => $users
+            'users' => $users,
+            'otherDepartmentUsers' => $otherOfficeUsers,
+            'throughUsers' => $throughUsers
         ]);
+    }
+
+    public function markAsReceived(Document $document)
+    {
+        $documentRecipient = DocumentRecipient::where('document_id', $document->id)
+            ->where('user_id', Auth::id())
+            ->first();
+        $documentRecipient->update(['status' => 'received']);
+        $documentRecipient->update(['responded_at' => now()]);
+
+        // Check if all recipients have received the document and if the document is for_info, then update the document status to received
+        $allRecipients = DocumentRecipient::where('document_id', $document->id)->get();
+        $allReceived = $allRecipients->every(function($recipient) {
+            return $recipient->status === 'received';
+        });
+        if ($allReceived && $document->document_type === 'for_info') {
+            $document->update(['status' => 'received']);
+        } else {
+            $document->update(['status' => 'in_review']);
+        }
+
+        return redirect()->back()->with('success', 'Document marked as received.');
     }
 
     public function downloadDocument(Document $document, DocumentFile $file)
@@ -257,7 +384,7 @@ class DocumentController extends Controller
         if ($document->owner_id !== Auth::id()) {
             abort(403, 'Only the owner can publish this document.');
         }
-        if ($document->status !== 'approved') {
+        if ($document->status !== 'approved' && $document->status !== 'received') {
             abort(403, 'Document must be approved before publishing.');
         }
         if ($document->is_public) {
@@ -269,23 +396,12 @@ class DocumentController extends Controller
         // Generate public URL
         $publicUrl = route('documents.public_view', ['public_token' => $publicToken], false);
 
-        // Generate QR code SVG
-        $renderer = new ImageRenderer(
-            new RendererStyle(300),
-            new SvgImageBackEnd()
-        );
-        $writer = new Writer($renderer);
-        $qrSvg = $writer->writeString(url($publicUrl));
-
-        // Save SVG to storage
-        $barcodePath = 'barcodes/document_' . $document->id . '_' . $publicToken . '.svg';
-        Storage::disk('public')->put($barcodePath, $qrSvg);
+        // No barcode generation here; it is now done when the document is sent
 
         // Update document
         $document->update([
             'is_public' => true,
             'public_token' => $publicToken,
-            'barcode_path' => $barcodePath,
         ]);
 
         return redirect()->back()->with('success', 'Document published publicly.');
@@ -293,10 +409,20 @@ class DocumentController extends Controller
 
     public function publicView($public_token)
     {
-        $document = Document::where('public_token', $public_token)
-            ->where('is_public', true)
-            ->with(['files', 'owner', 'recipients.user'])
-            ->firstOrFail();
+        $document = Document::where(function($query) use ($public_token) {
+            $query->where('public_token', $public_token)
+                  ->orWhere('barcode_value', $public_token);
+        })
+        ->where('is_public', true)
+        ->with(['files', 'owner', 'recipients.user.department'])
+        ->first();
+
+        if (!$document) {
+            // If no document found, show the search page
+            return Inertia::render('Users/Documents/PublicSearch', [
+                'searchToken' => $public_token,
+            ]);
+        }
 
         $documentData = $document->toArray();
         $documentData['owner_id'] = $document->owner_id;
@@ -304,6 +430,57 @@ class DocumentController extends Controller
         // You may want to return a special Inertia/Blade view for public documents
         return Inertia::render('Users/Documents/PublicView', [
             'document' => $documentData,
+        ]);
+    }
+
+    public function publicDocuments()
+    {
+        $search = request()->get('search');
+
+        $query = Document::where('is_public', true)
+            ->with(['files', 'owner', 'recipients.user.department']);
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('subject', 'like', '%' . $search . '%')
+                  ->orWhere('description', 'like', '%' . $search . '%')
+                  ->orWhere('barcode_value', 'like', '%' . $search . '%')
+                  ->orWhere('public_token', 'like', '%' . $search . '%')
+                  ->orWhereHas('owner', function($ownerQuery) use ($search) {
+                      $ownerQuery->where('first_name', 'like', '%' . $search . '%')
+                                ->orWhere('last_name', 'like', '%' . $search . '%');
+                  });
+            });
+        }
+
+        $documents = $query->orderByDesc('created_at')
+            ->get()
+            ->map(function($document) {
+                return [
+                    'id' => $document->id,
+                    'order_number' => $document->order_number,
+                    'subject' => $document->subject,
+                    'description' => $document->description,
+                    'status' => $document->status,
+                    'is_public' => $document->is_public,
+                    'public_token' => $document->public_token,
+                    'barcode_path' => $document->barcode_path,
+                    'barcode_value' => $document->barcode_value,
+                    'created_at' => $document->created_at,
+                    'owner' => [
+                        'id' => $document->owner->id,
+                        'name' => $document->owner->first_name . ' ' . $document->owner->last_name,
+                        'email' => $document->owner->email,
+                        'department' => $document->owner->department->name ?? 'No Department',
+                    ],
+                    'files_count' => $document->files->count(),
+                    'public_url' => route('documents.public_view', ['public_token' => $document->public_token]),
+                ];
+            });
+
+        return Inertia::render('Users/Documents/PublicSearch', [
+            'documents' => $documents,
+            'search' => $search,
         ]);
     }
 

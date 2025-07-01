@@ -4,28 +4,31 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import InputError from '../input-error';
+import InputError from '@/components/input-error';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Props {
     setIsCreateDialogOpen: (value: boolean) => void;
 }
 
-export default function AddNewOffice({ setIsCreateDialogOpen }: Props) {
+export default function AddDepartment({ setIsCreateDialogOpen }: Props) {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
+        code: '',
         description: '',
+        type: '',
     });
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        post(route('offices.store'), {
+        post(route('departments.store'), {
             onSuccess: () => {
-                toast.success('Office created successfully');
+                toast.success('Department created successfully');
                 setIsCreateDialogOpen(false);
                 reset();
             },
             onError: (errors) => {
-                toast.error('Failed to create office. Please try again.');
+                toast.error('Failed to create department. Please try again.');
             },
         });
     };
@@ -33,15 +36,27 @@ export default function AddNewOffice({ setIsCreateDialogOpen }: Props) {
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-                <Label htmlFor="name">Office Name</Label>
+                <Label htmlFor="name">Department Name</Label>
                 <Input
                     id="name"
                     value={data.name}
                     onChange={(e) => setData('name', e.target.value)}
-                    placeholder="Enter office name"
+                    placeholder="Enter department name"
                     required
                 />
                 <InputError message={errors.name} />
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="code">Department Code</Label>
+                <Input
+                    id="code"
+                    value={data.code}
+                    onChange={(e) => setData('code', e.target.value)}
+                    placeholder="Enter department code"
+                    required
+                />
+                <InputError message={errors.code} />
             </div>
 
             <div className="space-y-2">
@@ -50,9 +65,27 @@ export default function AddNewOffice({ setIsCreateDialogOpen }: Props) {
                     id="description"
                     value={data.description}
                     onChange={(e) => setData('description', e.target.value)}
-                    placeholder="Enter office description"
+                    placeholder="Enter department description"
                 />
                 <InputError message={errors.description} />
+            </div>
+
+            {/* department type */}
+            <div className="space-y-2">
+                <Label htmlFor="type">Department Type</Label>
+                <Select
+                    value={data.type}
+                    onValueChange={(value) => setData('type', value)}
+                >
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select department type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="office">Office</SelectItem>
+                        <SelectItem value="college">College</SelectItem>
+                    </SelectContent>
+                </Select>
+                <InputError message={errors.type} />
             </div>
 
             <div className="flex justify-end gap-2">
@@ -64,7 +97,7 @@ export default function AddNewOffice({ setIsCreateDialogOpen }: Props) {
                     Cancel
                 </Button>
                 <Button type="submit" disabled={processing}>
-                    {processing ? 'Creating...' : 'Create Office'}
+                    {processing ? 'Creating...' : 'Create Department'}
                 </Button>
             </div>
         </form>

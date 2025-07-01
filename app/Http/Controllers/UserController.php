@@ -11,10 +11,13 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
-use App\Models\Office;
+use App\Models\Departments;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Log;
+use Picqer\Barcode\BarcodeGeneratorSVG;
+
+
 
 class UserController extends Controller
 {
@@ -27,13 +30,14 @@ class UserController extends Controller
         ]);
     }
 
-    public function offices()
+    public function departments()
     {
-        // get all users with role user or receiver and with office same as the user's office
-        $users = User::whereIn('role', ['user', 'receiver'])->where('office_id', Auth::user()->office_id)->with('office')->get();
-        return Inertia::render('Users/Offices', [
+        // get all users with role user or receiver and with department same as the user's department
+        $users = User::whereIn('role', ['user', 'receiver'])->where('department_id', Auth::user()->department_id)->with('department')->get();
+        return Inertia::render('Users/Department', [
             'auth' => [
-                'user' => Auth::user()
+                'user' => Auth::user(),
+                'department' => Auth::user()->department
             ],
             'users' => $users
         ]);
@@ -53,15 +57,15 @@ class UserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        // Check if trying to create a receiver and if one already exists for this office
+        // Check if trying to create a receiver and if one already exists for this department
         if ($request->role === 'receiver') {
-            $existingReceiver = User::where('office_id', Auth::user()->office_id)
+            $existingReceiver = User::where('department_id', Auth::user()->department_id)
                 ->where('role', 'receiver')
                 ->first();
 
             if ($existingReceiver) {
                 return back()->withErrors([
-                    'role' => 'A receiver already exists for this office.'
+                    'role' => 'A receiver already exists for this department.'
                 ]);
             }
         }
@@ -73,13 +77,13 @@ class UserController extends Controller
             'suffix' => $request->suffix,
             'gender' => $request->gender,
             'position' => $request->position,
-            'office_id' => Auth::user()->office_id,
+            'department_id' => Auth::user()->department_id,
             'role' => $request->role,
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
 
-        return redirect()->route('users.offices');
+        return redirect()->route('users.departments');
     }
 
     public function toggleStatus(User $admin)
@@ -94,22 +98,30 @@ class UserController extends Controller
     public function destroy(User $user)
     {
         $user->delete();
-        return redirect()->route('users.offices');
+        return redirect()->route('users.departments');
     }
 
     // Document Profile Methods
     public function documents()
     {
         // Get documents where user is the owner
-        $ownedDocuments = Auth::user()->documents;
+        $ownedDocuments = Document::where('owner_id', Auth::id())
+            ->select('id', 'subject', 'document_type', 'status', 'created_at', 'owner_id', 'is_public', 'barcode_value')
+            ->get();
 
         // Get documents where user is a recipient
         $receivedDocuments = Document::whereHas('recipients', function($query) {
             $query->where('user_id', Auth::id());
-        })->get();
+        })->select('id', 'subject', 'document_type', 'status', 'created_at', 'owner_id', 'is_public', 'barcode_value')->get();
 
-        // Merge the collections
-        $documents = $ownedDocuments->concat($receivedDocuments);
+        // Get returned documents where user is the owner
+        $returnedDocuments = Document::where('owner_id', Auth::id())
+            ->where('status', 'returned')
+            ->select('id', 'subject', 'document_type', 'status', 'created_at', 'owner_id', 'is_public', 'barcode_value')
+            ->get();
+
+        // Merge the collections and remove duplicates
+        $documents = $ownedDocuments->concat($receivedDocuments)->concat($returnedDocuments)->unique('id');
 
         return Inertia::render('Users/Documents', [
             'documents' => $documents,
@@ -121,7 +133,7 @@ class UserController extends Controller
 
     public function profile()
     {
-        $user = User::with('office')->find(Auth::id());
+        $user = User::with('department')->find(Auth::id());
         return Inertia::render('Users/Profile', [
             'user' => $user
         ]);
@@ -161,6 +173,7 @@ class UserController extends Controller
 
         $user = User::find(Auth::id());
         $user->password = Hash::make($validated['password']);
+        $user->markPasswordAsChanged();
         $user->save();
 
         return back()->with('success', 'Password updated successfully.');
@@ -168,17 +181,17 @@ class UserController extends Controller
 
     public function createDocument()
     {
-        $offices = Office::with(['users' => function($query) {
+        $departments = Departments::with(['users' => function($query) {
             $query->whereIn('role', ['receiver', 'admin'])->where('id', '!=', Auth::user()->id)
                   ->orderBy('role', 'desc'); // This will put receivers first
         }])->get();
 
-        // Transform the data to include the contact person for each office
-        $officesWithContact = $offices->map(function($office) {
-            $contactPerson = $office->users->first();
+        // Transform the data to include the contact person for each department
+        $departmentsWithContact = $departments->map(function($department) {
+            $contactPerson = $department->users->first();
             return [
-                'id' => $office->id,
-                'name' => $office->name,
+                'id' => $department->id,
+                'name' => $department->name,
                 'contact_person' => $contactPerson ? [
                     'id' => $contactPerson->id,
                     'name' => $contactPerson->first_name . ' ' . $contactPerson->last_name,
@@ -191,28 +204,42 @@ class UserController extends Controller
             'auth' => [
                 'user' => Auth::user()
             ],
-            'offices' => $officesWithContact
+            'departments' => $departmentsWithContact
         ]);
     }
 
     public function sendDocument(Request $request)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
+            'subject' => 'required|string|max:255',
+            'order_number' => 'required|string|max:255|unique:documents,order_number',
+            'document_type' => 'required|in:special_order,order,memorandum,for_info',
             'description' => 'nullable|string',
             'files' => 'required|array',
             'files.*' => 'required|file|max:10240', // 10MB max per file
             'recipient_ids' => 'required|array|min:1',
             'recipient_ids.*' => 'exists:users,id',
-            'initial_recipient_id' => 'required|exists:users,id'
+            'initial_recipient_id' => 'nullable|exists:users,id',
+            'through_user_ids' => 'nullable|array',
+            'through_user_ids.*' => 'exists:users,id'
         ]);
 
         // Create the document
         $document = Document::create([
             'owner_id' => Auth::id(),
-            'title' => $validated['title'],
+            'subject' => $validated['subject'],
+            'order_number' => $validated['order_number'],
+            'document_type' => $validated['document_type'],
             'description' => $validated['description'],
+            'through_user_ids' => $request->input('through_user_ids', []),
             'status' => 'pending'
+        ]);
+
+        // Log the through_user_ids for debugging
+        Log::info('Document created with through_user_ids', [
+            'document_id' => $document->id,
+            'through_user_ids' => $request->input('through_user_ids', []),
+            'document_through_user_ids' => $document->through_user_ids
         ]);
 
         // Handle multiple file uploads
@@ -228,29 +255,75 @@ class UserController extends Controller
             ]);
         }
 
-        // Extra safety: check recipient_ids is not empty
-        if (empty($validated['recipient_ids'])) {
-            \Illuminate\Support\Facades\Log::error('No recipient_ids provided for document send', ['request' => $request->all()]);
-            return back()->withErrors(['recipient_ids' => 'At least one recipient is required.']);
-        }
+        // Recipient logic
+        if ($validated['document_type'] === 'for_info') {
+            // Multi-recipient logic (unchanged)
+            $sequence = 1;
+            foreach ($validated['recipient_ids'] as $recipientId) {
+                if (!$recipientId) continue;
 
-        // Create recipients
-        $sequence = 1;
-        foreach ($validated['recipient_ids'] as $recipientId) {
-            if (!$recipientId) {
-                \Illuminate\Support\Facades\Log::error('Attempted to create DocumentRecipient with empty user_id', ['recipientId' => $recipientId]);
-                continue;
+                // get the admin of the recipient's department
+                $admin = User::where('department_id', User::find($recipientId)->department_id)->where('role', 'admin')->first();
+
+                DocumentRecipient::create([
+                    'document_id' => $document->id,
+                    'user_id' => $recipientId,
+                    'final_recipient_id' => $admin->id,
+                    'status' => 'pending',
+                    'sequence' => $sequence,
+                    'is_active' => true,
+                    'is_final_approver' => User::find($recipientId)->role === 'admin' ? true : false,
+                ]);
+                $sequence++;
             }
+        } else {
+            // For memorandum, order, special_order documents
+            $sendToId = $request->input('recipient_ids')[0];
+            $throughUserIds = $request->input('through_user_ids', []);
+
+            // Get the sendtoId's office admin
+            $officeAdmin = User::where('department_id', User::find($sendToId)->department_id)->where('role', 'admin')->first();
+
+            // Determine the initial recipient (first through user if any, otherwise the main recipient)
+            $initialRecipientId = !empty($throughUserIds) ? $throughUserIds[0] : $sendToId;
+
+            // Always create a recipient record with the final recipient as the "send to" user
             DocumentRecipient::create([
                 'document_id' => $document->id,
-                'user_id' => $recipientId,
+                'user_id' => $initialRecipientId, // Initially send to first through user or directly to main recipient
+                'final_recipient_id' => $officeAdmin->id, // Final destination is always the "send to" user
                 'status' => 'pending',
-                'sequence' => $sequence,
-                'is_active' => true, // All recipients are active initially
-                'is_final_approver' => User::find($recipientId)->role === 'admin' ? true : false,
+                'sequence' => 1,
+                'is_active' => true,
+                'is_final_approver' => User::find($sendToId)->role === 'admin' ? true : false,
+                'forwarded_by' => null,
             ]);
-            $sequence++;
         }
+
+         // Generate barcode at the moment the document is sent
+        $currentUser = Auth::user();
+        $department = $currentUser->department;
+        $departmentCode = $department ? $department->code : 'NOCODE';
+        $timestamp = now()->format('YmdHis'); // Format: YYYYMMDDHHMMSS
+        $userId = $currentUser->id;
+
+        // Generate unique barcode value: Department Code + Timestamp + User ID
+        $barcodeValue = $departmentCode . $timestamp . $userId;
+
+        // Generate barcode SVG
+        $generator = new BarcodeGeneratorSVG();
+        $barcodeSvg = $generator->getBarcode($barcodeValue, $generator::TYPE_CODE_128);
+
+        // Save SVG to storage
+        $barcodePath = 'barcodes/document_' . $document->id . '_' . $barcodeValue . '.svg';
+        Storage::disk('public')->put($barcodePath, $barcodeSvg);
+
+        // Save to document
+        $document->update([
+            'barcode_path' => $barcodePath,
+            'barcode_value' => $barcodeValue,
+        ]);
+
 
         return redirect()->route('users.documents')->with('success', 'Document sent successfully.');
     }
@@ -265,34 +338,70 @@ class UserController extends Controller
 
     public function editDocument($document)
     {
-        // $document = Auth::user()->documents()->findOrFail($document);
-        // return Inertia::render('Users/Documents/Edit', [
-        //     'document' => $document
-        // ]);
+        $doc = Document::where('id', $document)
+            ->where('owner_id', Auth::id())
+            ->where('status', 'returned')
+            ->with(['files', 'recipients'])
+            ->firstOrFail();
+        return Inertia::render('Users/EditDocument', [
+            'document' => $doc
+        ]);
     }
 
     public function updateDocument(Request $request, $document)
     {
-        // $document = Auth::user()->documents()->findOrFail($document);
+        $doc = Document::where('id', $document)
+            ->where('owner_id', Auth::id())
+            ->where('status', 'returned')
+            ->firstOrFail();
 
-        // $validated = $request->validate([
-        //     'title' => 'required|string|max:255',
-        //     'description' => 'nullable|string',
-        //     'file' => 'nullable|file|max:10240', // 10MB max
-        //     'type' => 'required|string|in:personal,academic,professional',
-        //     'status' => 'required|string|in:draft,published,archived'
-        // ]);
+        $validated = $request->validate([
+            'order_number' => 'required|string|max:255|unique:documents,order_number,' . $doc->id,
+            'subject' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'files' => 'nullable|array',
+            'files.*' => 'nullable|file|max:10240', // 10MB max per file
+        ]);
 
-        // if ($request->hasFile('file')) {
-        //     // Delete old file
-        //     Storage::disk('public')->delete($document->file_path);
-        //     $filePath = $request->file('file')->store('documents', 'public');
-        //     $validated['file_path'] = $filePath;
-        // }
+        $doc->order_number = $validated['order_number'];
+        $doc->subject = $validated['subject'];
+        $doc->description = $validated['description'] ?? '';
+        $doc->status = 'pending'; // Reset status so it can be resent
+        $doc->save();
 
-        // $document->update($validated);
+        // Handle file uploads (optional: delete old files if needed)
+        if ($request->hasFile('files')) {
+            foreach ($request->file('files') as $file) {
+                $filePath = $file->store('documents', 'public');
+                $doc->files()->create([
+                    'file_path' => $filePath,
+                    'original_filename' => $file->getClientOriginalName(),
+                    'mime_type' => $file->getMimeType(),
+                    'file_size' => $file->getSize(),
+                    'uploaded_by' => Auth::id(),
+                    'upload_type' => 'original',
+                ]);
+            }
+        }
 
-        // return redirect()->route('users.documents')->with('success', 'Document updated successfully.');
+        // Append a new approval chain entry for the original recipient
+        $lastRecipient = $doc->recipients()->orderByDesc('sequence')->first();
+        if ($lastRecipient) {
+            $nextSequence = $lastRecipient->sequence + 1;
+            DocumentRecipient::create([
+                'document_id' => $doc->id,
+                'user_id' => $lastRecipient->user_id,
+                'final_recipient_id' => $lastRecipient->final_recipient_id,
+                'status' => 'pending',
+                'sequence' => $nextSequence,
+                'is_active' => true,
+                'is_final_approver' => $lastRecipient->is_final_approver,
+                'forwarded_by' => null,
+                'comments' => 'Document resent by owner.',
+            ]);
+        }
+
+        return redirect()->route('users.documents', $doc->id)->with('success', 'Document updated and resent successfully.');
     }
 
     public function destroyDocument($document)
@@ -320,16 +429,16 @@ class UserController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
         ]);
 
-        // Check if trying to update to receiver role and if one already exists for this office
+        // Check if trying to update to receiver role and if one already exists for this department
         if ($request->role === 'receiver' && $user->role !== 'receiver') {
-            $existingReceiver = User::where('office_id', Auth::user()->office_id)
+            $existingReceiver = User::where('department_id', Auth::user()->department_id)
                 ->where('role', 'receiver')
                 ->where('id', '!=', $user->id)
                 ->first();
 
             if ($existingReceiver) {
                 return back()->withErrors([
-                    'role' => 'A receiver already exists for this office.'
+                    'role' => 'A receiver already exists for this department.'
                 ]);
             }
         }
@@ -345,7 +454,7 @@ class UserController extends Controller
             'email' => $request->email,
         ]);
 
-        return redirect()->route('users.offices');
+        return redirect()->route('users.departments');
     }
 
     // Dashboard Data for User
@@ -365,6 +474,9 @@ class UserController extends Controller
         $pendingDocuments = $allDocuments->where('status', 'pending')->count();
         $completedDocuments = $allDocuments->where('status', 'approved')->count();
 
+        // Count published documents where user is owner or recipient
+        $publishedDocuments = $allDocuments->where('is_public', true)->count();
+
         // Recent Activities: last 5 actions involving the user (owned or received)
         $recentActivities = DocumentRecipient::where('user_id', $userId)
             ->orderByDesc('responded_at')
@@ -374,7 +486,7 @@ class UserController extends Controller
             ->map(function($activity) {
                 return [
                     'document_id' => $activity->document_id,
-                    'title' => $activity->document->title ?? 'Untitled',
+                    'subject' => $activity->document->subject ?? 'Untitled',
                     'status' => $activity->status,
                     'responded_at' => $activity->responded_at,
                     'comments' => $activity->comments,
@@ -385,7 +497,108 @@ class UserController extends Controller
             'totalDocuments' => $totalDocuments,
             'pendingDocuments' => $pendingDocuments,
             'completedDocuments' => $completedDocuments,
+            'publishedDocuments' => $publishedDocuments,
             'recentActivities' => $recentActivities,
         ]);
+    }
+
+    // User's Published Documents Management
+    public function publishedDocuments()
+    {
+        $userId = Auth::id();
+
+        // Get documents where user is the owner
+        $ownedDocuments = Document::where('owner_id', $userId)
+            ->where('is_public', true)
+            ->with(['files', 'owner'])
+            ->get()
+            ->map(function($document) {
+                return [
+                    'id' => $document->id,
+                    'subject' => $document->subject,
+                    'description' => $document->description,
+                    'status' => $document->status,
+                    'is_public' => $document->is_public,
+                    'public_token' => $document->public_token,
+                    'barcode_path' => $document->barcode_path,
+                    'barcode_value' => $document->barcode_value,
+                    'created_at' => $document->created_at,
+                    'files_count' => $document->files->count(),
+                    'public_url' => route('documents.public_view', ['public_token' => $document->public_token]),
+                    'user_role' => 'owner',
+                    'owner_name' => $document->owner->first_name . ' ' . $document->owner->last_name,
+                ];
+            });
+
+        // Get documents where user is a recipient
+        $receivedDocuments = Document::whereHas('recipients', function($query) use ($userId) {
+            $query->where('user_id', $userId);
+        })
+        ->where('is_public', true)
+        ->where('owner_id', '!=', $userId) // Exclude documents where user is also the owner
+        ->with(['files', 'owner'])
+        ->get()
+        ->map(function($document) {
+            return [
+                'id' => $document->id,
+                'subject' => $document->subject,
+                'description' => $document->description,
+                'status' => $document->status,
+                'is_public' => $document->is_public,
+                'public_token' => $document->public_token,
+                'barcode_path' => $document->barcode_path,
+                'barcode_value' => $document->barcode_value,
+                'created_at' => $document->created_at,
+                'files_count' => $document->files->count(),
+                'public_url' => route('documents.public_view', ['public_token' => $document->public_token]),
+                'user_role' => 'recipient',
+                'owner_name' => $document->owner->first_name . ' ' . $document->owner->last_name,
+            ];
+        });
+
+        // Merge and sort by creation date
+        $publishedDocuments = $ownedDocuments->concat($receivedDocuments)
+            ->sortByDesc('created_at')
+            ->values();
+
+        return Inertia::render('Users/PublishedDocuments', [
+            'publishedDocuments' => $publishedDocuments,
+            'auth' => [
+                'user' => Auth::user()
+            ]
+        ]);
+    }
+
+    // Unpublish document (user can only unpublish their own documents)
+    public function unpublishDocument(Document $document)
+    {
+        // Check if the user owns this document
+        if ($document->owner_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $document->update([
+            'is_public' => false,
+            'public_token' => null,
+            'barcode_path' => null,
+            'barcode_value' => null,
+        ]);
+
+        return redirect()->route('users.published-documents')->with('success', 'Document unpublished successfully.');
+    }
+
+    public function deleteDocumentFile($document, $file)
+    {
+        $doc = Document::where('id', $document)
+            ->where('owner_id', Auth::id())
+            ->where('status', 'returned')
+            ->firstOrFail();
+        $fileModel = $doc->files()->where('id', $file)->firstOrFail();
+        // Delete the physical file
+        if ($fileModel->file_path) {
+            Storage::disk('public')->delete($fileModel->file_path);
+        }
+        $fileModel->delete();
+        return redirect()->route('users.documents.edit', $doc->id)->with('success', 'File deleted successfully.');
     }
 }

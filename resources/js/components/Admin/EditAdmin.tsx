@@ -9,7 +9,7 @@ import InputError from '../input-error';
 
 interface EditAdminProps {
     admin: Admin;
-    offices: {
+    departments: {
         id: number;
         name: string;
         description: string;
@@ -17,7 +17,7 @@ interface EditAdminProps {
     setIsEditDialogOpen: (value: boolean) => void;
 }
 
-export default function EditAdmin({ admin, offices, setIsEditDialogOpen }: EditAdminProps) {
+export default function EditAdmin({ admin, departments, setIsEditDialogOpen }: EditAdminProps) {
     const { data, setData, put, processing, errors } = useForm({
         first_name: admin.first_name,
         last_name: admin.last_name,
@@ -25,7 +25,7 @@ export default function EditAdmin({ admin, offices, setIsEditDialogOpen }: EditA
         suffix: admin.suffix || '',
         gender: admin.gender,
         position: admin.position,
-        office_id: admin.office?.id?.toString() || '',
+        department_id: admin.department?.id?.toString() || '',
         email: admin.email,
     });
 
@@ -104,23 +104,23 @@ export default function EditAdmin({ admin, offices, setIsEditDialogOpen }: EditA
                     <InputError message={errors.gender} />
                 </div>
                 <div>
-                    <Label htmlFor="office_id">Office</Label>
+                    <Label htmlFor="department_id">Department</Label>
                     <Select
-                        value={data.office_id}
-                        onValueChange={value => setData('office_id', value)}
+                        value={data.department_id}
+                        onValueChange={value => setData('department_id', value)}
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder="Select office" />
+                            <SelectValue placeholder="Select department" />
                         </SelectTrigger>
                         <SelectContent>
-                            {offices.map(office => (
-                                <SelectItem key={office.id} value={office.id.toString()}>
-                                    {office.name}
+                            {departments.map(department => (
+                                <SelectItem key={department.id} value={department.id.toString()}>
+                                    {department.name}
                                 </SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
-                    <InputError message={errors.office_id} />
+                    <InputError message={errors.department_id} />
                 </div>
             </div>
             <div>

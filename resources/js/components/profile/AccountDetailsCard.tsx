@@ -2,7 +2,7 @@ import React from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { CalendarDays, Mail, MapPin, Shield } from "lucide-react"
+import { CalendarDays, Mail, MapPin, Shield, User as UserIcon, Building } from "lucide-react"
 import type { User } from "@/types"
 
 interface Props {
@@ -23,83 +23,124 @@ const AccountDetailsCard: React.FC<Props> = ({ user }) => {
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-start space-x-4">
-                <Avatar className="h-16 w-16">
+        <div className="space-y-8">
+            {/* Profile Header */}
+            <div className="flex items-start space-x-6">
+                <Avatar className="h-20 w-20 border-4 border-white shadow-lg">
                     <AvatarImage src={user.avatar || "/placeholder.svg"} alt={`${user.first_name} ${user.last_name}`} />
-                    <AvatarFallback className="text-lg font-semibold bg-gray-200 text-gray-500">
+                    <AvatarFallback className="text-xl font-bold bg-gradient-to-br from-red-400 to-red-500 text-white">
                         {getInitials(user.first_name, user.last_name)}
                     </AvatarFallback>
                 </Avatar>
-                <div className="flex-1 space-y-1">
+                <div className="flex-1 space-y-3">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-2xl font-bold tracking-tight text-gray-800">
-                            {user.first_name} {user.last_name}
-                        </h2>
+                        <div>
+                            <h2 className="text-3xl font-bold tracking-tight text-gray-900">
+                                {user.first_name} {user.last_name}
+                            </h2>
+                            <p className="text-lg text-gray-600 mt-1">{user.position}</p>
+                        </div>
                         <Badge
                             variant="outline"
-                            className={`${user.is_active ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"}`}
+                            className={`px-4 py-2 text-sm font-semibold ${user.is_active ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"}`}
                         >
                             {user.is_active ? "Active" : "Inactive"}
                         </Badge>
                     </div>
                     <div className="flex items-center text-gray-600">
-                        <Mail className="mr-2 h-4 w-4" />
-                        <span className="text-sm">{user.email}</span>
+                        <Mail className="mr-3 h-5 w-5" />
+                        <span className="text-base">{user.email}</span>
                     </div>
-                    <p className="text-sm text-gray-600">ID: {user.id}</p>
+                    <p className="text-sm text-gray-500 font-medium">ID: {user.id}</p>
                 </div>
             </div>
 
-            <Separator />
+            <Separator className="bg-gray-200" />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                    <div className="flex items-center space-x-3">
-                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100">
-                            <Shield className="h-4 w-4 text-gray-600" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-medium text-gray-600">Role</p>
-                            <p className="font-semibold text-gray-800 capitalize">{user.role}</p>
+            {/* Account Information Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Left Column */}
+                <div className="space-y-6">
+                    {/* Role Information */}
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
+                        <div className="flex items-center space-x-4">
+                            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 shadow-lg">
+                                <Shield className="h-6 w-6 text-white" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Role</p>
+                                <p className="text-xl font-bold text-gray-900 capitalize mt-1">{user.role}</p>
+                            </div>
                         </div>
                     </div>
 
-                    <div className="flex items-center space-x-3">
-                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100">
-                            <MapPin className="h-4 w-4 text-gray-600" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-medium text-gray-600">Office</p>
-                            <p className="font-semibold text-gray-800">{user.office?.name || "Not assigned"}</p>
+                    {/* Department Information */}
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
+                        <div className="flex items-center space-x-4">
+                            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-500 shadow-lg">
+                                <Building className="h-6 w-6 text-white" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Department</p>
+                                <p className="text-xl font-bold text-gray-900 mt-1">{user.department?.name || "Not assigned"}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="space-y-4">
-                    <div className="flex items-center space-x-3">
-                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100">
-                            <Mail className="h-4 w-4 text-gray-600" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-medium text-gray-600">Email Status</p>
-                            <Badge
-                                variant="outline"
-                                className={`mt-1 ${user.email_verified_at ? "bg-green-100 text-green-800 border-green-200" : "bg-yellow-100 text-yellow-800 border-yellow-200"}`}
-                            >
-                                {user.email_verified_at ? "Verified" : "Unverified"}
-                            </Badge>
+                {/* Right Column */}
+                <div className="space-y-6">
+                    {/* Email Status */}
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
+                        <div className="flex items-center space-x-4">
+                            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-purple-500 shadow-lg">
+                                <Mail className="h-6 w-6 text-white" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Email Status</p>
+                                <div className="mt-2">
+                                    <Badge
+                                        variant="outline"
+                                        className={`px-3 py-1.5 text-sm font-semibold ${user.email_verified_at ? "bg-green-100 text-green-800 border-green-200" : "bg-yellow-100 text-yellow-800 border-yellow-200"}`}
+                                    >
+                                        {user.email_verified_at ? "Verified" : "Unverified"}
+                                    </Badge>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
+                    {/* Member Since */}
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
+                        <div className="flex items-center space-x-4">
+                            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-orange-500 shadow-lg">
+                                <CalendarDays className="h-6 w-6 text-white" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Member Since</p>
+                                <p className="text-xl font-bold text-gray-900 mt-1">{formatDate(user.created_at)}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Additional Information */}
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+                <div className="flex items-center space-x-4 mb-4">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-blue-400 to-blue-500 shadow-lg">
+                        <UserIcon className="h-5 w-5 text-white" />
+                    </div>
+                    <h3 className="text-lg font-bold text-blue-900">Account Information</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div className="flex items-center space-x-3">
-                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100">
-                            <CalendarDays className="h-4 w-4 text-gray-600" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-medium text-gray-600">Member Since</p>
-                            <p className="font-semibold text-gray-800">{formatDate(user.created_at)}</p>
-                        </div>
+                        <span className="font-semibold text-blue-800">Full Name:</span>
+                        <span className="text-blue-900">{user.first_name} {user.middle_name} {user.last_name} {user.suffix}</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                        <span className="font-semibold text-blue-800">Gender:</span>
+                        <span className="text-blue-900 capitalize">{user.gender}</span>
                     </div>
                 </div>
             </div>

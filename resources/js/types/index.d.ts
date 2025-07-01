@@ -39,7 +39,7 @@ export interface User {
     suffix: string | null;
     gender: string;
     position: string;
-    office: Office | null;
+    department: Departments | null;
     role: string;
     avatar?: string;
     email: string;
@@ -58,17 +58,19 @@ export interface Admin {
     suffix: string | null;
     gender: string;
     position: string;
-    office: Office | null;
+    department: Departments | null;
     email: string;
     is_active: boolean;
     created_at: string;
     avatar: string | null;
 }
 
-export interface Office {
+export interface Departments {
     id: number;
     name: string;
+    code: string;
     description: string | null;
+    type: 'office' | 'college';
     created_at: string;
     updated_at: string;
     [key: string]: unknown;

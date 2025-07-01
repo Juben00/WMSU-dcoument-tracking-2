@@ -5,14 +5,15 @@ use Inertia\Inertia;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\OfficeController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\DepartmentsController;
+use App\Http\Controllers\FirstTimePasswordController;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'require_password_change'])->group(function () {
     Route::get('dashboard', function () {
         if (Auth::user()->role === 'superadmin') {
             return app(AdminController::class)->dashboard();
@@ -20,6 +21,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             return Inertia::render('Users/Dashboard');
         }
     })->name('dashboard');
+
+    // First-time password change routes
+    Route::get('/password/change', [FirstTimePasswordController::class, 'show'])->name('password.change');
+    Route::post('/password/change', [FirstTimePasswordController::class, 'update'])->name('password.update');
 
     // Admin and Office Management Routes - Superadmin Only
         // Admin Management Routes
@@ -32,13 +37,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/Admin/users/{admin}', [AdminController::class, 'destroy'])->name('admins.destroy');
 
         // Office Management Routes
-        Route::get('/Admin/offices', [OfficeController::class, 'index'])->name('offices.index');
-        Route::get('/Admin/offices/create', [OfficeController::class, 'create'])->name('offices.create');
-        Route::post('/Admin/offices', [OfficeController::class, 'store'])->name('offices.store');
-        Route::get('/Admin/offices/{office}', [OfficeController::class, 'show'])->name('offices.show');
-        Route::get('/Admin/offices/{office}/edit', [OfficeController::class, 'edit'])->name('offices.edit');
-        Route::put('/Admin/offices/{office}', [OfficeController::class, 'update'])->name('offices.update');
-        Route::delete('/Admin/offices/{office}', [OfficeController::class, 'destroy'])->name('offices.destroy');
+        Route::get('/Admin/departments', [DepartmentsController::class, 'departments'])->name('departments.index');
+        Route::get('/Admin/departments/create', [DepartmentsController::class, 'create'])->name('departments.create');
+        Route::post('/Admin/departments', [DepartmentsController::class, 'store'])->name('departments.store');
+        Route::get('/Admin/departments/{department}', [DepartmentsController::class, 'show'])->name('departments.show');
+        Route::get('/Admin/departments/{department}/edit', [DepartmentsController::class, 'edit'])->name('departments.edit');
+        Route::put('/Admin/departments/{department}', [DepartmentsController::class, 'update'])->name('departments.update');
+        Route::delete('/Admin/departments/{department}', [DepartmentsController::class, 'destroy'])->name('departments.destroy');
 
         // Published Documents Management Routes
         Route::get('/Admin/published-documents', [AdminController::class, 'publishedDocuments'])->name('admin.published-documents');
@@ -54,7 +59,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile', [UserController::class, 'profile'])->name('users.profile');
     Route::patch('/profile', [UserController::class, 'updateProfile'])->name('profile.update');
     Route::put('/profile/password', [UserController::class, 'updatePassword'])->name('users.password.update');
-    Route::get('/offices', [UserController::class, 'offices'])->name('users.offices');
+    Route::get('/departments', [UserController::class, 'departments'])->name('users.departments');
 
     // // User Document Profile Routes
     Route::get('/documents/create', [UserController::class, 'createDocument'])->name('users.createDocument');
@@ -67,16 +72,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/users/documents/{document}', [UserController::class, 'updateDocument'])->name('users.documents.update');
     Route::delete('/users/documents/{document}', [UserController::class, 'destroyDocument'])->name('users.documents.destroy');
 
+    // User's Published Documents Management
+    Route::get('/published-documents', [UserController::class, 'publishedDocuments'])->name('users.published-documents');
+    Route::delete('/users/published-documents/{document}', [UserController::class, 'unpublishDocument'])->name('users.unpublish-document');
+
     // Document routes
     Route::get('/documents/{document}', [DocumentController::class, 'viewDocument'])->name('documents.view');
     Route::post('/documents/{document}/respond', [DocumentController::class, 'respondToDocument'])->name('documents.respond');
     Route::post('/documents/{document}/forward', [DocumentController::class, 'forwardDocument'])->name('documents.forward');
+    Route::post('/documents/{document}/received', [DocumentController::class, 'markAsReceived'])->name('documents.received');
     Route::get('/documents/{document}/chain', [DocumentController::class, 'getDocumentChain'])->name('documents.chain');
     Route::post('/documents/{document}/publish', [DocumentController::class, 'publishDocument'])->name('documents.publish');
-    Route::get('/public/documents/{public_token}', [DocumentController::class, 'publicView'])->name('documents.public_view');
+    Route::get('/documents/public', [DocumentController::class, 'publicDocuments'])->name('documents.public');
+    Route::get('/documents/public/{public_token}', [DocumentController::class, 'publicView'])->name('documents.public_view');
     Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
 
     Route::get('/dashboard/data', [UserController::class, 'dashboardData'])->name('dashboard.data');
+
+    Route::delete('/users/documents/{document}/files/{file}', [UserController::class, 'deleteDocumentFile'])->name('users.documents.files.delete');
 });
 
 // Download route without email verification requirement

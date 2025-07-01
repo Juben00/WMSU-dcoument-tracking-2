@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Navbar from '@/components/User/navbar';
-import { useForm } from '@inertiajs/react';
+import { useForm, router } from '@inertiajs/react';
 import { User } from '@/types';
 import {
     Select,
@@ -13,21 +13,25 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { MultiSelect } from '@/components/ui/multi-select';
 import Swal from 'sweetalert2';
+import { FileText, FileCheck, Users, Hash, User as UserIcon, Building, Calendar, Upload, ArrowLeft } from 'lucide-react';
 
 type FormData = {
-    title: string;
+    subject: string;
+    order_number: string;
+    document_type: 'special_order' | 'order' | 'memorandum' | 'for_info';
     description: string;
     files: File[];
     status: 'pending' | 'in_review' | 'approved' | 'rejected' | 'returned';
     recipient_ids: number[];
     initial_recipient_id: number | null;
+    through_user_ids: number[];
 }
 
 interface Props {
     auth: {
         user: User;
     };
-    offices: Array<{
+    departments: Array<{
         id: number;
         name: string;
         contact_person: {
@@ -46,44 +50,147 @@ const Spinner = () => (
     </svg>
 );
 
-const CreateDocument = ({ auth, offices }: Props) => {
+const CreateDocument = ({ auth, departments }: Props) => {
     const [filePreviews, setFilePreviews] = useState<string[]>([]);
+    const [sendToId, setSendToId] = useState<number | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const { data, setData, post, processing, errors } = useForm<FormData>({
-        title: '',
+        subject: '',
+        order_number: '',
+        document_type: 'for_info',
         description: '',
         files: [],
         status: 'pending',
         recipient_ids: [],
-        initial_recipient_id: null
+        initial_recipient_id: null,
+        through_user_ids: []
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (data.recipient_ids.length === 0) {
+
+        // Prevent double submission
+        if (isSubmitting || processing) {
+            return;
+        }
+
+        // Validate required fields
+        if (!data.subject || !data.order_number || !data.document_type || !data.description) {
             Swal.fire({
                 icon: 'warning',
-                title: 'No Recipients Selected',
-                text: 'Please select at least one recipient.',
+                title: 'Missing Required Fields',
+                text: 'Please fill out all required fields.',
                 confirmButtonColor: '#b91c1c',
             });
             return;
         }
-        setData('status', 'pending');
-        setTimeout(() => {
-            post(route('users.documents.send'), {
-                forceFormData: true,
-                onSuccess: () => {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Document Submitted!',
-                        text: 'Your document has been sent successfully.',
-                        confirmButtonColor: '#b91c1c',
-                    }).then(() => {
-                        window.location.href = '/documents';
-                    });
-                }
+
+        if (data.files.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'No Files Selected',
+                text: 'Please upload at least one file.',
+                confirmButtonColor: '#b91c1c',
             });
-        }, 0);
+            return;
+        }
+
+        setIsSubmitting(true);
+
+        // For 'for_info', must have at least one recipient
+        if (data.document_type === 'for_info') {
+            if (data.recipient_ids.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No Recipients Selected',
+                    text: 'Please select at least one recipient.',
+                    confirmButtonColor: '#b91c1c',
+                });
+                setIsSubmitting(false);
+                return;
+            }
+        } else {
+            // For other types, must have a main recipient
+            if (!sendToId) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No Main Recipient Selected',
+                    text: 'Please select the main recipient (Send To).',
+                    confirmButtonColor: '#b91c1c',
+                });
+                setIsSubmitting(false);
+                return;
+            }
+
+            // Check if through users include the main recipient
+            if (data.through_user_ids.includes(sendToId)) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Invalid Selection',
+                    text: 'The main recipient cannot be selected as a through user.',
+                    confirmButtonColor: '#b91c1c',
+                });
+                setIsSubmitting(false);
+                return;
+            }
+        }
+
+        // Always use FormData for submission
+        const formData = new FormData();
+        formData.append('subject', data.subject);
+        formData.append('order_number', data.order_number);
+        formData.append('document_type', data.document_type);
+        formData.append('description', data.description);
+        formData.append('status', 'pending');
+
+        // Recipients
+        if (data.document_type === 'for_info') {
+            data.recipient_ids.forEach((id, idx) => {
+                formData.append(`recipient_ids[${idx}]`, id.toString());
+            });
+            // Set initial_recipient_id if available
+            if (data.initial_recipient_id) {
+                formData.append('initial_recipient_id', data.initial_recipient_id.toString());
+            }
+        } else {
+            // Only one recipient for these types
+            formData.append('recipient_ids[0]', sendToId!.toString());
+            if (data.through_user_ids.length > 0) {
+                formData.append('initial_recipient_id', data.through_user_ids[0].toString());
+                // Add all through user IDs to the form data
+                data.through_user_ids.forEach((id, idx) => {
+                    formData.append(`through_user_ids[${idx}]`, id.toString());
+                });
+            }
+        }
+
+        // Files
+        data.files.forEach((file, idx) => {
+            formData.append(`files[${idx}]`, file);
+        });
+
+        router.post(route('users.documents.send'), formData, {
+            forceFormData: true,
+            onSuccess: () => {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Document Submitted!',
+                    text: 'Your document has been sent successfully.',
+                    confirmButtonColor: '#b91c1c',
+                }).then(() => {
+                    window.location.href = '/documents';
+                });
+            },
+            onError: () => {
+                setIsSubmitting(false);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Failed to Submit Document',
+                    text: 'Failed to submit document. Please try again.',
+                    confirmButtonColor: '#b91c1c',
+                });
+            }
+        });
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -111,61 +218,169 @@ const CreateDocument = ({ auth, offices }: Props) => {
         };
     }, [filePreviews]);
 
-    const recipientOptions = offices
-        .filter((office) => office.contact_person)
-        .map((office) => ({
-            value: office.contact_person!.id,
-            label: `${office.contact_person!.name} - ${office.name}`,
-        }));
+    const recipientOptions = departments
+        .filter((department) => department.contact_person)
+        .map((department) => {
+            const role = department.contact_person!.role;
+            const capitalizedRole = role.charAt(0).toUpperCase() + role.slice(1);
+            return {
+                value: department.contact_person!.id,
+                label: `${department.contact_person!.name} | ${department.name} | ${capitalizedRole}`,
+                name: department.contact_person!.name,
+                department: department.name,
+                role: capitalizedRole,
+            };
+        });
+
+    const documentTypeOptions = [
+        { value: 'special_order', label: 'Special Order' },
+        { value: 'order', label: 'Order' },
+        { value: 'memorandum', label: 'Memorandum' },
+        { value: 'for_info', label: 'For Info' },
+    ];
+
+    const getDocumentTypeColor = (documentType: string) => {
+        switch (documentType) {
+            case 'special_order':
+                return 'bg-purple-100 text-purple-800 border-purple-200';
+            case 'order':
+                return 'bg-blue-100 text-blue-800 border-blue-200';
+            case 'memorandum':
+                return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+            case 'for_info':
+                return 'bg-gray-100 text-gray-800 border-gray-200';
+            default:
+                return 'bg-gray-100 text-gray-800 border-gray-200';
+        }
+    };
 
     return (
         <>
             <Navbar />
-            <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-gray-100 py-12 px-2">
-                <div className="max-w-3xl mx-auto">
-                    <div className="mb-8 text-center">
-                        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight mb-2">Create New Document</h1>
-                        <p className="text-gray-500 text-base">Fill out the form below to send a new document to one or more offices.</p>
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    {/* Header Section */}
+                    <div className="mb-8">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-lg">
+                                    <FileText className="w-8 h-8 text-white" />
+                                </div>
+                                <div>
+                                    <h1 className="text-3xl font-bold text-gray-900">Create New Document</h1>
+                                    <p className="text-gray-600 mt-1">Fill out the form below to send a new document</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => window.history.back()}
+                                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-gray-700 hover:text-gray-900 font-semibold rounded-lg border border-gray-200 hover:border-gray-300 shadow-sm hover:shadow-md transition-all duration-200"
+                            >
+                                <ArrowLeft className="w-4 h-4" />
+                                Back
+                            </button>
+                        </div>
                     </div>
 
-                    <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-                        <form id="create-doc-form" onSubmit={handleSubmit} className="space-y-8">
-                            <div className="grid grid-cols-1 gap-8">
-                                <div>
-                                    <label htmlFor="title" className="block text-sm font-semibold text-gray-700 mb-1">
-                                        Title <span className="text-red-500">*</span>
-                                    </label>
-                                    <Input
-                                        type="text"
-                                        name="title"
-                                        id="title"
-                                        required
-                                        className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition"
-                                        value={data.title}
-                                        onChange={e => setData('title', e.target.value)}
-                                    />
-                                    {errors.title && <div className="text-red-500 text-xs mt-1">{errors.title}</div>}
+                    {/* Document Information Card */}
+                    <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
+                        <div className="p-8">
+                            <div className="flex items-center gap-3 mb-8">
+                                <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
+                                    <FileCheck className="w-5 h-5 text-white" />
+                                </div>
+                                <h2 className="text-2xl font-bold text-gray-900">Document Information</h2>
+                            </div>
+
+                            <form id="create-doc-form" onSubmit={handleSubmit} className="space-y-8">
+                                {/* Document Type and Order Number */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                        <label htmlFor="document_type" className="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
+                                            Document Type <span className="text-red-500">*</span>
+                                        </label>
+                                        <Select
+                                            value={data.document_type}
+                                            onValueChange={(value: 'special_order' | 'order' | 'memorandum' | 'for_info') =>
+                                                setData('document_type', value)
+                                            }
+                                        >
+                                            <SelectTrigger className="mt-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition truncate bg-white">
+                                                <SelectValue placeholder="Select document type" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {documentTypeOptions.map((option) => (
+                                                    <SelectItem key={option.value} value={option.value}>
+                                                        {option.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        {errors.document_type && <div className="text-red-500 text-xs mt-1">{errors.document_type}</div>}
+                                    </div>
+
+                                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                        <label htmlFor="order_number" className="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
+                                            Order Number <span className="text-red-500">*</span>
+                                        </label>
+                                        <Input
+                                            type="text"
+                                            name="order_number"
+                                            id="order_number"
+                                            required
+                                            className="mt-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition bg-white"
+                                            value={data.order_number}
+                                            onChange={e => setData('order_number', e.target.value)}
+                                        />
+                                        {errors.order_number && <div className="text-red-500 text-xs mt-1">{errors.order_number}</div>}
+                                    </div>
                                 </div>
 
-                                <div>
-                                    <label htmlFor="description" className="block text-sm font-semibold text-gray-700 mb-1">
-                                        Description <span className="text-red-500">*</span>
-                                    </label>
+                                {/* Subject */}
+                                <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                    <label htmlFor="subject" className="text-sm font-semibold text-gray-600 mb-2">Subject <span className="text-red-500">*</span></label>
+                                    <Input
+                                        type="text"
+                                        name="subject"
+                                        id="subject"
+                                        required
+                                        className="mt-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition bg-white"
+                                        value={data.subject}
+                                        onChange={e => setData('subject', e.target.value)}
+                                    />
+                                    {errors.subject && <div className="text-red-500 text-xs mt-1">{errors.subject}</div>}
+                                </div>
+
+                                {/* Description */}
+                                <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                    <label htmlFor="description" className="text-sm font-semibold text-gray-600 mb-2">Description <span className="text-red-500">*</span></label>
                                     <Textarea
                                         name="description"
                                         id="description"
                                         rows={4}
-                                        className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition"
+                                        className="mt-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition bg-white"
                                         value={data.description}
                                         onChange={e => setData('description', e.target.value)}
                                     />
                                     {errors.description && <div className="text-red-500 text-xs mt-1">{errors.description}</div>}
                                 </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    {/* Recipients Section */}
+                    <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
+                        <div className="p-8">
+                            <div className="flex items-center gap-3 mb-8">
+                                <div className="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg">
+                                    <Users className="w-5 h-5 text-white" />
+                                </div>
+                                <h2 className="text-2xl font-bold text-gray-900">Recipients</h2>
                             </div>
 
-                            <div className="grid grid-cols-1  gap-8">
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                            {data.document_type === 'for_info' ? (
+                                <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                                    <label className="text-sm font-semibold text-blue-700 mb-2 flex items-center gap-2">
+                                        <Users className="w-4 h-4" />
                                         Send To <span className="text-red-500">*</span>
                                     </label>
                                     <MultiSelect
@@ -181,38 +396,101 @@ const CreateDocument = ({ auth, offices }: Props) => {
                                         <div className="text-red-500 text-xs mt-1">{errors.recipient_ids}</div>
                                     )}
                                 </div>
+                            ) : (
+                                <div className="space-y-6">
+                                    <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                                        <label className="text-sm font-semibold text-blue-700 mb-2 flex items-center gap-2">
+                                            <UserIcon className="w-4 h-4" />
+                                            Send To <span className="text-red-500">*</span>
+                                        </label>
+                                        <Select
+                                            value={sendToId ? sendToId.toString() : ''}
+                                            onValueChange={(value) => {
+                                                setSendToId(value ? parseInt(value) : null);
+                                            }}
+                                        >
+                                            <SelectTrigger className="mt-2 block w-full rounded-lg border-blue-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition truncate bg-white">
+                                                <SelectValue placeholder="Select main recipient" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {recipientOptions.map((option) => (
+                                                    <SelectItem key={option.value} value={option.value.toString()}>
+                                                        <span>{option.label}</span>
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        {!sendToId && (
+                                            <div className="text-red-500 text-xs mt-1">Main recipient is required.</div>
+                                        )}
+                                    </div>
 
-                                <div>
-                                    <label htmlFor="files" className="block text-sm font-semibold text-gray-700 mb-1">
-                                        Upload Documents <span className="text-red-500">*</span>
-                                    </label>
-                                    <Input
-                                        type="file"
-                                        name="files"
-                                        id="files"
-                                        multiple
-                                        required
-                                        className="mt-1 block w-full text-sm text-gray-500 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-200 transition"
-                                        onChange={handleFileChange}
-                                    />
-                                    {errors.files && <div className="text-red-500 text-xs mt-1">{errors.files}</div>}
+                                    <div className="bg-amber-50 rounded-xl p-4 border border-amber-100">
+                                        <label className="text-sm font-semibold text-amber-700 mb-2 flex items-center gap-2">
+                                            <Users className="w-4 h-4" />
+                                            Send Through <span className="text-gray-400">(optional)</span>
+                                        </label>
+                                        <MultiSelect
+                                            options={recipientOptions}
+                                            selected={data.through_user_ids}
+                                            onChange={(selected) => {
+                                                setData('through_user_ids', selected);
+                                            }}
+                                            placeholder="Select optional through users"
+                                        />
+                                        <p className="text-xs text-amber-600 mt-2">
+                                            Document will be sent to the first selected through user, then to the main recipient.
+                                        </p>
+                                    </div>
                                 </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Files Section */}
+                    <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
+                        <div className="p-8">
+                            <div className="flex items-center gap-3 mb-8">
+                                <div className="p-2 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg">
+                                    <Upload className="w-5 h-5 text-white" />
+                                </div>
+                                <h2 className="text-2xl font-bold text-gray-900">Upload Documents</h2>
+                            </div>
+
+                            <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                <label htmlFor="files" className="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
+                                    <Upload className="w-4 h-4" />
+                                    Select Files <span className="text-red-500">*</span>
+                                </label>
+                                <Input
+                                    type="file"
+                                    name="files"
+                                    id="files"
+                                    multiple
+                                    required
+                                    className="mt-2 block w-full text-sm text-gray-500 file:px-4 file:py-2 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-200 transition bg-white"
+                                    onChange={handleFileChange}
+                                />
+                                {errors.files && <div className="text-red-500 text-xs mt-1">{errors.files}</div>}
                             </div>
 
                             {/* File Previews */}
                             {filePreviews.length > 0 && (
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">File Previews</label>
+                                <div className="mt-6">
+                                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                        File Previews
+                                    </h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                                         {filePreviews.map((preview, index) => (
                                             preview && (
-                                                <div key={index} className="relative group rounded-lg overflow-hidden shadow border border-gray-200 bg-gray-50">
+                                                <div key={index} className="relative group rounded-xl overflow-hidden shadow-lg border border-gray-200 bg-white hover:shadow-xl transition-all duration-200">
                                                     <img
                                                         src={preview}
                                                         alt={`Preview ${index + 1}`}
-                                                        className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-200"
+                                                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-200"
                                                     />
-                                                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white px-3 py-2 text-xs truncate">
+                                                    <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white px-4 py-3 text-sm font-medium">
                                                         {data.files[index]?.name}
                                                     </div>
                                                 </div>
@@ -221,24 +499,38 @@ const CreateDocument = ({ auth, offices }: Props) => {
                                     </div>
                                 </div>
                             )}
+                        </div>
+                    </div>
 
-                            <div className="flex flex-col sm:flex-row justify-end gap-4 pt-4">
+                    {/* Actions Section */}
+                    <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
+                        <div className="p-8">
+                            <div className="flex items-center gap-3 mb-8">
+                                <div className="p-2 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg">
+                                    <FileCheck className="w-5 h-5 text-white" />
+                                </div>
+                                <h2 className="text-2xl font-bold text-gray-900">Submit Document</h2>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row justify-end gap-4">
                                 <button
                                     type="button"
                                     onClick={() => window.history.back()}
-                                    className="px-5 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition shadow-sm"
+                                    disabled={isSubmitting || processing}
+                                    className="px-6 py-3 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={processing}
-                                    className="px-6 py-2 rounded-lg shadow text-sm font-semibold text-white bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-60 flex items-center justify-center transition"
+                                    form="create-doc-form"
+                                    disabled={isSubmitting || processing}
+                                    className="px-8 py-3 rounded-lg shadow-lg text-sm font-semibold text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center transition-all duration-200 transform hover:scale-105"
                                 >
-                                    {processing ? (<><span>Submitting...</span><Spinner /></>) : 'Submit Document'}
+                                    {isSubmitting || processing ? (<><span>Submitting...</span><Spinner /></>) : 'Submit Document'}
                                 </button>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -14,8 +14,9 @@ return new class extends Migration
         Schema::create('documents', function (Blueprint $table) {
             $table->id();
             $table->foreignId('owner_id')->constrained('users')->onDelete('cascade');
-            $table->string('title');
-            $table->enum('status', ['draft', 'pending', 'in_review', 'approved', 'rejected', 'returned']);
+            $table->string('order_number');
+            $table->string('subject');
+            $table->enum('status', ['draft', 'pending', 'in_review', 'approved', 'rejected', 'returned', 'cancelled', 'received'])->default('draft');
             $table->text('description')->nullable();
             $table->boolean('is_public')->default(false);
             $table->string('public_token')->unique()->nullable();

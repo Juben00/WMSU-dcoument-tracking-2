@@ -16,12 +16,21 @@ class Document extends Model
 
     protected $fillable = [
         'owner_id',
-        'title',
+        'subject',
+        'order_number',
+        'document_type',
         'status',
         'description',
+        'through_user_ids',
         'is_public',
         'public_token',
         'barcode_path',
+        'barcode_value',
+    ];
+
+    protected $casts = [
+        'is_public' => 'boolean',
+        'through_user_ids' => 'array',
     ];
 
     public function owner(): BelongsTo
@@ -37,5 +46,32 @@ class Document extends Model
     public function files(): HasMany
     {
         return $this->hasMany(DocumentFile::class);
+    }
+
+    /**
+     * Get the display name for the document type
+     */
+    public function getDocumentTypeDisplayName(): string
+    {
+        return match($this->document_type) {
+            'special_order' => 'Special Order',
+            'order' => 'Order',
+            'memorandum' => 'Memorandum',
+            'for_info' => 'For Info',
+            default => 'Unknown'
+        };
+    }
+
+    /**
+     * Get all available document types
+     */
+    public static function getDocumentTypes(): array
+    {
+        return [
+            'special_order' => 'Special Order',
+            'order' => 'Order',
+            'memorandum' => 'Memorandum',
+            'for_info' => 'For Info',
+        ];
     }
 }

@@ -10,6 +10,7 @@ class DocumentRecipient extends Model
     protected $fillable = [
         'document_id',
         'user_id',
+        'final_recipient_id',
         'status',
         'comments',
         'responded_at',
@@ -44,5 +45,10 @@ class DocumentRecipient extends Model
     public function forwardedTo(): BelongsTo
     {
         return $this->belongsTo(User::class, 'forwarded_to');
+    }
+
+    public function finalRecipient(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'final_recipient_id');
     }
 }

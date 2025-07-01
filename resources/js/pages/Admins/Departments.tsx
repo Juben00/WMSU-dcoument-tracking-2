@@ -13,19 +13,20 @@ import { useForm } from '@inertiajs/react';
 import { Plus, Trash2, Pencil, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import AddNewOffice from '@/components/Offices/add-new-office';
-import EditOffice from '@/components/Offices/edit-office';
-import { Office } from '@/types';
+import EditDepartment from '@/components/Departments/EditDepartment';
+import type { Departments } from '@/types';
+import AddDepartment from '@/components/Departments/AddDepartment';
+import Swal from 'sweetalert2';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Offices',
-        href: '/offices',
+        title: 'Departments',
+        href: '/departments',
     },
 ];
 
 interface Props {
-    offices: Office[];
+    departments: Departments[];
     auth: {
         user: {
             id: number;
@@ -33,53 +34,76 @@ interface Props {
     };
 }
 
-export default function Offices({ offices, auth }: Props) {
+export default function Departments({ departments, auth }: Props) {
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-    const [selectedOffice, setSelectedOffice] = useState<Office | null>(null);
+    const [selectedOffice, setSelectedOffice] = useState<Departments | null>(null);
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
-    const handleDeleteOffice = (office: Office) => {
-        if (confirm('Are you sure you want to delete this office?')) {
-            router.delete(route('offices.destroy', office.id), {
-                onSuccess: () => {
-                    toast.success('Office deleted successfully');
-                },
-                onError: (errors) => {
-                    toast.error('Failed to delete office. Please try again.');
-                }
-            });
-        }
+    const handleDeleteOffice = (department: Departments) => {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'You won\'t be able to revert this!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                router.delete(route('departments.destroy', department.id), {
+                    onSuccess: () => {
+                        toast.success('Department deleted successfully');
+                        router.reload({ only: ['departments'] });
+                    },
+                    onError: (errors) => {
+                        console.error('Delete error:', errors);
+                        if (errors.department) {
+                            toast.error(errors.department);
+                        } else {
+                            toast.error('Failed to delete department. Please try again.');
+                        }
+                    }
+                });
+            }
+        });
     };
 
-    const handleViewOffice = (office: Office) => {
-        setSelectedOffice(office);
+    const handleViewOffice = (department: Departments) => {
+        setSelectedOffice(department);
         setIsViewDialogOpen(true);
     };
 
-    const handleEditOffice = (office: Office) => {
-        setSelectedOffice(office);
+    const handleEditOffice = (department: Departments) => {
+        setSelectedOffice(department);
         setIsEditDialogOpen(true);
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Offices Management" />
+            <Head title="Departments Management" />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 overflow-x-auto">
                 <div className="flex justify-between items-center">
-                    <h1 className="text-2xl font-semibold">Offices Management</h1>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-3xl font-bold tracking-tight">Departments Management</h1>
+                            <p className="text-muted-foreground">
+                                Manage all departments
+                            </p>
+                        </div>
+                    </div>
                     <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                         <DialogTrigger asChild>
                             <Button>
                                 <Plus className="mr-2 h-4 w-4" />
-                                Create Office
+                                Create Department
                             </Button>
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
-                                <DialogTitle>Create New Office</DialogTitle>
+                                <DialogTitle>Create New Department</DialogTitle>
                             </DialogHeader>
-                            <AddNewOffice setIsCreateDialogOpen={setIsCreateDialogOpen} />
+                            <AddDepartment setIsCreateDialogOpen={setIsCreateDialogOpen} />
                         </DialogContent>
                     </Dialog>
                 </div>
@@ -89,40 +113,44 @@ export default function Offices({ offices, auth }: Props) {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Name</TableHead>
+                                <TableHead>Code</TableHead>
                                 <TableHead>Description</TableHead>
+                                <TableHead>Type</TableHead>
                                 <TableHead>Created At</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {offices.map((office) => (
-                                <TableRow key={office.id}>
-                                    <TableCell>{office.name}</TableCell>
-                                    <TableCell>{office.description}</TableCell>
-                                    <TableCell>{format(new Date(office.created_at), 'MMM d, yyyy')}</TableCell>
+                            {departments.map((department) => (
+                                <TableRow key={department.id}>
+                                    <TableCell>{department.name}</TableCell>
+                                    <TableCell>{department.code}</TableCell>
+                                    <TableCell>{department.description}</TableCell>
+                                    <TableCell>{department.type}</TableCell>
+                                    <TableCell>{format(new Date(department.created_at), 'MMM d, yyyy')}</TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                onClick={() => handleViewOffice(office)}
-                                                title="View Office Details"
+                                                onClick={() => handleViewOffice(department)}
+                                                title="View Department Details"
                                             >
                                                 <Eye className="h-4 w-4" />
                                             </Button>
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                onClick={() => handleEditOffice(office)}
-                                                title="Edit Office"
+                                                onClick={() => handleEditOffice(department)}
+                                                title="Edit Department"
                                             >
                                                 <Pencil className="h-4 w-4" />
                                             </Button>
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                onClick={() => handleDeleteOffice(office)}
-                                                title="Delete Office"
+                                                onClick={() => handleDeleteOffice(department)}
+                                                title="Delete Department"
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
@@ -138,17 +166,25 @@ export default function Offices({ offices, auth }: Props) {
                 <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Office Details</DialogTitle>
+                            <DialogTitle>Department Details</DialogTitle>
                         </DialogHeader>
                         {selectedOffice && (
                             <div className="space-y-4">
                                 <div>
-                                    <Label>Office Name</Label>
+                                    <Label>Department Name</Label>
                                     <p className="text-sm">{selectedOffice.name}</p>
+                                </div>
+                                <div>
+                                    <Label>Department Code</Label>
+                                    <p className="text-sm">{selectedOffice.code}</p>
                                 </div>
                                 <div>
                                     <Label>Description</Label>
                                     <p className="text-sm">{selectedOffice.description}</p>
+                                </div>
+                                <div>
+                                    <Label>Type</Label>
+                                    <p className="text-sm capitalize">{selectedOffice.type}</p>
                                 </div>
                                 <div>
                                     <Label>Created At</Label>
@@ -163,11 +199,11 @@ export default function Offices({ offices, auth }: Props) {
                 <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Edit Office</DialogTitle>
+                            <DialogTitle>Edit Department</DialogTitle>
                         </DialogHeader>
                         {selectedOffice && (
-                            <EditOffice
-                                office={selectedOffice}
+                            <EditDepartment
+                                department={selectedOffice}
                                 setIsEditDialogOpen={setIsEditDialogOpen}
                             />
                         )}

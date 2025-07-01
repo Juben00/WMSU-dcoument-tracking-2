@@ -25,11 +25,12 @@ class User extends Authenticatable
         'suffix',
         'gender',
         'position',
-        'office_id',
+        'department_id',
         'role',
         'avatar',
         'email',
         'password',
+        'password_changed_at',
         'is_active',
     ];
 
@@ -50,8 +51,8 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'password_changed_at' => 'datetime',
         'password' => 'hashed',
-        'is_admin' => 'boolean',
         'is_active' => 'boolean',
     ];
 
@@ -60,8 +61,24 @@ class User extends Authenticatable
         return $this->hasMany(\App\Models\Document::class, 'owner_id');
     }
 
-    public function office()
+    public function department()
     {
-        return $this->belongsTo(Office::class);
+        return $this->belongsTo(Departments::class, 'department_id');
+    }
+
+    /**
+     * Check if the user needs to change their password (first-time login)
+     */
+    public function needsPasswordChange(): bool
+    {
+        return $this->password_changed_at === null;
+    }
+
+    /**
+     * Mark that the user has changed their password
+     */
+    public function markPasswordAsChanged(): void
+    {
+        $this->update(['password_changed_at' => now()]);
     }
 }
