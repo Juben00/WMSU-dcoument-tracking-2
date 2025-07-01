@@ -8,6 +8,7 @@ import { Download, FileText, FileCheck, Users, BarChart3, Copy, ExternalLink, Ca
 import Swal from 'sweetalert2';
 import ForwardOtherOfficeModal from './components/ForwardOtherOfficeModal';
 import { log } from 'console';
+import ReturnModal from './components/ReturnModal';
 
 interface DocumentFile {
     id: number;
@@ -219,6 +220,7 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
     const [revisionFile, setRevisionFile] = useState<File | null>(null);
     const [approveFile, setApproveFile] = useState<File | null>(null);
     const [copied, setCopied] = useState(false);
+    const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
 
     const { post, delete: destroy, processing, setData } = useForm({
         status: '',
@@ -242,25 +244,32 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
     const cannotRespond = () => !document.can_respond;
     const isNotOwner = () => !isOwner();
     const isNotFinalRecipient = () => !isFinalRecipient();
+    const isReturned = () => document.status === 'returned';
+    const isPending = () => document.status === 'pending';
+    const notApprovedAndRejected = () => !['approved', 'rejected'].includes(document.status);
 
     // Action permission checks
     const canMarkAsReceived = () => {
         if (isForInfoDocument()) {
             return canRespond();
         }
-        return canRespond() && isNonForInfoDocument() && isNotFinalRecipient();
+        return canRespond() && isNonForInfoDocument() && isNotFinalRecipient() && !isReturned() && !isPending();
     };
 
     const canApproveOrReject = () => {
-        return canRespond() && isNonForInfoDocument() && isFinalRecipient();
+        return canRespond() && isNonForInfoDocument() && isFinalRecipient() && !isReturned() && !isPending();
     };
 
     const canForwardToOffice = () => {
-        return cannotRespond() && isNotFinalRecipient() && isNotOwner();
+        return cannotRespond() && isNotFinalRecipient() && isNotOwner() && !isReturned() && !isPending() && notApprovedAndRejected();
     };
 
     const canForwardToOtherOffice = () => {
-        return cannotRespond() && isNotFinalRecipient() && isAdmin() && isNotOwner();
+        return cannotRespond() && isNotFinalRecipient() && isAdmin() && isNotOwner() && !isReturned() && !isPending() && notApprovedAndRejected();
+    };
+
+    const canReturnDocument = () => {
+        return cannotRespond() && isAdmin() && isNotOwner() && isNonForInfoDocument() && !isReturned() && !isPending() && notApprovedAndRejected();
     };
 
     const canPublishPublicly = () => {
@@ -268,7 +277,7 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
     };
 
     const canCancelDocument = () => {
-        return isOwner() && ['pending', 'in_review', 'approved'].includes(document.status);
+        return isOwner() && ['pending', 'in_review', 'approved', 'returned'].includes(document.status);
     };
 
     const getStatusColor = (status: string) => {
@@ -886,6 +895,26 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                         </button>
                                     </>
                                 )}
+
+                                {/* Return Document Button */}
+                                {canReturnDocument() && (
+                                    <button
+                                        onClick={() => setIsReturnModalOpen(true)}
+                                        className="px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg hover:from-gray-700 hover:to-gray-800 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                                    >
+                                        Return Document
+                                    </button>
+                                )}
+
+                                {/* Edit Button for Owner when status is returned */}
+                                {isOwner() && document.status === 'returned' && (
+                                    <Link
+                                        href={route('users.documents.edit', { document: document.id })}
+                                        className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-lg hover:from-yellow-600 hover:to-yellow-700 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                                    >
+                                        Edit & Resend
+                                    </Link>
+                                )}
                             </div>
 
                             {/* Publish Publicly Button for Owner */}
@@ -1160,6 +1189,11 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                 onClose={() => setIsForwardOtherOfficeModalOpen(false)}
                 processing={processing}
                 users={otherDepartmentUsers || []}
+                documentId={document.id}
+            />
+            <ReturnModal
+                isOpen={isReturnModalOpen}
+                onClose={() => setIsReturnModalOpen(false)}
                 documentId={document.id}
             />
         </>

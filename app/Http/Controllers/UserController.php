@@ -17,6 +17,8 @@ use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Log;
 use Picqer\Barcode\BarcodeGeneratorSVG;
 
+
+
 class UserController extends Controller
 {
     public function index()
@@ -112,8 +114,14 @@ class UserController extends Controller
             $query->where('user_id', Auth::id());
         })->select('id', 'subject', 'document_type', 'status', 'created_at', 'owner_id', 'is_public', 'barcode_value')->get();
 
-        // Merge the collections
-        $documents = $ownedDocuments->concat($receivedDocuments);
+        // Get returned documents where user is the owner
+        $returnedDocuments = Document::where('owner_id', Auth::id())
+            ->where('status', 'returned')
+            ->select('id', 'subject', 'document_type', 'status', 'created_at', 'owner_id', 'is_public', 'barcode_value')
+            ->get();
+
+        // Merge the collections and remove duplicates
+        $documents = $ownedDocuments->concat($receivedDocuments)->concat($returnedDocuments)->unique('id');
 
         return Inertia::render('Users/Documents', [
             'documents' => $documents,
@@ -330,34 +338,70 @@ class UserController extends Controller
 
     public function editDocument($document)
     {
-        // $document = Auth::user()->documents()->findOrFail($document);
-        // return Inertia::render('Users/Documents/Edit', [
-        //     'document' => $document
-        // ]);
+        $doc = Document::where('id', $document)
+            ->where('owner_id', Auth::id())
+            ->where('status', 'returned')
+            ->with(['files', 'recipients'])
+            ->firstOrFail();
+        return Inertia::render('Users/EditDocument', [
+            'document' => $doc
+        ]);
     }
 
     public function updateDocument(Request $request, $document)
     {
-        // $document = Auth::user()->documents()->findOrFail($document);
+        $doc = Document::where('id', $document)
+            ->where('owner_id', Auth::id())
+            ->where('status', 'returned')
+            ->firstOrFail();
 
-        // $validated = $request->validate([
-        //     'subject' => 'required|string|max:255',
-        //     'description' => 'nullable|string',
-        //     'file' => 'nullable|file|max:10240', // 10MB max
-        //     'type' => 'required|string|in:personal,academic,professional',
-        //     'status' => 'required|string|in:draft,published,archived'
-        // ]);
+        $validated = $request->validate([
+            'order_number' => 'required|string|max:255|unique:documents,order_number,' . $doc->id,
+            'subject' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'files' => 'nullable|array',
+            'files.*' => 'nullable|file|max:10240', // 10MB max per file
+        ]);
 
-        // if ($request->hasFile('file')) {
-        //     // Delete old file
-        //     Storage::disk('public')->delete($document->file_path);
-        //     $filePath = $request->file('file')->store('documents', 'public');
-        //     $validated['file_path'] = $filePath;
-        // }
+        $doc->order_number = $validated['order_number'];
+        $doc->subject = $validated['subject'];
+        $doc->description = $validated['description'] ?? '';
+        $doc->status = 'pending'; // Reset status so it can be resent
+        $doc->save();
 
-        // $document->update($validated);
+        // Handle file uploads (optional: delete old files if needed)
+        if ($request->hasFile('files')) {
+            foreach ($request->file('files') as $file) {
+                $filePath = $file->store('documents', 'public');
+                $doc->files()->create([
+                    'file_path' => $filePath,
+                    'original_filename' => $file->getClientOriginalName(),
+                    'mime_type' => $file->getMimeType(),
+                    'file_size' => $file->getSize(),
+                    'uploaded_by' => Auth::id(),
+                    'upload_type' => 'original',
+                ]);
+            }
+        }
 
-        // return redirect()->route('users.documents')->with('success', 'Document updated successfully.');
+        // Append a new approval chain entry for the original recipient
+        $lastRecipient = $doc->recipients()->orderByDesc('sequence')->first();
+        if ($lastRecipient) {
+            $nextSequence = $lastRecipient->sequence + 1;
+            DocumentRecipient::create([
+                'document_id' => $doc->id,
+                'user_id' => $lastRecipient->user_id,
+                'final_recipient_id' => $lastRecipient->final_recipient_id,
+                'status' => 'pending',
+                'sequence' => $nextSequence,
+                'is_active' => true,
+                'is_final_approver' => $lastRecipient->is_final_approver,
+                'forwarded_by' => null,
+                'comments' => 'Document resent by owner.',
+            ]);
+        }
+
+        return redirect()->route('users.documents', $doc->id)->with('success', 'Document updated and resent successfully.');
     }
 
     public function destroyDocument($document)
@@ -541,5 +585,20 @@ class UserController extends Controller
         ]);
 
         return redirect()->route('users.published-documents')->with('success', 'Document unpublished successfully.');
+    }
+
+    public function deleteDocumentFile($document, $file)
+    {
+        $doc = Document::where('id', $document)
+            ->where('owner_id', Auth::id())
+            ->where('status', 'returned')
+            ->firstOrFail();
+        $fileModel = $doc->files()->where('id', $file)->firstOrFail();
+        // Delete the physical file
+        if ($fileModel->file_path) {
+            Storage::disk('public')->delete($fileModel->file_path);
+        }
+        $fileModel->delete();
+        return redirect()->route('users.documents.edit', $doc->id)->with('success', 'File deleted successfully.');
     }
 }

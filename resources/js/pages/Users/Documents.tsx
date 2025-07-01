@@ -38,8 +38,8 @@ const Documents = ({ documents, auth }: Props) => {
     const [documentTypeFilter, setDocumentTypeFilter] = useState('all');
     const [sortBy, setSortBy] = useState('latest');
 
-    const received = documents.filter(doc => doc.owner_id !== auth.user.id);
-    const sent = documents.filter(doc => doc.status !== 'draft' && doc.owner_id === auth.user.id);
+    const received = documents.filter(doc => doc.owner_id !== auth.user.id || (doc.owner_id === auth.user.id && doc.status === 'returned'));
+    const sent = documents.filter(doc => doc.status !== 'draft' && doc.owner_id === auth.user.id && doc.status !== 'returned');
     const published = documents.filter(doc => doc.owner_id === auth.user.id && (doc as any).is_public);
 
     const getStatusColor = (status: string) => {
@@ -135,9 +135,9 @@ const Documents = ({ documents, auth }: Props) => {
             filtered.map((doc) => (
                 <div
                     key={doc.id}
-                    className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-200 border border-gray-200 hover:border-gray-300 overflow-hidden group"
+                    className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-200 border border-gray-200 hover:border-gray-300 overflow-hidden group flex flex-col h-full"
                 >
-                    <div className="p-6">
+                    <div className="p-6 flex flex-col flex-1">
                         {/* Header */}
                         <div className="flex items-start justify-between mb-4">
                             <div className="flex items-center gap-3">
@@ -164,7 +164,7 @@ const Documents = ({ documents, auth }: Props) => {
                         </div>
 
                         {/* Content */}
-                        <div className="space-y-4">
+                        <div className="flex flex-col gap-4 flex-1">
                             <div className="flex items-center gap-4 text-sm text-gray-600">
                                 <div className="flex items-center gap-2">
                                     <Calendar className="w-4 h-4 text-gray-400" />
@@ -181,6 +181,7 @@ const Documents = ({ documents, auth }: Props) => {
                                     </div>
                                 )}
                             </div>
+
                             <div className="flex items-end gap-2">
                                 <span className={`px-3 py-1.5 inline-flex items-center text-xs leading-5 font-semibold rounded-full border ${getDocumentTypeColor(doc.document_type)}`}>
                                     {getDocumentTypeDisplayName(doc.document_type)}
@@ -190,27 +191,17 @@ const Documents = ({ documents, auth }: Props) => {
                                     {doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}
                                 </span>
                             </div>
-
-                            {/* Actions */}
-                            <div className="flex items-center gap-3 border-t border-gray-100">
-                                <Link
-                                    href={`/documents/${doc.id}`}
-                                    className="flex-1 inline-flex items-center justify-center gap-2 text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 px-4 py-2.5 rounded-lg shadow-sm transition-all duration-200 font-semibold focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2"
-                                >
-                                    <Eye className="w-4 h-4" />
-                                    View Details
-                                </Link>
-                                {doc.files && doc.files.length > 0 && (
-                                    <Link
-                                        href={`/documents/${doc.id}/files/${doc.files[0].id}`}
-                                        className="inline-flex items-center gap-2 text-red-700 bg-red-50 hover:bg-red-100 px-4 py-2.5 rounded-lg shadow-sm transition-all duration-200 font-semibold focus:outline-none focus:ring-2 focus:ring-red-200 focus:ring-offset-2"
-                                    >
-                                        <Download className="w-4 h-4" />
-                                        Download
-                                    </Link>
-                                )}
-                            </div>
                         </div>
+                    </div>
+                    {/* Button always at the bottom */}
+                    <div className="p-6 pt-0 mt-auto">
+                        <Link
+                            href={`/documents/${doc.id}`}
+                            className="w-full inline-flex items-center justify-center gap-2 text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 px-4 py-2.5 rounded-lg shadow-sm transition-all duration-200 font-semibold focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2"
+                        >
+                            <Eye className="w-4 h-4" />
+                            View Details
+                        </Link>
                     </div>
                 </div>
             ))

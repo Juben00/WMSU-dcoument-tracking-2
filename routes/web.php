@@ -88,6 +88,8 @@ Route::middleware(['auth', 'verified', 'require_password_change'])->group(functi
     Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
 
     Route::get('/dashboard/data', [UserController::class, 'dashboardData'])->name('dashboard.data');
+
+    Route::delete('/users/documents/{document}/files/{file}', [UserController::class, 'deleteDocumentFile'])->name('users.documents.files.delete');
 });
 
 // Download route without email verification requirement

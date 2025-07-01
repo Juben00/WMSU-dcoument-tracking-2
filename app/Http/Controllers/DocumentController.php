@@ -117,7 +117,7 @@ class DocumentController extends Controller
             ->whereIn('status', ['pending', 'forwarded'])
             ->first();
 
-        if (!$recipient) {
+        if (!$recipient && $request->status !== 'returned') {
             return redirect()->back()->withErrors([
                 'message' => 'You are not authorized to approve this document or you have already responded.'
             ]);
@@ -127,13 +127,13 @@ class DocumentController extends Controller
 
         // Mark the current sequence to received
         $currentSequenceRecipient = DocumentRecipient::where('document_id', $document->id)->where('sequence', $currentSequence)->first();
-        $currentSequenceRecipient->update([
+        $currentSequenceRecipient?->update([
             'status' => 'received',
             'responded_at' => now(),
             'is_active' => false,
         ]);
 
-        $isFinalApprover = $currentSequenceRecipient->is_final_approver;
+        $isFinalApprover = $currentSequenceRecipient ? $currentSequenceRecipient->is_final_approver : false;
 
         // Create a new recipient record for the response
         $newRecipient = DocumentRecipient::create([
@@ -145,8 +145,8 @@ class DocumentController extends Controller
             'responded_at' => now(),
             'is_active' => false,
             'sequence' => $currentSequence + 1,
-            'is_final_approver' => $recipient->is_final_approver,
-            'final_recipient_id' => $recipient->final_recipient_id,
+            'is_final_approver' => $recipient ? $recipient->is_final_approver : false,
+            'final_recipient_id' => $recipient ? $recipient->final_recipient_id : null,
         ]);
 
         // Handle multiple file uploads if present
