@@ -253,7 +253,7 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
         if (isForInfoDocument()) {
             return canRespond();
         }
-        return canRespond() && isNonForInfoDocument() && isNotFinalRecipient() && !isReturned() && !isPending();
+        return canRespond() && isNonForInfoDocument() && isNotFinalRecipient() && !isReturned();
     };
 
     const canApproveOrReject = () => {
