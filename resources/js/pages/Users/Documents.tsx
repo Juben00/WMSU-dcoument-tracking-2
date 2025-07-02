@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/User/navbar';
 import { Link } from '@inertiajs/react';
 import { Eye, Download, Search, FileCheck2, Clock, XCircle, Undo2, FileSearch, Filter, BarChart3, FileText, Plus, Users, Calendar } from 'lucide-react';
@@ -37,6 +37,7 @@ const Documents = ({ documents, auth }: Props) => {
     const [statusFilter, setStatusFilter] = useState('all');
     const [documentTypeFilter, setDocumentTypeFilter] = useState('all');
     const [sortBy, setSortBy] = useState('latest');
+    const [notifications, setNotifications] = useState<any[]>([]);
 
     const received = documents.filter(doc => doc.owner_id !== auth.user.id || (doc.owner_id === auth.user.id && doc.status === 'returned'));
     const sent = documents.filter(doc => doc.status !== 'draft' && doc.owner_id === auth.user.id && doc.status !== 'returned');
@@ -208,9 +209,16 @@ const Documents = ({ documents, auth }: Props) => {
         );
     };
 
+    useEffect(() => {
+        fetch('/notifications')
+            .then(res => res.json())
+            .then(data => setNotifications(data))
+            .catch(() => setNotifications([]));
+    }, []);
+
     return (
         <>
-            <Navbar />
+            <Navbar notifications={notifications} />
             <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* Header Section */}

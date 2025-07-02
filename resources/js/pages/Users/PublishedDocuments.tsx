@@ -1,5 +1,5 @@
 import Navbar from '@/components/User/navbar'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { router, Link } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -70,10 +70,18 @@ const getStatusColor = (status: string) => {
     }
 };
 
-export default function PublishedDocuments({ publishedDocuments, auth }: Props) {
+const PublishedDocuments = ({ publishedDocuments, auth }: Props) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedDocument, setSelectedDocument] = useState<PublishedDocument | null>(null);
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+    const [notifications, setNotifications] = useState<any[]>([]);
+
+    useEffect(() => {
+        fetch('/notifications')
+            .then(res => res.json())
+            .then(data => setNotifications(data))
+            .catch(() => setNotifications([]));
+    }, []);
 
     const filteredDocuments = publishedDocuments.filter(doc =>
         doc.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -112,7 +120,7 @@ export default function PublishedDocuments({ publishedDocuments, auth }: Props) 
 
     return (
         <>
-            <Navbar />
+            <Navbar notifications={notifications} />
             <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* Header Section */}
@@ -447,3 +455,5 @@ export default function PublishedDocuments({ publishedDocuments, auth }: Props) 
         </>
     );
 }
+
+export default PublishedDocuments;

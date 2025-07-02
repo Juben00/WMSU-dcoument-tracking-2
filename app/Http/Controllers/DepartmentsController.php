@@ -6,6 +6,8 @@ use App\Models\Departments;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
+use App\Notifications\InAppNotification;
+use App\Models\User;
 
 class DepartmentsController extends Controller
 {
@@ -48,6 +50,12 @@ class DepartmentsController extends Controller
 
         Departments::create($request->all());
 
+        // Notify all admins about the new department
+        $admins = User::where('role', 'admin')->get();
+        foreach ($admins as $admin) {
+            $admin->notify(new InAppNotification('A new department has been created.', ['department_name' => $request->name]));
+        }
+
         return redirect()->route('departments.index')
             ->with('success', 'Department created successfully.');
     }
@@ -87,8 +95,13 @@ class DepartmentsController extends Controller
 
         $department->update($request->all());
 
-        return redirect()->route('departments.index')
-            ->with('success', 'Department updated successfully.');
+        // Notify all admins about the department update
+        $admins = User::where('role', 'admin')->get();
+        foreach ($admins as $admin) {
+            $admin->notify(new InAppNotification('A department has been updated.', ['department_name' => $department->name]));
+        }
+
+        return redirect()->route('departments.index')->with('success', 'Department updated successfully.');
     }
 
     /**
@@ -107,6 +120,12 @@ class DepartmentsController extends Controller
             }
 
             $department->delete();
+
+            // Notify all admins about the department deletion
+            $admins = User::where('role', 'admin')->get();
+            foreach ($admins as $admin) {
+                $admin->notify(new InAppNotification('A department has been deleted.', ['department_name' => $department->name]));
+            }
 
             return back()->with('success', 'Department deleted successfully.');
         } catch (\Exception $e) {

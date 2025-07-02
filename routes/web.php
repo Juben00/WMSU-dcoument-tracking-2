@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\DepartmentsController;
 use App\Http\Controllers\FirstTimePasswordController;
+use App\Http\Controllers\NotificationController;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -90,6 +91,10 @@ Route::middleware(['auth', 'verified', 'require_password_change'])->group(functi
     Route::get('/dashboard/data', [UserController::class, 'dashboardData'])->name('dashboard.data');
 
     Route::delete('/users/documents/{document}/files/{file}', [UserController::class, 'deleteDocumentFile'])->name('users.documents.files.delete');
+
+    Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.readAll');
+
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
 });
 
 // Download route without email verification requirement

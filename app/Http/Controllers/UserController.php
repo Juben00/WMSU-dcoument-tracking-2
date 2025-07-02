@@ -16,6 +16,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Log;
 use Picqer\Barcode\BarcodeGeneratorSVG;
+use App\Notifications\InAppNotification;
 
 
 
@@ -83,6 +84,9 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        // Notify the user about their account creation
+        $user->notify(new InAppNotification('Your account has been created.', ['user_id' => $user->id]));
+
         return redirect()->route('users.departments');
     }
 
@@ -98,6 +102,11 @@ class UserController extends Controller
     public function destroy(User $user)
     {
         $user->delete();
+        // Notify the user (if possible) and all admins
+        $admins = User::where('role', 'admin')->get();
+        foreach ($admins as $admin) {
+            $admin->notify(new InAppNotification('A user has been deleted.', ['user_id' => $user->id]));
+        }
         return redirect()->route('users.departments');
     }
 
@@ -324,6 +333,23 @@ class UserController extends Controller
             'barcode_value' => $barcodeValue,
         ]);
 
+        // Notify the document owner
+        $document->owner->notify(new InAppNotification('Your document has been created and sent.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+        // Notify all initial recipients
+        if ($validated['document_type'] === 'for_info') {
+            foreach ($validated['recipient_ids'] as $recipientId) {
+                $recipient = User::find($recipientId);
+                if ($recipient) {
+                    $recipient->notify(new InAppNotification('A new document has been sent to you.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+                }
+            }
+        } else {
+            $sendToId = $request->input('recipient_ids')[0];
+            $recipient = User::find($sendToId);
+            if ($recipient) {
+                $recipient->notify(new InAppNotification('A new document has been sent to you.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+            }
+        }
 
         return redirect()->route('users.documents')->with('success', 'Document sent successfully.');
     }
@@ -453,6 +479,13 @@ class UserController extends Controller
             'role' => $request->role,
             'email' => $request->email,
         ]);
+
+        // Notify the user and all admins
+        $admins = User::where('role', 'admin')->get();
+        foreach ($admins as $admin) {
+            $admin->notify(new InAppNotification('A user has been updated.', ['user_id' => $user->id]));
+        }
+        $user->notify(new InAppNotification('Your account has been updated.', ['user_id' => $user->id]));
 
         return redirect()->route('users.departments');
     }

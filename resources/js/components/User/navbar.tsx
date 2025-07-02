@@ -26,16 +26,33 @@ interface PageProps extends InertiaPageProps {
     notifications: any[];
 }
 
-const Navbar = () => {
+interface NavbarProps {
+    notifications?: any[];
+}
+
+const Navbar = ({ notifications = [] }: NavbarProps) => {
     const [menuOpen, setMenuOpen] = useState(false);
     const [notifOpen, setNotifOpen] = useState(false);
     const notifRef = useRef<HTMLDivElement>(null);
     const menuRef = useRef<HTMLDivElement>(null);
 
-    const page = usePage<PageProps & { notifications: any[] }>();
-    const { auth, notifications = [] } = page.props;
+    const page = usePage<PageProps>();
+    const { auth } = page.props;
     const role = auth?.user?.role || 'user';
     const currentUrl = page.url;
+
+    // Calculate unread notifications
+    const unreadCount = notifications.filter(n => !n.read_at).length;
+
+    // Handler to mark all as read and refetch notifications
+    const handleMarkAllAsRead = () => {
+        router.post(route('notifications.readAll'), {}, {
+            onSuccess: () => {
+                // refresh the entire page
+                window.location.reload();
+            }
+        });
+    };
 
     // Close notification dropdown on outside click
     useEffect(() => {
@@ -203,10 +220,10 @@ const Navbar = () => {
                                         onClick={() => setNotifOpen((open) => !open)}
                                         aria-label="Notifications"
                                     >
-                                        <Bell className={`w-4 h-4 ${notifications.length > 0 ? 'text-red-600' : 'text-gray-700'} transition-colors`} />
-                                        {notifications.length > 0 && (
+                                        <Bell className={`w-4 h-4 ${unreadCount > 0 ? 'text-red-600' : 'text-gray-700'} transition-colors`} />
+                                        {unreadCount > 0 && (
                                             <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full px-1.5 py-0.5 shadow-md border-2 border-white font-bold">
-                                                {notifications.length}
+                                                {unreadCount}
                                             </span>
                                         )}
                                     </button>
@@ -219,14 +236,12 @@ const Navbar = () => {
                                     <div className="flex items-center justify-between px-4 py-2 border-b">
                                         <span className="font-semibold text-gray-800">Notifications</span>
                                         {notifications.length > 0 && (
-                                            <Link
-                                                href={route('notifications.readAll')}
-                                                method="post"
-                                                as="button"
+                                            <button
+                                                onClick={handleMarkAllAsRead}
                                                 className="text-xs text-red-600 hover:underline font-semibold px-2 py-1 rounded hover:bg-red-50 transition-all"
                                             >
                                                 Mark all as read
-                                            </Link>
+                                            </button>
                                         )}
                                     </div>
                                     <div className="max-h-80 overflow-y-auto divide-y">
@@ -237,12 +252,19 @@ const Navbar = () => {
                                             </div>
                                         ) : (
                                             notifications.map((notif: any) => (
-                                                <div key={notif.id} className="p-4 hover:bg-red-50 transition-all cursor-pointer rounded">
-                                                    <div className="text-sm text-gray-800 font-medium mb-1">{notif.data.message}</div>
-                                                    {notif.data.data && (
-                                                        <div className="text-xs text-gray-500 mt-1 break-all">{JSON.stringify(notif.data.data)}</div>
-                                                    )}
-                                                    <div className="text-xs text-gray-400 mt-1">{new Date(notif.created_at).toLocaleString()}</div>
+                                                <div key={notif.id} className={`p-4 transition-all flex items-center gap-3 cursor-pointer rounded ${notif.read_at ? 'bg-gray-50' : 'hover:bg-red-100'}`}>
+                                                    {/* Icon */}
+                                                    <div className="flex-shrink-0 flex items-center justify-center w-11 h-11 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 shadow-sm border text-red-500 bg-red-50">
+                                                        <Bell className="w-5 h-5" />
+                                                    </div>
+                                                    {/* Content */}
+                                                    <div className="flex-1 flex flex-col gap-1 min-w-0">
+                                                        <div className="text-sm text-gray-800 font-medium break-words">{notif.data.message}</div>
+                                                        {notif.data.document_name && (
+                                                            <div className="text-xs text-gray-700 font-semibold truncate">Document: {notif.data.document_name}</div>
+                                                        )}
+                                                        <div className="text-xs text-gray-400 mt-1">{new Date(notif.created_at).toLocaleString()}</div>
+                                                    </div>
                                                 </div>
                                             ))
                                         )}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/User/navbar';
 import { Link, useForm } from '@inertiajs/react';
 import ApproveModal from './components/ApproveModal';
@@ -221,6 +221,7 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
     const [approveFile, setApproveFile] = useState<File | null>(null);
     const [copied, setCopied] = useState(false);
     const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
+    const [notifications, setNotifications] = useState<any[]>([]);
 
     const { post, delete: destroy, processing, setData } = useForm({
         status: '',
@@ -257,7 +258,7 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
     };
 
     const canApproveOrReject = () => {
-        return canRespond() && isNonForInfoDocument() && isFinalRecipient() && !isReturned() && !isPending();
+        return canRespond() && isNonForInfoDocument() && isFinalRecipient() && !isReturned();
     };
 
     const canForwardToOffice = () => {
@@ -413,9 +414,16 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
         return route('documents.public_view', { public_token: token });
     };
 
+    useEffect(() => {
+        fetch('/notifications')
+            .then(res => res.json())
+            .then(data => setNotifications(data))
+            .catch(() => setNotifications([]));
+    }, []);
+
     return (
         <>
-            <Navbar />
+            <Navbar notifications={notifications} />
             <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* Header Section */}
