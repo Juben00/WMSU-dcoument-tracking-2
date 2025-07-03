@@ -286,7 +286,7 @@ const Documents = ({ documents, auth }: Props) => {
                     <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
                         <div className="p-6">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
+                                <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                                     <Search className="w-5 h-5 text-white" />
                                 </div>
                                 <h2 className="text-xl font-bold text-gray-900">Search & Filter</h2>
@@ -387,7 +387,7 @@ const Documents = ({ documents, auth }: Props) => {
                     <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
                         <div className="p-6">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg">
+                                <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                                     <FileText className="w-5 h-5 text-white" />
                                 </div>
                                 <h2 className="text-xl font-bold text-gray-900">

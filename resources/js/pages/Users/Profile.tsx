@@ -126,7 +126,7 @@ const Profile = ({ user }: Props) => {
                     <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
                         <div className="p-8">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
+                                <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                                     <Settings className="w-5 h-5 text-white" />
                                 </div>
                                 <h2 className="text-2xl font-bold text-gray-900">Account Settings</h2>

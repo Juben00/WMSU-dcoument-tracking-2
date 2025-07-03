@@ -36,8 +36,8 @@ const formatFileSize = (bytes: number) => {
 };
 
 const FileCard = ({ file, documentId, color = 'red', onDelete }: { file: any, documentId: number, color?: 'red' | 'blue', onDelete: (fileId: number) => void }) => (
-    <div className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-5 flex flex-col items-center border ${color === 'red' ? 'border-gray-200 hover:border-gray-300' : 'border-blue-200 hover:border-blue-300'}`}>
-        <div className={`w-full h-32 flex items-center justify-center ${color === 'red' ? 'bg-gradient-to-br from-gray-50 to-gray-100' : 'bg-gradient-to-br from-blue-50 to-blue-100'} rounded-lg mb-4 overflow-hidden`}>
+    <div className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-5 flex flex-col items-center border ${color === 'red' ? 'border-gray-200 hover:border-gray-300' : 'border-red-200 hover:border-red-300'}`}>
+        <div className={`w-full h-32 flex items-center justify-center ${color === 'red' ? 'bg-gradient-to-br from-gray-50 to-gray-100' : 'bg-gradient-to-br from-red-50 to-red-100'} rounded-lg mb-4 overflow-hidden`}>
             <a
                 href={file.file_path ? `/storage/${file.file_path}` : '#'}
                 target="_blank"
@@ -58,7 +58,7 @@ const FileCard = ({ file, documentId, color = 'red', onDelete }: { file: any, do
                         className="w-full h-full"
                     />
                 ) : (
-                    <div className={`flex flex-col items-center justify-center ${color === 'red' ? 'text-gray-400' : 'text-blue-400'}`}>
+                    <div className={`flex flex-col items-center justify-center ${color === 'red' ? 'text-gray-400' : 'text-red-400'}`}>
                         <svg className="h-8 w-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                         </svg>
@@ -204,7 +204,7 @@ const EditDocument = ({ document }: Props) => {
                                 {/* Preview replaced files */}
                                 {filePreviews.length > 0 && (
                                     <div className="mt-4">
-                                        <h3 className="text-sm font-semibold text-blue-700 mb-2">Replaced Files Preview</h3>
+                                        <h3 className="text-sm font-semibold text-red-700 mb-2">Replaced Files Preview</h3>
                                         <div className="flex flex-wrap gap-4">
                                             {data.files.map((file, idx) => (
                                                 <div key={idx} className="flex flex-col items-center">

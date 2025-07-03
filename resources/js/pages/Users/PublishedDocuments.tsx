@@ -127,7 +127,7 @@ const PublishedDocuments = ({ publishedDocuments, auth }: Props) => {
                     <div className="mb-8">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                                <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg">
+                                <div className="p-3 bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-lg">
                                     <FileText className="w-8 h-8 text-white" />
                                 </div>
                                 <div>
@@ -149,27 +149,27 @@ const PublishedDocuments = ({ publishedDocuments, auth }: Props) => {
                     <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
                         <div className="p-8">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg">
+                                <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                                     <BarChart3 className="w-5 h-5 text-white" />
                                 </div>
                                 <h2 className="text-2xl font-bold text-gray-900">Published Documents Overview</h2>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200 text-center">
-                                    <div className="text-3xl font-bold text-blue-600 mb-2">{publishedDocuments.length}</div>
-                                    <div className="text-sm font-semibold text-blue-700">Total Documents</div>
+                                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 text-center">
+                                    <div className="text-3xl font-bold text-red-600 mb-2">{publishedDocuments.length}</div>
+                                    <div className="text-sm font-semibold text-red-700">Total Documents</div>
                                 </div>
-                                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border border-emerald-200 text-center">
-                                    <div className="text-3xl font-bold text-emerald-600 mb-2">
+                                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 text-center">
+                                    <div className="text-3xl font-bold text-red-600 mb-2">
                                         {publishedDocuments.filter(doc => doc.user_role === 'owner').length}
                                     </div>
-                                    <div className="text-sm font-semibold text-emerald-700">Owned by You</div>
+                                    <div className="text-sm font-semibold text-red-700">Owned by You</div>
                                 </div>
-                                <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-6 border border-amber-200 text-center">
-                                    <div className="text-3xl font-bold text-amber-600 mb-2">
+                                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 text-center">
+                                    <div className="text-3xl font-bold text-red-600 mb-2">
                                         {publishedDocuments.filter(doc => doc.user_role === 'recipient').length}
                                     </div>
-                                    <div className="text-sm font-semibold text-amber-700">Received by You</div>
+                                    <div className="text-sm font-semibold text-red-700">Received by You</div>
                                 </div>
                             </div>
                         </div>
@@ -179,7 +179,7 @@ const PublishedDocuments = ({ publishedDocuments, auth }: Props) => {
                     <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
                         <div className="p-8">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg">
+                                <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                                     <Search className="w-5 h-5 text-white" />
                                 </div>
                                 <div>
@@ -193,7 +193,7 @@ const PublishedDocuments = ({ publishedDocuments, auth }: Props) => {
                                     placeholder="Search by subject, description, barcode value, or owner name..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-12 h-12 text-lg border-gray-200 focus:border-indigo-300 focus:ring-indigo-200"
+                                    className="pl-12 h-12 text-lg border-gray-200 focus:border-red-300 focus:ring-red-200"
                                 />
                             </div>
                         </div>
@@ -203,7 +203,7 @@ const PublishedDocuments = ({ publishedDocuments, auth }: Props) => {
                     <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
                         <div className="p-8">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg">
+                                <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                                     <FileCheck className="w-5 h-5 text-white" />
                                 </div>
                                 <div>
@@ -240,7 +240,7 @@ const PublishedDocuments = ({ publishedDocuments, auth }: Props) => {
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                                        <div className="w-8 h-8 bg-gradient-to-br from-red-400 to-red-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
                                                             {document.owner_name.split(' ').map(n => n[0]).join('').toUpperCase()}
                                                         </div>
                                                         <span className="font-medium text-gray-900">{document.owner_name}</span>
@@ -278,7 +278,7 @@ const PublishedDocuments = ({ publishedDocuments, auth }: Props) => {
                                                             size="icon"
                                                             onClick={() => handleViewDocument(document)}
                                                             title="View Document Details"
-                                                            className="h-9 w-9 hover:bg-blue-50 hover:text-blue-600"
+                                                            className="h-9 w-9 hover:bg-red-50 hover:text-red-600"
                                                         >
                                                             <Eye className="h-4 w-4" />
                                                         </Button>
@@ -338,7 +338,7 @@ const PublishedDocuments = ({ publishedDocuments, auth }: Props) => {
                                 {/* Document Information */}
                                 <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
                                     <div className="flex items-center gap-3 mb-6">
-                                        <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
+                                        <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                                             <FileCheck className="w-5 h-5 text-white" />
                                         </div>
                                         <h3 className="text-xl font-bold text-gray-900">Document Information</h3>
@@ -366,7 +366,7 @@ const PublishedDocuments = ({ publishedDocuments, auth }: Props) => {
                                                 Owner
                                             </Label>
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                                <div className="w-8 h-8 bg-gradient-to-br from-red-400 to-red-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
                                                     {selectedDocument.owner_name.split(' ').map(n => n[0]).join('').toUpperCase()}
                                                 </div>
                                                 <span className="font-semibold text-gray-900">{selectedDocument.owner_name}</span>
@@ -375,7 +375,7 @@ const PublishedDocuments = ({ publishedDocuments, auth }: Props) => {
 
                                         <div className="bg-white rounded-xl p-4 border border-gray-200">
                                             <Label className="text-sm font-semibold text-gray-600 mb-2">Your Role</Label>
-                                            <Badge className={selectedDocument.user_role === 'owner' ? 'bg-blue-100 text-blue-800 border-blue-200' : 'bg-gray-100 text-gray-800 border-gray-200'}>
+                                            <Badge className={selectedDocument.user_role === 'owner' ? 'bg-red-100 text-red-800 border-red-200' : 'bg-gray-100 text-gray-800 border-gray-200'}>
                                                 {selectedDocument.user_role === 'owner' ? 'Owner' : 'Recipient'}
                                             </Badge>
                                         </div>
@@ -412,7 +412,7 @@ const PublishedDocuments = ({ publishedDocuments, auth }: Props) => {
                                                 href={selectedDocument.public_url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-blue-600 hover:text-blue-800 font-medium underline break-all"
+                                                className="text-red-600 hover:text-red-800 font-medium underline break-all"
                                             >
                                                 View Public Page
                                             </a>
