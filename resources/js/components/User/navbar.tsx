@@ -352,7 +352,7 @@ const Navbar = ({ notifications = [] }: NavbarProps) => {
                                         href={item.href}
                                         {...(item.method ? { method: item.method as any } : {})}
                                         aria-label={item.label}
-                                        className={`flex items-center justify-center w-12 h-12 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 shadow-sm border ${isLogout
+                                        className={`flex items-center gap-3 justify-start w-full h-12 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 shadow-sm border px-4 ${isLogout
                                             ? 'text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 border-red-700 shadow-lg'
                                             : isActive
                                                 ? 'text-red-700 bg-red-50 border-red-200 ring-2 ring-red-500'
@@ -360,6 +360,7 @@ const Navbar = ({ notifications = [] }: NavbarProps) => {
                                             }`}
                                     >
                                         {item.icon}
+                                        <span className="text-sm">{item.label}</span>
                                     </Link>
                                 </TooltipTrigger>
                                 <TooltipContent>{item.label}</TooltipContent>

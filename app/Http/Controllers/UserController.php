@@ -219,6 +219,8 @@ class UserController extends Controller
 
     public function sendDocument(Request $request)
     {
+        try {
+
         $validated = $request->validate([
             'subject' => 'required|string|max:255',
             'order_number' => 'required|string|max:255|unique:documents,order_number',
@@ -242,13 +244,6 @@ class UserController extends Controller
             'description' => $validated['description'],
             'through_user_ids' => $request->input('through_user_ids', []),
             'status' => 'pending'
-        ]);
-
-        // Log the through_user_ids for debugging
-        Log::info('Document created with through_user_ids', [
-            'document_id' => $document->id,
-            'through_user_ids' => $request->input('through_user_ids', []),
-            'document_through_user_ids' => $document->through_user_ids
         ]);
 
         // Handle multiple file uploads
@@ -352,6 +347,12 @@ class UserController extends Controller
         }
 
         return redirect()->route('users.documents')->with('success', 'Document sent successfully.');
+
+        } catch (\Throwable $th) {
+            return back()->withErrors([
+                'message' => $th->getMessage(),
+            ]);
+        }
     }
 
     public function showDocument($document)
@@ -380,6 +381,17 @@ class UserController extends Controller
             ->where('owner_id', Auth::id())
             ->where('status', 'returned')
             ->firstOrFail();
+
+        $doc->update([
+            'status' => 'pending',
+        ]);
+
+        // set the last document recipient status to pending
+        $lastRecipient = $doc->recipients()->orderByDesc('sequence')->first();
+        if ($lastRecipient) {
+            $lastRecipient->status = 'pending';
+            $lastRecipient->save();
+        }
 
         $validated = $request->validate([
             'order_number' => 'required|string|max:255|unique:documents,order_number,' . $doc->id,
@@ -410,9 +422,14 @@ class UserController extends Controller
             }
         }
 
-        // Append a new approval chain entry for the original recipient
+        // set the previous chain to received
         $lastRecipient = $doc->recipients()->orderByDesc('sequence')->first();
         if ($lastRecipient) {
+            // Set the previous recipient's status to 'received' (not pending)
+            $lastRecipient->status = 'received';
+            $lastRecipient->save();
+
+            // Create a new recipient record for the original recipient
             $nextSequence = $lastRecipient->sequence + 1;
             DocumentRecipient::create([
                 'document_id' => $doc->id,

@@ -70,6 +70,7 @@ interface Document {
     is_final_approver: boolean;
     final_recipient_id: number | null;
     can_respond: boolean;
+    can_respond_other_data: DocumentRecipient | null;
     recipient_status: string | null;
     owner_id: number;
     is_public: boolean;
@@ -230,6 +231,8 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
         forward_to_id: null as number | null,
     });
 
+    console.log('users', users);
+
     // Check if current user is an active recipient
     const currentRecipient = document.recipients.find(
         (r: DocumentRecipient) => r.user.id === auth.user.id
@@ -278,7 +281,7 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
     };
 
     const canCancelDocument = () => {
-        return isOwner() && ['pending', 'in_review', 'approved', 'returned'].includes(document.status);
+        return isOwner() && ['pending', 'in_review', 'approved', 'returned', 'rejected'].includes(document.status);
     };
 
     const getStatusColor = (status: string) => {
@@ -877,7 +880,14 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                             }}
                                             className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                                         >
-                                            Reject
+                                            Disapprove
+                                        </button>
+                                        {/* return document button */}
+                                        <button
+                                            onClick={() => setIsReturnModalOpen(true)}
+                                            className="px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg hover:from-gray-700 hover:to-gray-800 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                                        >
+                                            Return Document
                                         </button>
                                     </>
                                 )}

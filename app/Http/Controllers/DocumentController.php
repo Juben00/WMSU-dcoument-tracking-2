@@ -258,7 +258,7 @@ class DocumentController extends Controller
         if (!empty($throughUserIds)) {
             $throughUsers = User::whereIn('id', $throughUserIds)->with('department')->get();
             // Merge and remove duplicates by id
-            $users = $users->merge($throughUsers)->unique('id')->values();
+            // $users = $users->merge($throughUsers)->unique('id')->values();
         }
 
         // Get users from other departments (excluding current user's department and current user and the document owner), prioritizing 'receiver' or 'admin' roles
@@ -300,12 +300,14 @@ class DocumentController extends Controller
         $firstRecipient = $document->recipients()->with('finalRecipient.department')->first();
         $documentData['final_recipient'] = $firstRecipient ? $firstRecipient->finalRecipient : null;
 
-        // Check if current user is a recipient and can respond
+        // Check if current user is a recipient and can respond, get the latest data
         $currentRecipient = $document->recipients()
             ->where('user_id', Auth::id())
+            ->orderByDesc('sequence')
             ->first();
 
-        $documentData['can_respond'] = $currentRecipient && in_array($currentRecipient->status, ['pending', 'forwarded']);
+        $documentData['can_respond'] = $currentRecipient && in_array($currentRecipient->status, ['pending', 'forwarded', ]);
+        $documentData['can_respond_other_data'] = $currentRecipient;
         $documentData['is_final_approver'] = $currentRecipient ? $currentRecipient->is_final_approver : false;
         $documentData['recipient_status'] = $currentRecipient ? $currentRecipient->status : null;
 
@@ -324,6 +326,7 @@ class DocumentController extends Controller
     {
         $documentRecipient = DocumentRecipient::where('document_id', $document->id)
             ->where('user_id', Auth::id())
+            ->orderByDesc('sequence')
             ->first();
         $documentRecipient->update(['status' => 'received']);
         $documentRecipient->update(['responded_at' => now()]);

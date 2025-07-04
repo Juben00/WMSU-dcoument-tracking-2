@@ -189,12 +189,12 @@ const CreateDocument = ({ auth, departments }: Props) => {
                     window.location.href = '/documents';
                 });
             },
-            onError: () => {
+            onError: (errors) => {
                 setIsSubmitting(false);
                 Swal.fire({
                     icon: 'error',
                     title: 'Failed to Submit Document',
-                    text: 'Failed to submit document. Please try again.',
+                    text: errors.message,
                     confirmButtonColor: '#b91c1c',
                 });
             }
