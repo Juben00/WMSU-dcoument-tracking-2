@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/User/navbar';
 import { Link } from '@inertiajs/react';
-import { Eye, Download, Search, FileCheck2, Clock, XCircle, Undo2, FileSearch, Filter, BarChart3, FileText, Plus, Users, Calendar } from 'lucide-react';
+import { Eye, Download, Search, FileCheck2, Clock, XCircle, Undo2, FileSearch, Filter, BarChart3, FileText, Plus, Users, Calendar, Archive, Hash, Send, Inbox } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 interface Document {
@@ -12,6 +12,7 @@ interface Document {
     created_at: string;
     owner_id: number;
     barcode_value?: string;
+    order_number?: string;
     files?: { id: number }[];
 }
 
@@ -37,10 +38,62 @@ const Documents = ({ documents, auth }: Props) => {
     const [statusFilter, setStatusFilter] = useState('all');
     const [documentTypeFilter, setDocumentTypeFilter] = useState('all');
     const [sortBy, setSortBy] = useState('latest');
+    const [fiscalYearFilter, setFiscalYearFilter] = useState('all');
+    const [archivedFilter, setArchivedFilter] = useState('all');
+    const [notifications, setNotifications] = useState<any[]>([]);
 
-    const received = documents.filter(doc => doc.owner_id !== auth.user.id || (doc.owner_id === auth.user.id && doc.status === 'returned'));
-    const sent = documents.filter(doc => doc.status !== 'draft' && doc.owner_id === auth.user.id && doc.status !== 'returned');
+    // Get current fiscal year (January to December)
+    const getCurrentFiscalYear = () => {
+        const now = new Date();
+        return now.getFullYear();
+    };
+
+    // Get fiscal year from date
+    const getFiscalYear = (date: string) => {
+        return new Date(date).getFullYear();
+    };
+
+    // Get available fiscal years from documents
+    const getAvailableFiscalYears = () => {
+        const years = new Set<number>();
+        documents.forEach(doc => {
+            years.add(getFiscalYear(doc.created_at));
+        });
+        return Array.from(years).sort((a, b) => b - a); // Sort descending
+    };
+
+    // Filter documents by fiscal year
+    const isInCurrentFiscalYear = (date: string) => {
+        const docYear = getFiscalYear(date);
+        const currentYear = getCurrentFiscalYear();
+        return docYear === currentYear;
+    };
+
+    // Helper function to determine if a document was originally sent by the current user
+    const isDocumentSentByUser = (doc: Document) => {
+        return doc.owner_id === auth.user.id && doc.status !== 'draft' && doc.status !== 'returned';
+    };
+
+    // Helper function to determine if a document was originally received by the current user
+    const isDocumentReceivedByUser = (doc: Document) => {
+        return doc.owner_id !== auth.user.id || (doc.owner_id === auth.user.id && doc.status === 'returned');
+    };
+
+    // Filter documents by current fiscal year and exclude archived ones from active tabs
+    const received = documents.filter(doc =>
+        isInCurrentFiscalYear(doc.created_at) &&
+        isDocumentReceivedByUser(doc)
+    );
+
+    const sent = documents.filter(doc =>
+        isInCurrentFiscalYear(doc.created_at) &&
+        isDocumentSentByUser(doc)
+    );
+
     const published = documents.filter(doc => doc.owner_id === auth.user.id && (doc as any).is_public);
+
+    // Archived documents are those not in the current fiscal year
+    const archived = documents.filter(doc => !isInCurrentFiscalYear(doc.created_at));
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -97,7 +150,8 @@ const Documents = ({ documents, auth }: Props) => {
             filtered = filtered.filter(doc =>
                 doc.subject.toLowerCase().includes(search.toLowerCase()) ||
                 doc.id.toString().includes(search) ||
-                (doc.barcode_value && doc.barcode_value.toLowerCase().includes(search.toLowerCase()))
+                (doc.barcode_value && doc.barcode_value.toLowerCase().includes(search.toLowerCase())) ||
+                (doc.order_number && doc.order_number.toLowerCase().includes(search.toLowerCase()))
             );
         }
 
@@ -109,6 +163,20 @@ const Documents = ({ documents, auth }: Props) => {
         // Filter by document type
         if (documentTypeFilter !== 'all') {
             filtered = filtered.filter(doc => doc.document_type === documentTypeFilter);
+        }
+
+        // Filter by fiscal year (only for archived tab)
+        if (activeTab === 'archived' && fiscalYearFilter !== 'all') {
+            filtered = filtered.filter(doc => getFiscalYear(doc.created_at).toString() === fiscalYearFilter);
+        }
+
+        // Filter by archived type (only for archived tab)
+        if (activeTab === 'archived' && archivedFilter !== 'all') {
+            if (archivedFilter === 'sent') {
+                filtered = filtered.filter(doc => isDocumentSentByUser(doc));
+            } else if (archivedFilter === 'received') {
+                filtered = filtered.filter(doc => isDocumentReceivedByUser(doc));
+            }
         }
 
         // Sort by date
@@ -149,6 +217,15 @@ const Documents = ({ documents, auth }: Props) => {
                                         {doc.subject}
                                     </h3>
                                     <div className="flex items-center gap-2 mt-1">
+                                        {doc.order_number && (
+                                            <>
+                                                <span className="text-gray-300">•</span>
+                                                <div className="flex items-center gap-1">
+                                                    <Hash className="w-3 h-3 text-gray-400" />
+                                                    <span className="text-xs font-mono text-gray-500">{doc.order_number}</span>
+                                                </div>
+                                            </>
+                                        )}
                                         {doc.barcode_value && (
                                             <>
                                                 <span className="text-gray-300">•</span>
@@ -174,6 +251,29 @@ const Documents = ({ documents, auth }: Props) => {
                                         day: 'numeric'
                                     })}</span>
                                 </div>
+                                {activeTab === 'archived' && (
+                                    <div className="flex items-center gap-2">
+                                        <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-semibold">
+                                            FY {getFiscalYear(doc.created_at)}
+                                        </span>
+                                        <span className={`px-2 py-1 rounded-md text-xs font-semibold inline-flex items-center gap-1 ${isDocumentSentByUser(doc)
+                                            ? 'bg-blue-100 text-blue-700'
+                                            : 'bg-green-100 text-green-700'
+                                            }`}>
+                                            {isDocumentSentByUser(doc) ? (
+                                                <>
+                                                    <Send className="w-3 h-3" />
+                                                    Sent
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Inbox className="w-3 h-3" />
+                                                    Received
+                                                </>
+                                            )}
+                                        </span>
+                                    </div>
+                                )}
                                 {doc.files && doc.files.length > 0 && (
                                     <div className="flex items-center gap-2">
                                         <Download className="w-4 h-4 text-gray-400" />
@@ -208,9 +308,16 @@ const Documents = ({ documents, auth }: Props) => {
         );
     };
 
+    useEffect(() => {
+        fetch('/notifications')
+            .then(res => res.json())
+            .then(data => setNotifications(data))
+            .catch(() => setNotifications([]));
+    }, []);
+
     return (
         <>
-            <Navbar />
+            <Navbar notifications={notifications} />
             <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* Header Section */}
@@ -260,6 +367,17 @@ const Documents = ({ documents, auth }: Props) => {
                                     Sent
                                 </div>
                             </button>
+                            <button
+                                onClick={() => setActiveTab('archived')}
+                                className={`px-8 py-3 text-sm font-semibold transition-all duration-200 focus:outline-none border-l border-gray-200 ${activeTab === 'archived'
+                                    ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-inner'
+                                    : 'bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900'} `}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Archive className="w-4 h-4" />
+                                    Archived
+                                </div>
+                            </button>
                             <Link
                                 href="/published-documents"
                                 className={`px-8 py-3 text-sm font-semibold transition-all duration-200 focus:outline-none border-l border-gray-200 ${window.location.pathname === '/published-documents'
@@ -278,12 +396,12 @@ const Documents = ({ documents, auth }: Props) => {
                     <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
                         <div className="p-6">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
+                                <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                                     <Search className="w-5 h-5 text-white" />
                                 </div>
                                 <h2 className="text-xl font-bold text-gray-900">Search & Filter</h2>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
                                 {/* Search Input */}
                                 <div className="lg:col-span-2">
                                     <div className="relative">
@@ -293,7 +411,7 @@ const Documents = ({ documents, auth }: Props) => {
                                         <Input
                                             type="text"
                                             className="block w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-red-500 focus:border-red-500 text-sm"
-                                            placeholder="Search by Subject, ID, or barcode value..."
+                                            placeholder="Search by Subject, ID, Order Number, or barcode value..."
                                             value={search}
                                             onChange={e => setSearch(e.target.value)}
                                         />
@@ -346,6 +464,55 @@ const Documents = ({ documents, auth }: Props) => {
                                         </svg>
                                     </div>
                                 </div>
+
+                                {/* Fiscal Year Filter - Only show for archived tab */}
+                                {activeTab === 'archived' && (
+                                    <div className="relative">
+                                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                            <Calendar className="w-5 h-5 text-gray-400" />
+                                        </span>
+                                        <select
+                                            className="block w-full pl-10 pr-8 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-red-500 focus:border-red-500 text-sm appearance-none bg-white"
+                                            value={fiscalYearFilter}
+                                            onChange={e => setFiscalYearFilter(e.target.value)}
+                                        >
+                                            <option value="all">All Years</option>
+                                            {getAvailableFiscalYears().map(year => (
+                                                <option key={year} value={year.toString()}>
+                                                    {year}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Archived Type Filter - Only show for archived tab */}
+                                {activeTab === 'archived' && (
+                                    <div className="relative">
+                                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                            <Archive className="w-5 h-5 text-gray-400" />
+                                        </span>
+                                        <select
+                                            className="block w-full pl-10 pr-8 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-red-500 focus:border-red-500 text-sm appearance-none bg-white"
+                                            value={archivedFilter}
+                                            onChange={e => setArchivedFilter(e.target.value)}
+                                        >
+                                            <option value="all">All Types</option>
+                                            <option value="sent">Sent</option>
+                                            <option value="received">Received</option>
+                                        </select>
+                                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Sort Options */}
@@ -379,18 +546,20 @@ const Documents = ({ documents, auth }: Props) => {
                     <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
                         <div className="p-6">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg">
+                                <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                                     <FileText className="w-5 h-5 text-white" />
                                 </div>
                                 <h2 className="text-xl font-bold text-gray-900">
                                     {activeTab === 'received' ? 'Received Documents' :
-                                        activeTab === 'sent' ? 'Sent Documents' : 'Published Documents'}
+                                        activeTab === 'sent' ? 'Sent Documents' :
+                                            activeTab === 'archived' ? 'Archived Documents' : 'Published Documents'}
                                 </h2>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                                 {activeTab === 'received' && renderDocuments(received)}
                                 {activeTab === 'sent' && renderDocuments(sent)}
+                                {activeTab === 'archived' && renderDocuments(archived)}
                                 {activeTab === 'published' && renderDocuments(published)}
                             </div>
                         </div>

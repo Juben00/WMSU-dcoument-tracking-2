@@ -33,7 +33,7 @@ const ProfileInfoForm: React.FC<Props> = ({ data, errors, processing, onChange, 
             {/* Header Section */}
             <div className="mb-8">
                 <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
+                    <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                         <User className="w-5 h-5 text-white" />
                     </div>
                     <h2 className="text-2xl font-bold text-gray-900">Personal Information</h2>
@@ -45,7 +45,7 @@ const ProfileInfoForm: React.FC<Props> = ({ data, errors, processing, onChange, 
                 {/* Personal Information Section */}
                 <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
                     <div className="flex items-center gap-3 mb-6">
-                        <div className="p-2 bg-gradient-to-br from-purple-400 to-purple-500 rounded-lg">
+                        <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                             <User className="w-4 h-4 text-white" />
                         </div>
                         <h3 className="text-lg font-bold text-gray-900">Basic Information</h3>
@@ -61,7 +61,7 @@ const ProfileInfoForm: React.FC<Props> = ({ data, errors, processing, onChange, 
                                 id="first_name"
                                 value={data.first_name}
                                 onChange={(e) => handleInputChange("first_name", e.target.value)}
-                                className={`h-12 ${errors.first_name ? "border-red-500 focus:border-red-500 focus:ring-red-200" : "focus:border-blue-500 focus:ring-blue-200"}`}
+                                className={`h-12 ${errors.first_name ? "border-red-500 focus:border-red-500 focus:ring-red-200" : "focus:border-red-500 focus:ring-red-200"}`}
                                 placeholder="Enter your first name"
                                 required
                             />
@@ -81,7 +81,7 @@ const ProfileInfoForm: React.FC<Props> = ({ data, errors, processing, onChange, 
                                 id="last_name"
                                 value={data.last_name}
                                 onChange={(e) => handleInputChange("last_name", e.target.value)}
-                                className={`h-12 ${errors.last_name ? "border-red-500 focus:border-red-500 focus:ring-red-200" : "focus:border-blue-500 focus:ring-blue-200"}`}
+                                className={`h-12 ${errors.last_name ? "border-red-500 focus:border-red-500 focus:ring-red-200" : "focus:border-red-500 focus:ring-red-200"}`}
                                 placeholder="Enter your last name"
                                 required
                             />
@@ -104,7 +104,7 @@ const ProfileInfoForm: React.FC<Props> = ({ data, errors, processing, onChange, 
                                 id="middle_name"
                                 value={data.middle_name}
                                 onChange={(e) => handleInputChange("middle_name", e.target.value)}
-                                className={`h-12 ${errors.middle_name ? "border-red-500 focus:border-red-500 focus:ring-red-200" : "focus:border-blue-500 focus:ring-blue-200"}`}
+                                className={`h-12 ${errors.middle_name ? "border-red-500 focus:border-red-500 focus:ring-red-200" : "focus:border-red-500 focus:ring-red-200"}`}
                                 placeholder="Enter your middle name"
                             />
                             {errors.middle_name && (
@@ -123,7 +123,7 @@ const ProfileInfoForm: React.FC<Props> = ({ data, errors, processing, onChange, 
                                 id="suffix"
                                 value={data.suffix}
                                 onChange={(e) => handleInputChange("suffix", e.target.value)}
-                                className={`h-12 ${errors.suffix ? "border-red-500 focus:border-red-500 focus:ring-red-200" : "focus:border-blue-500 focus:ring-blue-200"}`}
+                                className={`h-12 ${errors.suffix ? "border-red-500 focus:border-red-500 focus:ring-red-200" : "focus:border-red-500 focus:ring-red-200"}`}
                                 placeholder="Jr., Sr., III, etc."
                             />
                             {errors.suffix && (
@@ -137,22 +137,22 @@ const ProfileInfoForm: React.FC<Props> = ({ data, errors, processing, onChange, 
                 </div>
 
                 {/* Professional Information Section */}
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
                     <div className="flex items-center gap-3 mb-6">
-                        <div className="p-2 bg-gradient-to-br from-blue-400 to-blue-500 rounded-lg">
+                        <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                             <MapPin className="w-4 h-4 text-white" />
                         </div>
-                        <h3 className="text-lg font-bold text-blue-900">Professional Information</h3>
+                        <h3 className="text-lg font-bold text-red-900">Professional Information</h3>
                     </div>
 
                     {/* Gender & Position */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-3">
-                            <Label htmlFor="gender" className="text-sm font-semibold text-blue-800">
+                            <Label htmlFor="gender" className="text-sm font-semibold text-red-800">
                                 Gender <span className="text-red-600">*</span>
                             </Label>
                             <Select value={data.gender} onValueChange={(value) => handleInputChange("gender", value)}>
-                                <SelectTrigger className={`h-12 ${errors.gender ? "border-red-500 focus:border-red-500 focus:ring-red-200" : "focus:border-blue-500 focus:ring-blue-200"}`}>
+                                <SelectTrigger className={`h-12 ${errors.gender ? "border-red-500 focus:border-red-500 focus:ring-red-200" : "focus:border-red-500 focus:ring-red-200"}`}>
                                     <SelectValue placeholder="Select your gender" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -171,14 +171,14 @@ const ProfileInfoForm: React.FC<Props> = ({ data, errors, processing, onChange, 
                         </div>
 
                         <div className="space-y-3">
-                            <Label htmlFor="position" className="text-sm font-semibold text-blue-800">
+                            <Label htmlFor="position" className="text-sm font-semibold text-red-800">
                                 Position <span className="text-red-600">*</span>
                             </Label>
                             <Input
                                 id="position"
                                 value={data.position}
                                 onChange={(e) => handleInputChange("position", e.target.value)}
-                                className={`h-12 ${errors.position ? "border-red-500 focus:border-red-500 focus:ring-red-200" : "focus:border-blue-500 focus:ring-blue-200"}`}
+                                className={`h-12 ${errors.position ? "border-red-500 focus:border-red-500 focus:ring-red-200" : "focus:border-red-500 focus:ring-red-200"}`}
                                 placeholder="Enter your position"
                                 required
                             />
@@ -193,17 +193,17 @@ const ProfileInfoForm: React.FC<Props> = ({ data, errors, processing, onChange, 
                 </div>
 
                 {/* Contact Information Section */}
-                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border border-emerald-200">
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
                     <div className="flex items-center gap-3 mb-6">
-                        <div className="p-2 bg-gradient-to-br from-emerald-400 to-emerald-500 rounded-lg">
+                        <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                             <Mail className="w-4 h-4 text-white" />
                         </div>
-                        <h3 className="text-lg font-bold text-emerald-900">Contact Information</h3>
+                        <h3 className="text-lg font-bold text-red-900">Contact Information</h3>
                     </div>
 
                     {/* Email */}
                     <div className="space-y-3">
-                        <Label htmlFor="email" className="text-sm font-semibold text-emerald-800">
+                        <Label htmlFor="email" className="text-sm font-semibold text-red-800">
                             Email Address <span className="text-red-600">*</span>
                         </Label>
                         <Input
@@ -211,7 +211,7 @@ const ProfileInfoForm: React.FC<Props> = ({ data, errors, processing, onChange, 
                             type="email"
                             value={data.email}
                             onChange={(e) => handleInputChange("email", e.target.value)}
-                            className={`h-12 ${errors.email ? "border-red-500 focus:border-red-500 focus:ring-red-200" : "focus:border-emerald-500 focus:ring-emerald-200"}`}
+                            className={`h-12 ${errors.email ? "border-red-500 focus:border-red-500 focus:ring-red-200" : "focus:border-red-500 focus:ring-red-200"}`}
                             placeholder="Enter your email address"
                             required
                         />

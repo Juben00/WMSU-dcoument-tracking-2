@@ -34,7 +34,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 interface PublishedDocument {
     id: number;
-    title: string;
+    subject: string;
     description?: string;
     status: string;
     is_public: boolean;
@@ -62,7 +62,7 @@ export default function PublishedDocuments({ publishedDocuments }: Props) {
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
     const filteredDocuments = publishedDocuments.filter(doc =>
-        doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        doc.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
         doc.owner.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         doc.owner.office.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (doc.barcode_value && doc.barcode_value.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -71,7 +71,7 @@ export default function PublishedDocuments({ publishedDocuments }: Props) {
     const handleUnpublishDocument = (document: PublishedDocument) => {
         Swal.fire({
             title: 'Are you sure?',
-            text: `Are you sure you want to unpublish "${document.title}"? This will remove it from public access.`,
+            text: `Are you sure you want to unpublish "${document.subject}"? This will remove it from public access.`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
@@ -227,7 +227,7 @@ export default function PublishedDocuments({ publishedDocuments }: Props) {
                                         <TableRow key={document.id}>
                                             <TableCell>
                                                 <div>
-                                                    <div className="font-medium">{document.title}</div>
+                                                    <div className="font-medium">{document.subject}</div>
                                                     {document.description && (
                                                         <div className="text-sm text-muted-foreground truncate max-w-xs">
                                                             {document.description}
@@ -329,8 +329,8 @@ export default function PublishedDocuments({ publishedDocuments }: Props) {
                         {selectedDocument && (
                             <div className="space-y-6">
                                 <div>
-                                    <Label className="text-sm font-medium text-muted-foreground">Title</Label>
-                                    <p className="text-lg font-semibold">{selectedDocument.title}</p>
+                                    <Label className="text-sm font-medium text-muted-foreground">Subject</Label>
+                                    <p className="text-lg font-semibold">{selectedDocument.subject}</p>
                                 </div>
 
                                 {selectedDocument.description && (

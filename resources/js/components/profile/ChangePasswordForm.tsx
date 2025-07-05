@@ -36,7 +36,7 @@ const ChangePasswordForm: React.FC<Props> = ({ data, errors, processing, onChang
                 {/* Password Fields Section */}
                 <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
                     <div className="flex items-center gap-3 mb-6">
-                        <div className="p-2 bg-gradient-to-br from-blue-400 to-blue-500 rounded-lg">
+                        <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                             <Key className="w-4 h-4 text-white" />
                         </div>
                         <h3 className="text-lg font-bold text-gray-900">Password Information</h3>

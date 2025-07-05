@@ -64,7 +64,7 @@ const AccountDetailsCard: React.FC<Props> = ({ user }) => {
                     {/* Role Information */}
                     <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
                         <div className="flex items-center space-x-4">
-                            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 shadow-lg">
+                            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-red-400 to-red-500 shadow-lg">
                                 <Shield className="h-6 w-6 text-white" />
                             </div>
                             <div>
@@ -77,7 +77,7 @@ const AccountDetailsCard: React.FC<Props> = ({ user }) => {
                     {/* Department Information */}
                     <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
                         <div className="flex items-center space-x-4">
-                            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-500 shadow-lg">
+                            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-red-400 to-red-500 shadow-lg">
                                 <Building className="h-6 w-6 text-white" />
                             </div>
                             <div>
@@ -93,7 +93,7 @@ const AccountDetailsCard: React.FC<Props> = ({ user }) => {
                     {/* Email Status */}
                     <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
                         <div className="flex items-center space-x-4">
-                            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-purple-500 shadow-lg">
+                            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-red-400 to-red-500 shadow-lg">
                                 <Mail className="h-6 w-6 text-white" />
                             </div>
                             <div>
@@ -101,7 +101,7 @@ const AccountDetailsCard: React.FC<Props> = ({ user }) => {
                                 <div className="mt-2">
                                     <Badge
                                         variant="outline"
-                                        className={`px-3 py-1.5 text-sm font-semibold ${user.email_verified_at ? "bg-green-100 text-green-800 border-green-200" : "bg-yellow-100 text-yellow-800 border-yellow-200"}`}
+                                        className={`px-3 py-1.5 text-sm font-semibold ${user.email_verified_at ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"}`}
                                     >
                                         {user.email_verified_at ? "Verified" : "Unverified"}
                                     </Badge>
@@ -113,7 +113,7 @@ const AccountDetailsCard: React.FC<Props> = ({ user }) => {
                     {/* Member Since */}
                     <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
                         <div className="flex items-center space-x-4">
-                            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-orange-500 shadow-lg">
+                            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-red-400 to-red-500 shadow-lg">
                                 <CalendarDays className="h-6 w-6 text-white" />
                             </div>
                             <div>
@@ -126,21 +126,21 @@ const AccountDetailsCard: React.FC<Props> = ({ user }) => {
             </div>
 
             {/* Additional Information */}
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
                 <div className="flex items-center space-x-4 mb-4">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-blue-400 to-blue-500 shadow-lg">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-red-400 to-red-500 shadow-lg">
                         <UserIcon className="h-5 w-5 text-white" />
                     </div>
-                    <h3 className="text-lg font-bold text-blue-900">Account Information</h3>
+                    <h3 className="text-lg font-bold text-gray-900">Account Information</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div className="flex items-center space-x-3">
-                        <span className="font-semibold text-blue-800">Full Name:</span>
-                        <span className="text-blue-900">{user.first_name} {user.middle_name} {user.last_name} {user.suffix}</span>
+                        <span className="font-semibold text-gray-800">Full Name:</span>
+                        <span className="text-gray-900">{user.first_name} {user.middle_name} {user.last_name} {user.suffix}</span>
                     </div>
                     <div className="flex items-center space-x-3">
-                        <span className="font-semibold text-blue-800">Gender:</span>
-                        <span className="text-blue-900 capitalize">{user.gender}</span>
+                        <span className="font-semibold text-gray-800">Gender:</span>
+                        <span className="text-gray-900 capitalize">{user.gender}</span>
                     </div>
                 </div>
             </div>

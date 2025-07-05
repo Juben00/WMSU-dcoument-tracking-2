@@ -1,5 +1,5 @@
 import Navbar from '@/components/User/navbar'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useForm } from '@inertiajs/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Plus, Pencil, Trash2, Users, Building, UserPlus, User } from 'lucide-react'
 import InputError from '@/components/input-error'
+import Swal from 'sweetalert2'
 import {
     Table,
     TableBody,
@@ -61,6 +62,7 @@ const Offices = ({ auth, users }: Props) => {
         password: 'password',
         password_confirmation: 'password',
     });
+    const [notifications, setNotifications] = useState<any[]>([]);
 
     // Check if there's already a receiver in the office
     const hasReceiver = users.some(user => user.role === 'receiver');
@@ -112,30 +114,51 @@ const Offices = ({ auth, users }: Props) => {
     };
 
     const handleDeleteUser = (userId: number) => {
-        if (confirm('Are you sure you want to delete this user?')) {
-            destroy(route('users.destroy', userId), {
-                onSuccess: () => {
-                    // The page will automatically refresh with the updated data
-                },
-                onError: (errors) => {
-                    console.error(errors);
-                }
-            });
-        }
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'You will not be able to recover this user!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                destroy(route('users.destroy', userId), {
+                    onSuccess: () => {
+                        Swal.fire({
+                            title: 'User deleted successfully',
+                            icon: 'success',
+                            timer: 1500
+                        });
+                    },
+                    onError: (errors) => {
+                        console.error(errors);
+                    }
+                });
+            }
+        });
     };
+
+    useEffect(() => {
+        fetch('/notifications')
+            .then(res => res.json())
+            .then(data => setNotifications(data))
+            .catch(() => setNotifications([]));
+    }, []);
 
     console.log(auth.user);
 
     return (
         <>
-            <Navbar />
+            <Navbar notifications={notifications} />
             <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* Header Section */}
                     <div className="mb-8">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                                <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg">
+                                <div className="p-3 bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-lg">
                                     <Building className="w-8 h-8 text-white" />
                                 </div>
                                 <div>
@@ -145,7 +168,7 @@ const Offices = ({ auth, users }: Props) => {
                             </div>
                             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                                 <DialogTrigger asChild>
-                                    <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 flex items-center gap-2">
+                                    <Button className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 flex items-center gap-2">
                                         <UserPlus className="h-5 w-5" />
                                         Create User
                                     </Button>
@@ -266,7 +289,7 @@ const Offices = ({ auth, users }: Props) => {
                                             <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                                                 Cancel
                                             </Button>
-                                            <Button type="submit" disabled={processing} className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold">
+                                            <Button type="submit" disabled={processing} className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold">
                                                 Create User
                                             </Button>
                                         </div>
@@ -280,42 +303,42 @@ const Offices = ({ auth, users }: Props) => {
                     <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
                         <div className="p-8">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg">
+                                <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                                     <Users className="w-5 h-5 text-white" />
                                 </div>
                                 <h2 className="text-2xl font-bold text-gray-900">Department Overview</h2>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+                                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-500 rounded-lg flex items-center justify-center">
+                                        <div className="w-12 h-12 bg-gradient-to-br from-red-400 to-red-500 rounded-lg flex items-center justify-center">
                                             <Users className="w-6 h-6 text-white" />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-semibold text-blue-700">Total Users</p>
-                                            <p className="text-2xl font-bold text-blue-900">{users.length}</p>
+                                            <p className="text-sm font-semibold text-red-700">Total Users</p>
+                                            <p className="text-2xl font-bold text-red-900">{users.length}</p>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border border-emerald-200">
+                                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-emerald-500 rounded-lg flex items-center justify-center">
+                                        <div className="w-12 h-12 bg-gradient-to-br from-red-400 to-red-500 rounded-lg flex items-center justify-center">
                                             <User className="w-6 h-6 text-white" />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-semibold text-emerald-700">Regular Users</p>
-                                            <p className="text-2xl font-bold text-emerald-900">{users.filter(user => user.role === 'user').length}</p>
+                                            <p className="text-sm font-semibold text-red-700">Regular Users</p>
+                                            <p className="text-2xl font-bold text-red-900">{users.filter(user => user.role === 'user').length}</p>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-6 border border-amber-200">
+                                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-500 rounded-lg flex items-center justify-center">
+                                        <div className="w-12 h-12 bg-gradient-to-br from-red-400 to-red-500 rounded-lg flex items-center justify-center">
                                             <UserPlus className="w-6 h-6 text-white" />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-semibold text-amber-700">Receivers</p>
-                                            <p className="text-2xl font-bold text-amber-900">{users.filter(user => user.role === 'receiver').length}</p>
+                                            <p className="text-sm font-semibold text-red-700">Receivers</p>
+                                            <p className="text-2xl font-bold text-red-900">{users.filter(user => user.role === 'receiver').length}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -327,7 +350,7 @@ const Offices = ({ auth, users }: Props) => {
                     <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
                         <div className="p-8">
                             <div className="flex items-center gap-3 mb-8">
-                                <div className="p-2 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg">
+                                <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                                     <Users className="w-5 h-5 text-white" />
                                 </div>
                                 <h2 className="text-2xl font-bold text-gray-900">Department Users</h2>
@@ -349,7 +372,7 @@ const Offices = ({ auth, users }: Props) => {
                                             <TableRow key={user.id} className="hover:bg-gray-50 transition-all duration-200 border-b border-gray-100">
                                                 <TableCell className="py-4">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
+                                                        <div className="w-10 h-10 bg-gradient-to-br from-red-400 to-red-500 rounded-full flex items-center justify-center text-white font-semibold">
                                                             {user.first_name.charAt(0)}{user.last_name.charAt(0)}
                                                         </div>
                                                         <span className="font-medium text-gray-900">{user.first_name} {user.middle_name} {user.last_name} {user.suffix}</span>
@@ -365,7 +388,7 @@ const Offices = ({ auth, users }: Props) => {
                                                 <TableCell className="py-4">
                                                     <span className={`px-3 py-1.5 inline-flex text-sm leading-5 font-semibold rounded-full border capitalize ${user.role === 'receiver'
                                                         ? 'bg-amber-100 text-amber-800 border-amber-200'
-                                                        : 'bg-blue-100 text-blue-800 border-blue-200'
+                                                        : 'bg-red-100 text-red-800 border-red-200'
                                                         }`}>
                                                         {user.role}
                                                     </span>
@@ -375,7 +398,7 @@ const Offices = ({ auth, users }: Props) => {
                                                         <Button
                                                             variant="outline"
                                                             size="sm"
-                                                            className="border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-all duration-200"
+                                                            className="border-gray-300 hover:border-red-500 hover:text-red-600 transition-all duration-200"
                                                             onClick={() => handleEditUser(user)}
                                                         >
                                                             <Pencil className="h-4 w-4" />
@@ -531,7 +554,7 @@ const Offices = ({ auth, users }: Props) => {
                                     <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
                                         Cancel
                                     </Button>
-                                    <Button type="submit" disabled={processing} className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold">
+                                    <Button type="submit" disabled={processing} className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold">
                                         Update User
                                     </Button>
                                 </div>

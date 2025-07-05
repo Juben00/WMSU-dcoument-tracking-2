@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/User/navbar';
 import { Link, useForm } from '@inertiajs/react';
 import ApproveModal from './components/ApproveModal';
@@ -70,6 +70,7 @@ interface Document {
     is_final_approver: boolean;
     final_recipient_id: number | null;
     can_respond: boolean;
+    can_respond_other_data: DocumentRecipient | null;
     recipient_status: string | null;
     owner_id: number;
     is_public: boolean;
@@ -221,6 +222,7 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
     const [approveFile, setApproveFile] = useState<File | null>(null);
     const [copied, setCopied] = useState(false);
     const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
+    const [notifications, setNotifications] = useState<any[]>([]);
 
     const { post, delete: destroy, processing, setData } = useForm({
         status: '',
@@ -228,6 +230,8 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
         revision_file: null as File | null,
         forward_to_id: null as number | null,
     });
+
+    console.log('users', users);
 
     // Check if current user is an active recipient
     const currentRecipient = document.recipients.find(
@@ -253,11 +257,11 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
         if (isForInfoDocument()) {
             return canRespond();
         }
-        return canRespond() && isNonForInfoDocument() && isNotFinalRecipient() && !isReturned() && !isPending();
+        return canRespond() && isNonForInfoDocument() && isNotFinalRecipient() && !isReturned();
     };
 
     const canApproveOrReject = () => {
-        return canRespond() && isNonForInfoDocument() && isFinalRecipient() && !isReturned() && !isPending();
+        return canRespond() && isNonForInfoDocument() && isFinalRecipient() && !isReturned();
     };
 
     const canForwardToOffice = () => {
@@ -277,7 +281,7 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
     };
 
     const canCancelDocument = () => {
-        return isOwner() && ['pending', 'in_review', 'approved', 'returned'].includes(document.status);
+        return isOwner() && ['pending', 'in_review', 'approved', 'returned', 'rejected'].includes(document.status);
     };
 
     const getStatusColor = (status: string) => {
@@ -413,9 +417,16 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
         return route('documents.public_view', { public_token: token });
     };
 
+    useEffect(() => {
+        fetch('/notifications')
+            .then(res => res.json())
+            .then(data => setNotifications(data))
+            .catch(() => setNotifications([]));
+    }, []);
+
     return (
         <>
-            <Navbar />
+            <Navbar notifications={notifications} />
             <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* Header Section */}
@@ -869,7 +880,14 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                             }}
                                             className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                                         >
-                                            Reject
+                                            Disapprove
+                                        </button>
+                                        {/* return document button */}
+                                        <button
+                                            onClick={() => setIsReturnModalOpen(true)}
+                                            className="px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg hover:from-gray-700 hover:to-gray-800 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                                        >
+                                            Return Document
                                         </button>
                                     </>
                                 )}

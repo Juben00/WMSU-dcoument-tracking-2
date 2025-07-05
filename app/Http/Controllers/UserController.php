@@ -16,6 +16,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Log;
 use Picqer\Barcode\BarcodeGeneratorSVG;
+use App\Notifications\InAppNotification;
 
 
 
@@ -83,6 +84,9 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        // Notify the user about their account creation
+        $user->notify(new InAppNotification('Your account has been created.', ['user_id' => $user->id]));
+
         return redirect()->route('users.departments');
     }
 
@@ -98,6 +102,11 @@ class UserController extends Controller
     public function destroy(User $user)
     {
         $user->delete();
+        // Notify the user (if possible) and all admins
+        $admins = User::where('role', 'admin')->get();
+        foreach ($admins as $admin) {
+            $admin->notify(new InAppNotification('A user has been deleted.', ['user_id' => $user->id]));
+        }
         return redirect()->route('users.departments');
     }
 
@@ -210,9 +219,29 @@ class UserController extends Controller
 
     public function sendDocument(Request $request)
     {
+        try {
+
+        // Get the current user's department
+        $currentUser = Auth::user();
+        $departmentId = $currentUser->department_id;
+        $department = $currentUser->department;
+
+        // Check if this is the President's office (OP)
+        $isPresidentOffice = $department && $department->code === 'OP';
+
+        // Define validation rules based on department type
+        $orderNumberRule = 'required|string|max:255';
+        if ($isPresidentOffice) {
+            // For President's office: unique per department, document_type, and order_number
+            $orderNumberRule .= '|unique:documents,order_number,NULL,id,department_id,' . $departmentId . ',document_type,' . $request->input('document_type');
+        } else {
+            // For other departments: unique per department and order_number
+            $orderNumberRule .= '|unique:documents,order_number,NULL,id,department_id,' . $departmentId;
+        }
+
         $validated = $request->validate([
             'subject' => 'required|string|max:255',
-            'order_number' => 'required|string|max:255|unique:documents,order_number',
+            'order_number' => $orderNumberRule,
             'document_type' => 'required|in:special_order,order,memorandum,for_info',
             'description' => 'nullable|string',
             'files' => 'required|array',
@@ -227,19 +256,13 @@ class UserController extends Controller
         // Create the document
         $document = Document::create([
             'owner_id' => Auth::id(),
+            'department_id' => $departmentId,
             'subject' => $validated['subject'],
             'order_number' => $validated['order_number'],
             'document_type' => $validated['document_type'],
             'description' => $validated['description'],
             'through_user_ids' => $request->input('through_user_ids', []),
             'status' => 'pending'
-        ]);
-
-        // Log the through_user_ids for debugging
-        Log::info('Document created with through_user_ids', [
-            'document_id' => $document->id,
-            'through_user_ids' => $request->input('through_user_ids', []),
-            'document_through_user_ids' => $document->through_user_ids
         ]);
 
         // Handle multiple file uploads
@@ -324,8 +347,31 @@ class UserController extends Controller
             'barcode_value' => $barcodeValue,
         ]);
 
+        // Notify the document owner
+        $document->owner->notify(new InAppNotification('Your document has been created and sent.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+        // Notify all initial recipients
+        if ($validated['document_type'] === 'for_info') {
+            foreach ($validated['recipient_ids'] as $recipientId) {
+                $recipient = User::find($recipientId);
+                if ($recipient) {
+                    $recipient->notify(new InAppNotification('A new document has been sent to you.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+                }
+            }
+        } else {
+            $sendToId = $request->input('recipient_ids')[0];
+            $recipient = User::find($sendToId);
+            if ($recipient) {
+                $recipient->notify(new InAppNotification('A new document has been sent to you.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+            }
+        }
 
         return redirect()->route('users.documents')->with('success', 'Document sent successfully.');
+
+        } catch (\Throwable $th) {
+            return back()->withErrors([
+                'message' => $th->getMessage(),
+            ]);
+        }
     }
 
     public function showDocument($document)
@@ -355,8 +401,33 @@ class UserController extends Controller
             ->where('status', 'returned')
             ->firstOrFail();
 
+        $doc->update([
+            'status' => 'pending',
+        ]);
+
+        // set the last document recipient status to pending
+        $lastRecipient = $doc->recipients()->orderByDesc('sequence')->first();
+        if ($lastRecipient) {
+            $lastRecipient->status = 'pending';
+            $lastRecipient->save();
+        }
+
+        // Check if this is the President's office (OP)
+        $department = $doc->department;
+        $isPresidentOffice = $department && $department->code === 'OP';
+
+        // Define validation rules based on department type
+        $orderNumberRule = 'required|string|max:255';
+        if ($isPresidentOffice) {
+            // For President's office: unique per department, document_type, and order_number
+            $orderNumberRule .= '|unique:documents,order_number,' . $doc->id . ',id,department_id,' . $doc->department_id . ',document_type,' . $doc->document_type;
+        } else {
+            // For other departments: unique per department and order_number
+            $orderNumberRule .= '|unique:documents,order_number,' . $doc->id . ',id,department_id,' . $doc->department_id;
+        }
+
         $validated = $request->validate([
-            'order_number' => 'required|string|max:255|unique:documents,order_number,' . $doc->id,
+            'order_number' => $orderNumberRule,
             'subject' => 'required|string|max:255',
             'description' => 'nullable|string',
             'files' => 'nullable|array',
@@ -384,9 +455,14 @@ class UserController extends Controller
             }
         }
 
-        // Append a new approval chain entry for the original recipient
+        // set the previous chain to received
         $lastRecipient = $doc->recipients()->orderByDesc('sequence')->first();
         if ($lastRecipient) {
+            // Set the previous recipient's status to 'received' (not pending)
+            $lastRecipient->status = 'received';
+            $lastRecipient->save();
+
+            // Create a new recipient record for the original recipient
             $nextSequence = $lastRecipient->sequence + 1;
             DocumentRecipient::create([
                 'document_id' => $doc->id,
@@ -454,6 +530,13 @@ class UserController extends Controller
             'email' => $request->email,
         ]);
 
+        // Notify the user and all admins
+        $admins = User::where('role', 'admin')->get();
+        foreach ($admins as $admin) {
+            $admin->notify(new InAppNotification('A user has been updated.', ['user_id' => $user->id]));
+        }
+        $user->notify(new InAppNotification('Your account has been updated.', ['user_id' => $user->id]));
+
         return redirect()->route('users.departments');
     }
 
@@ -485,10 +568,11 @@ class UserController extends Controller
             ->get()
             ->map(function($activity) {
                 return [
-                    'document_id' => $activity->document_id,
+                    'order_number' => $activity->document->order_number,
                     'subject' => $activity->document->subject ?? 'Untitled',
                     'status' => $activity->status,
                     'responded_at' => $activity->responded_at,
+                    'created_at' => $activity->document->created_at,
                     'comments' => $activity->comments,
                 ];
             });

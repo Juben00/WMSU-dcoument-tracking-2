@@ -17,47 +17,47 @@ const statCards = [
     {
         key: 'totalDocuments',
         label: 'Total Documents',
-        icon: <FileText className="text-4xl text-red-700" />,
-        color: 'text-red-700',
-        bg: 'bg-gradient-to-br from-red-50 to-red-100',
+        icon: <FileText className="text-4xl text-red-600" />,
+        color: 'text-red-600',
+        bg: 'bg-gradient-to-br from-gray-50 to-gray-100',
         border: 'border-red-200',
         hover: 'hover:border-red-300',
     },
     {
         key: 'pendingDocuments',
         label: 'Pending Documents',
-        icon: <Hourglass className="text-4xl text-yellow-600" />,
-        color: 'text-yellow-600',
-        bg: 'bg-gradient-to-br from-yellow-50 to-yellow-100',
-        border: 'border-yellow-200',
-        hover: 'hover:border-yellow-300',
+        icon: <Hourglass className="text-4xl text-red-600" />,
+        color: 'text-red-600',
+        bg: 'bg-gradient-to-br from-gray-50 to-gray-100',
+        border: 'border-red-200',
+        hover: 'hover:border-red-300',
     },
     {
         key: 'completedDocuments',
         label: 'Completed Documents',
-        icon: <CheckCircle className="text-4xl text-green-600" />,
-        color: 'text-green-600',
-        bg: 'bg-gradient-to-br from-green-50 to-green-100',
-        border: 'border-green-200',
-        hover: 'hover:border-green-300',
+        icon: <CheckCircle className="text-4xl text-red-600" />,
+        color: 'text-red-600',
+        bg: 'bg-gradient-to-br from-gray-50 to-gray-100',
+        border: 'border-red-200',
+        hover: 'hover:border-red-300',
     },
     {
         key: 'publishedDocuments',
         label: 'Published Documents',
-        icon: <Globe className="text-4xl text-blue-600" />,
-        color: 'text-blue-600',
-        bg: 'bg-gradient-to-br from-blue-50 to-blue-100',
-        border: 'border-blue-200',
-        hover: 'hover:border-blue-300',
+        icon: <Globe className="text-4xl text-red-600" />,
+        color: 'text-red-600',
+        bg: 'bg-gradient-to-br from-gray-50 to-gray-100',
+        border: 'border-red-200',
+        hover: 'hover:border-red-300',
     },
 ]
 
 const statusIcon = {
-    approved: <CheckCircle className="text-green-600" />,
+    approved: <CheckCircle className="text-red-600" />,
     rejected: <XCircle className="text-red-600" />,
-    pending: <Hourglass className="text-yellow-600" />,
-    forwarded: <FileSignature className="text-blue-600" />,
-    returned: <Clock className="text-gray-500" />,
+    pending: <Hourglass className="text-red-600" />,
+    forwarded: <FileSignature className="text-red-600" />,
+    returned: <Clock className="text-red-600" />,
 }
 
 const getStatusColor = (status: string) => {
@@ -80,6 +80,7 @@ const getStatusColor = (status: string) => {
 const Dashboard = () => {
     const [stats, setStats] = useState<any>(null)
     const [loading, setLoading] = useState(true)
+    const [notifications, setNotifications] = useState<any[]>([])
 
     useEffect(() => {
         setLoading(true)
@@ -92,15 +93,22 @@ const Dashboard = () => {
             .catch(() => setLoading(false))
     }, [])
 
+    useEffect(() => {
+        fetch('/notifications')
+            .then(res => res.json())
+            .then(data => setNotifications(data))
+            .catch(() => setNotifications([]))
+    }, [])
+
     return (
         <>
-            <Navbar />
+            <Navbar notifications={notifications} />
             <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* Header Section */}
                     <div className="mb-8">
                         <div className="flex items-center gap-4">
-                            <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg">
+                            <div className="p-3 bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-lg">
                                 <BarChart3 className="w-8 h-8 text-white" />
                             </div>
                             <div>
@@ -131,7 +139,7 @@ const Dashboard = () => {
                     <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
                         <div className="p-8">
                             <div className="flex items-center gap-3 mb-8">
-                                <div className="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg">
+                                <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                                     <Activity className="w-5 h-5 text-white" />
                                 </div>
                                 <h2 className="text-2xl font-bold text-gray-900">Recent Activities</h2>
@@ -159,21 +167,16 @@ const Dashboard = () => {
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-3 mb-2">
                                                     <p className="font-semibold text-gray-900 text-lg">
-                                                        Document #{activity.document_id}: {activity.title}
+                                                        Order No. {activity.order_number} : {activity.subject}
                                                     </p>
                                                     <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getStatusColor(activity.status)}`}>
                                                         {activity.status.charAt(0).toUpperCase() + activity.status.slice(1)}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center justify-between">
-                                                    {activity.comments && (
-                                                        <p className="text-sm text-gray-600 italic">
-                                                            "{activity.comments}"
-                                                        </p>
-                                                    )}
                                                     <p className="text-sm text-gray-500 flex items-center gap-2">
                                                         <Clock className="w-4 h-4" />
-                                                        {activity.responded_at ? new Date(activity.responded_at).toLocaleString() : ''}
+                                                        {activity.created_at ? new Date(activity.created_at).toLocaleString() : ''}
                                                     </p>
                                                 </div>
                                             </div>
@@ -197,49 +200,49 @@ const Dashboard = () => {
                         <div className="mt-8 bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
                             <div className="p-8">
                                 <div className="flex items-center gap-3 mb-6">
-                                    <div className="p-2 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg">
+                                    <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                                         <TrendingUp className="w-5 h-5 text-white" />
                                     </div>
                                     <h2 className="text-xl font-bold text-gray-900">Performance Overview</h2>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border border-emerald-200">
+                                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
                                         <div className="flex items-center justify-between mb-2">
-                                            <span className="text-sm font-semibold text-emerald-700">Completion Rate</span>
-                                            <CheckCircle className="w-5 h-5 text-emerald-600" />
+                                            <span className="text-sm font-semibold text-red-700">Completion Rate</span>
+                                            <CheckCircle className="w-5 h-5 text-red-600" />
                                         </div>
-                                        <p className="text-2xl font-bold text-emerald-800">
+                                        <p className="text-2xl font-bold text-red-800">
                                             {stats.totalDocuments > 0
                                                 ? Math.round((stats.completedDocuments / stats.totalDocuments) * 100)
                                                 : 0}%
                                         </p>
-                                        <p className="text-sm text-emerald-600 mt-1">
+                                        <p className="text-sm text-red-600 mt-1">
                                             {stats.completedDocuments} of {stats.totalDocuments} documents completed
                                         </p>
                                     </div>
-                                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+                                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
                                         <div className="flex items-center justify-between mb-2">
-                                            <span className="text-sm font-semibold text-blue-700">Publication Rate</span>
-                                            <Globe className="w-5 h-5 text-blue-600" />
+                                            <span className="text-sm font-semibold text-red-700">Publication Rate</span>
+                                            <Globe className="w-5 h-5 text-red-600" />
                                         </div>
-                                        <p className="text-2xl font-bold text-blue-800">
+                                        <p className="text-2xl font-bold text-red-800">
                                             {stats.totalDocuments > 0
                                                 ? Math.round((stats.publishedDocuments / stats.totalDocuments) * 100)
                                                 : 0}%
                                         </p>
-                                        <p className="text-sm text-blue-600 mt-1">
+                                        <p className="text-sm text-red-600 mt-1">
                                             {stats.publishedDocuments} documents published publicly
                                         </p>
                                     </div>
-                                    <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-6 border border-amber-200">
+                                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
                                         <div className="flex items-center justify-between mb-2">
-                                            <span className="text-sm font-semibold text-amber-700">Pending Items</span>
-                                            <Hourglass className="w-5 h-5 text-amber-600" />
+                                            <span className="text-sm font-semibold text-red-700">Pending Items</span>
+                                            <Hourglass className="w-5 h-5 text-red-600" />
                                         </div>
-                                        <p className="text-2xl font-bold text-amber-800">
+                                        <p className="text-2xl font-bold text-red-800">
                                             {stats.pendingDocuments}
                                         </p>
-                                        <p className="text-sm text-amber-600 mt-1">
+                                        <p className="text-sm text-red-600 mt-1">
                                             Documents awaiting action
                                         </p>
                                     </div>

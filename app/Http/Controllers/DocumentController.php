@@ -14,6 +14,7 @@ use Inertia\Inertia;
 use Picqer\Barcode\BarcodeGeneratorSVG;
 use Illuminate\Support\Str;
 use App\Models\Departments;
+use App\Notifications\InAppNotification;
 
 class DocumentController extends Controller
 {
@@ -97,6 +98,13 @@ class DocumentController extends Controller
             $document->update(['status' => 'received']);
         }
 
+        // Notify the new recipient and document owner
+        $forwardedTo = User::find($request->forward_to_id);
+        if ($forwardedTo) {
+            $forwardedTo->notify(new InAppNotification('A document has been forwarded to you.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+        }
+        $document->owner->notify(new InAppNotification('Your document has been forwarded.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+
         return redirect()->route('documents.view', $document->id)->with('success', 'Document forwarded successfully');
     }
 
@@ -175,10 +183,23 @@ class DocumentController extends Controller
 
         if ($rejectedCount > 0) {
             $document->update(['status' => 'rejected']);
+            // Notify owner and recipients
+            $document->owner->notify(new InAppNotification('Your document was rejected.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+            foreach ($allRecipients as $rec) {
+                $rec->user->notify(new InAppNotification('A document you are involved in was rejected.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+            }
         } elseif ($returnedCount > 0) {
             $document->update(['status' => 'returned']);
+            $document->owner->notify(new InAppNotification('Your document was returned.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+            foreach ($allRecipients as $rec) {
+                $rec->user->notify(new InAppNotification('A document you are involved in was returned.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+            }
         } elseif ($pendingCount === 0 && $approvedCount === $totalRecipients) {
             $document->update(['status' => 'approved']);
+            $document->owner->notify(new InAppNotification('Your document was approved.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+            foreach ($allRecipients as $rec) {
+                $rec->user->notify(new InAppNotification('A document you are involved in was approved.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+            }
         } elseif ($pendingCount > 0) {
             $document->update(['status' => 'in_review']);
         } else {
@@ -188,10 +209,13 @@ class DocumentController extends Controller
         // If the final approver responds, update document status accordingly
         if ($isFinalApprover && $request->status === 'approved') {
             $document->update(['status' => 'approved']);
+            $document->owner->notify(new InAppNotification('Your document was approved by the final approver.', ['document_id' => $document->id, 'document_name' => $document->subject]));
         } elseif ($isFinalApprover && $request->status === 'rejected') {
             $document->update(['status' => 'rejected']);
+            $document->owner->notify(new InAppNotification('Your document was rejected by the final approver.', ['document_id' => $document->id, 'document_name' => $document->subject]));
         } elseif ($isFinalApprover && $request->status === 'returned') {
             $document->update(['status' => 'returned']);
+            $document->owner->notify(new InAppNotification('Your document was returned by the final approver.', ['document_id' => $document->id, 'document_name' => $document->subject]));
         }
 
         return redirect()->back()->with('success', 'Response recorded successfully');
@@ -234,7 +258,7 @@ class DocumentController extends Controller
         if (!empty($throughUserIds)) {
             $throughUsers = User::whereIn('id', $throughUserIds)->with('department')->get();
             // Merge and remove duplicates by id
-            $users = $users->merge($throughUsers)->unique('id')->values();
+            // $users = $users->merge($throughUsers)->unique('id')->values();
         }
 
         // Get users from other departments (excluding current user's department and current user and the document owner), prioritizing 'receiver' or 'admin' roles
@@ -276,12 +300,14 @@ class DocumentController extends Controller
         $firstRecipient = $document->recipients()->with('finalRecipient.department')->first();
         $documentData['final_recipient'] = $firstRecipient ? $firstRecipient->finalRecipient : null;
 
-        // Check if current user is a recipient and can respond
+        // Check if current user is a recipient and can respond, get the latest data
         $currentRecipient = $document->recipients()
             ->where('user_id', Auth::id())
+            ->orderByDesc('sequence')
             ->first();
 
-        $documentData['can_respond'] = $currentRecipient && in_array($currentRecipient->status, ['pending', 'forwarded']);
+        $documentData['can_respond'] = $currentRecipient && in_array($currentRecipient->status, ['pending', 'forwarded', ]);
+        $documentData['can_respond_other_data'] = $currentRecipient;
         $documentData['is_final_approver'] = $currentRecipient ? $currentRecipient->is_final_approver : false;
         $documentData['recipient_status'] = $currentRecipient ? $currentRecipient->status : null;
 
@@ -300,6 +326,7 @@ class DocumentController extends Controller
     {
         $documentRecipient = DocumentRecipient::where('document_id', $document->id)
             ->where('user_id', Auth::id())
+            ->orderByDesc('sequence')
             ->first();
         $documentRecipient->update(['status' => 'received']);
         $documentRecipient->update(['responded_at' => now()]);
@@ -403,6 +430,9 @@ class DocumentController extends Controller
             'is_public' => true,
             'public_token' => $publicToken,
         ]);
+
+        // Notify the document owner
+        $document->owner->notify(new InAppNotification('Your document has been published publicly.', ['document_id' => $document->id, 'document_name' => $document->subject]));
 
         return redirect()->back()->with('success', 'Document published publicly.');
     }

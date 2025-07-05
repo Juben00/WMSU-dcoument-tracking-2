@@ -16,6 +16,7 @@ class Document extends Model
 
     protected $fillable = [
         'owner_id',
+        'department_id',
         'subject',
         'order_number',
         'document_type',
@@ -46,6 +47,11 @@ class Document extends Model
     public function files(): HasMany
     {
         return $this->hasMany(DocumentFile::class);
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Departments::class, 'department_id');
     }
 
     /**

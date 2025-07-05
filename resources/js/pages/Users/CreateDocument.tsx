@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/User/navbar';
 import { useForm, router } from '@inertiajs/react';
 import { User } from '@/types';
@@ -65,6 +65,14 @@ const CreateDocument = ({ auth, departments }: Props) => {
         initial_recipient_id: null,
         through_user_ids: []
     });
+    const [notifications, setNotifications] = useState<any[]>([]);
+
+    useEffect(() => {
+        fetch('/notifications')
+            .then(res => res.json())
+            .then(data => setNotifications(data))
+            .catch(() => setNotifications([]));
+    }, []);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -181,12 +189,12 @@ const CreateDocument = ({ auth, departments }: Props) => {
                     window.location.href = '/documents';
                 });
             },
-            onError: () => {
+            onError: (errors) => {
                 setIsSubmitting(false);
                 Swal.fire({
                     icon: 'error',
                     title: 'Failed to Submit Document',
-                    text: 'Failed to submit document. Please try again.',
+                    text: errors.message,
                     confirmButtonColor: '#b91c1c',
                 });
             }
@@ -239,24 +247,10 @@ const CreateDocument = ({ auth, departments }: Props) => {
         { value: 'for_info', label: 'For Info' },
     ];
 
-    const getDocumentTypeColor = (documentType: string) => {
-        switch (documentType) {
-            case 'special_order':
-                return 'bg-purple-100 text-purple-800 border-purple-200';
-            case 'order':
-                return 'bg-blue-100 text-blue-800 border-blue-200';
-            case 'memorandum':
-                return 'bg-emerald-100 text-emerald-800 border-emerald-200';
-            case 'for_info':
-                return 'bg-gray-100 text-gray-800 border-gray-200';
-            default:
-                return 'bg-gray-100 text-gray-800 border-gray-200';
-        }
-    };
 
     return (
         <>
-            <Navbar />
+            <Navbar notifications={notifications} />
             <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* Header Section */}
@@ -285,7 +279,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
                     <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
                         <div className="p-8">
                             <div className="flex items-center gap-3 mb-8">
-                                <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
+                                <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                                     <FileCheck className="w-5 h-5 text-white" />
                                 </div>
                                 <h2 className="text-2xl font-bold text-gray-900">Document Information</h2>
@@ -371,15 +365,15 @@ const CreateDocument = ({ auth, departments }: Props) => {
                     <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
                         <div className="p-8">
                             <div className="flex items-center gap-3 mb-8">
-                                <div className="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg">
+                                <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                                     <Users className="w-5 h-5 text-white" />
                                 </div>
                                 <h2 className="text-2xl font-bold text-gray-900">Recipients</h2>
                             </div>
 
                             {data.document_type === 'for_info' ? (
-                                <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-                                    <label className="text-sm font-semibold text-blue-700 mb-2 flex items-center gap-2">
+                                <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                    <label className="text-sm font-semibold text-red-700 mb-2 flex items-center gap-2">
                                         <Users className="w-4 h-4" />
                                         Send To <span className="text-red-500">*</span>
                                     </label>
@@ -398,8 +392,8 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                 </div>
                             ) : (
                                 <div className="space-y-6">
-                                    <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-                                        <label className="text-sm font-semibold text-blue-700 mb-2 flex items-center gap-2">
+                                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                        <label className="text-sm font-semibold text-red-700 mb-2 flex items-center gap-2">
                                             <UserIcon className="w-4 h-4" />
                                             Send To <span className="text-red-500">*</span>
                                         </label>
@@ -409,7 +403,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                                 setSendToId(value ? parseInt(value) : null);
                                             }}
                                         >
-                                            <SelectTrigger className="mt-2 block w-full rounded-lg border-blue-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition truncate bg-white">
+                                            <SelectTrigger className="mt-2 block w-full rounded-lg border-red-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition truncate bg-white">
                                                 <SelectValue placeholder="Select main recipient" />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -425,8 +419,8 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                         )}
                                     </div>
 
-                                    <div className="bg-amber-50 rounded-xl p-4 border border-amber-100">
-                                        <label className="text-sm font-semibold text-amber-700 mb-2 flex items-center gap-2">
+                                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                        <label className="text-sm font-semibold text-red-700 mb-2 flex items-center gap-2">
                                             <Users className="w-4 h-4" />
                                             Send Through <span className="text-gray-400">(optional)</span>
                                         </label>
@@ -438,7 +432,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                             }}
                                             placeholder="Select optional through users"
                                         />
-                                        <p className="text-xs text-amber-600 mt-2">
+                                        <p className="text-xs text-red-600 mt-2">
                                             Document will be sent to the first selected through user, then to the main recipient.
                                         </p>
                                     </div>
@@ -451,7 +445,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
                     <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
                         <div className="p-8">
                             <div className="flex items-center gap-3 mb-8">
-                                <div className="p-2 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg">
+                                <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                                     <Upload className="w-5 h-5 text-white" />
                                 </div>
                                 <h2 className="text-2xl font-bold text-gray-900">Upload Documents</h2>
@@ -506,7 +500,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
                     <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
                         <div className="p-8">
                             <div className="flex items-center gap-3 mb-8">
-                                <div className="p-2 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg">
+                                <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                                     <FileCheck className="w-5 h-5 text-white" />
                                 </div>
                                 <h2 className="text-2xl font-bold text-gray-900">Submit Document</h2>

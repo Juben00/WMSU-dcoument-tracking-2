@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import Swal from 'sweetalert2';
 import Navbar from '@/components/User/navbar';
@@ -31,9 +31,9 @@ interface PasswordFormData {
     password_confirmation: string;
 }
 
-
 const Profile = ({ user }: Props) => {
     const [activeTab, setActiveTab] = useState(0);
+    const [notifications, setNotifications] = useState<any[]>([]);
 
     const { data: profileData, setData: setProfileData, patch, processing: profileProcessing, errors: profileErrors } = useForm<ProfileFormData>({
         first_name: user.first_name,
@@ -50,6 +50,13 @@ const Profile = ({ user }: Props) => {
         password: '',
         password_confirmation: '',
     });
+
+    useEffect(() => {
+        fetch('/notifications')
+            .then(res => res.json())
+            .then(data => setNotifications(data))
+            .catch(() => setNotifications([]));
+    }, []);
 
     const handleProfileSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -97,7 +104,7 @@ const Profile = ({ user }: Props) => {
     return (
         <>
             <Head title="Profile Settings" />
-            <Navbar />
+            <Navbar notifications={notifications} />
             <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* Header Section */}
@@ -119,7 +126,7 @@ const Profile = ({ user }: Props) => {
                     <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
                         <div className="p-8">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
+                                <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                                     <Settings className="w-5 h-5 text-white" />
                                 </div>
                                 <h2 className="text-2xl font-bold text-gray-900">Account Settings</h2>

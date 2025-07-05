@@ -13,6 +13,7 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Notifications\InAppNotification;
 
 class AdminController extends Controller
 {
@@ -65,6 +66,9 @@ class AdminController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        // Notify the user about their account creation
+        $user->notify(new InAppNotification('Your admin account has been created.', ['user_id' => $user->id]));
+
         return redirect()->route('admins.index');
     }
 
@@ -80,6 +84,12 @@ class AdminController extends Controller
     public function destroy(User $admin)
     {
         $admin->delete();
+
+        // Notify all superadmins
+        $superadmins = User::where('role', 'superadmin')->get();
+        foreach ($superadmins as $superadmin) {
+            $superadmin->notify(new InAppNotification('An admin has been deleted.', ['admin_id' => $admin->id]));
+        }
 
         return redirect()->route('admins.index');
     }
@@ -109,6 +119,13 @@ class AdminController extends Controller
         }
 
         $admin->update($data);
+
+        // Notify all superadmins and the updated admin
+        $superadmins = User::where('role', 'superadmin')->get();
+        foreach ($superadmins as $superadmin) {
+            $superadmin->notify(new InAppNotification('An admin has been updated.', ['admin_id' => $admin->id]));
+        }
+        $admin->notify(new InAppNotification('Your admin account has been updated.', ['admin_id' => $admin->id]));
 
         return redirect()->route('admins.index');
     }
