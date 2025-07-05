@@ -365,7 +365,7 @@ class UserController extends Controller
             }
         }
 
-        return redirect()->route('users.documents')->with('success', 'Document sent successfully.');
+        return redirect()->route('users.document')->with('success', 'Document sent successfully.');
 
         } catch (\Throwable $th) {
             return back()->withErrors([
@@ -477,7 +477,7 @@ class UserController extends Controller
             ]);
         }
 
-        return redirect()->route('users.documents', $doc->id)->with('success', 'Document updated and resent successfully.');
+        return redirect()->route('users.document', $doc->id)->with('success', 'Document updated and resent successfully.');
     }
 
     public function destroyDocument($document)
