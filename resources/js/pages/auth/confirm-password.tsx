@@ -32,7 +32,7 @@ export default function ConfirmPassword() {
             <form onSubmit={submit}>
                 <div className="space-y-6">
                     <div className="grid gap-2">
-                        <Label htmlFor="password">Password</Label>
+                        <Label htmlFor="password" className="text-gray-700 dark:text-gray-200">Password</Label>
                         <Input
                             id="password"
                             type="password"
@@ -42,6 +42,7 @@ export default function ConfirmPassword() {
                             value={data.password}
                             autoFocus
                             onChange={(e) => setData('password', e.target.value)}
+                            className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                         />
 
                         <InputError message={errors.password} />

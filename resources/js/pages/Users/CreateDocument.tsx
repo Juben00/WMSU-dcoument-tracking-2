@@ -251,7 +251,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
     return (
         <>
             <Navbar notifications={notifications} />
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* Header Section */}
                     <div className="mb-8">
@@ -261,13 +261,13 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                     <FileText className="w-8 h-8 text-white" />
                                 </div>
                                 <div>
-                                    <h1 className="text-3xl font-bold text-gray-900">Create New Document</h1>
-                                    <p className="text-gray-600 mt-1">Fill out the form below to send a new document</p>
+                                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Create New Document</h1>
+                                    <p className="text-gray-600 dark:text-gray-300 mt-1">Fill out the form below to send a new document</p>
                                 </div>
                             </div>
                             <button
                                 onClick={() => window.history.back()}
-                                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-gray-700 hover:text-gray-900 font-semibold rounded-lg border border-gray-200 hover:border-gray-300 shadow-sm hover:shadow-md transition-all duration-200"
+                                className="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white font-semibold rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm hover:shadow-md transition-all duration-200"
                             >
                                 <ArrowLeft className="w-4 h-4" />
                                 Back
@@ -276,20 +276,20 @@ const CreateDocument = ({ auth, departments }: Props) => {
                     </div>
 
                     {/* Document Information Card */}
-                    <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200 dark:border-gray-700">
                         <div className="p-8">
                             <div className="flex items-center gap-3 mb-8">
                                 <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                                     <FileCheck className="w-5 h-5 text-white" />
                                 </div>
-                                <h2 className="text-2xl font-bold text-gray-900">Document Information</h2>
+                                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Document Information</h2>
                             </div>
 
                             <form id="create-doc-form" onSubmit={handleSubmit} className="space-y-8">
                                 {/* Document Type and Order Number */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                                        <label htmlFor="document_type" className="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
+                                    <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
+                                        <label htmlFor="document_type" className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2 flex items-center gap-2">
                                             Document Type <span className="text-red-500">*</span>
                                         </label>
                                         <Select
@@ -298,7 +298,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                                 setData('document_type', value)
                                             }
                                         >
-                                            <SelectTrigger className="mt-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition truncate bg-white">
+                                            <SelectTrigger className="mt-2 block w-full rounded-lg border-gray-300 dark:border-gray-600 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition truncate bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
                                                 <SelectValue placeholder="Select document type" />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -312,8 +312,8 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                         {errors.document_type && <div className="text-red-500 text-xs mt-1">{errors.document_type}</div>}
                                     </div>
 
-                                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                                        <label htmlFor="order_number" className="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
+                                    <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
+                                        <label htmlFor="order_number" className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2 flex items-center gap-2">
                                             Order Number <span className="text-red-500">*</span>
                                         </label>
                                         <Input
@@ -321,7 +321,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                             name="order_number"
                                             id="order_number"
                                             required
-                                            className="mt-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition bg-white"
+                                            className="mt-2 block w-full rounded-lg border-gray-300 dark:border-gray-600 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                                             value={data.order_number}
                                             onChange={e => setData('order_number', e.target.value)}
                                         />
@@ -330,14 +330,14 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                 </div>
 
                                 {/* Subject */}
-                                <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                                    <label htmlFor="subject" className="text-sm font-semibold text-gray-600 mb-2">Subject <span className="text-red-500">*</span></label>
+                                <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
+                                    <label htmlFor="subject" className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2">Subject <span className="text-red-500">*</span></label>
                                     <Input
                                         type="text"
                                         name="subject"
                                         id="subject"
                                         required
-                                        className="mt-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition bg-white"
+                                        className="mt-2 block w-full rounded-lg border-gray-300 dark:border-gray-600 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                                         value={data.subject}
                                         onChange={e => setData('subject', e.target.value)}
                                     />
@@ -345,13 +345,13 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                 </div>
 
                                 {/* Description */}
-                                <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                                    <label htmlFor="description" className="text-sm font-semibold text-gray-600 mb-2">Description <span className="text-red-500">*</span></label>
+                                <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
+                                    <label htmlFor="description" className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2">Description <span className="text-red-500">*</span></label>
                                     <Textarea
                                         name="description"
                                         id="description"
                                         rows={4}
-                                        className="mt-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition bg-white"
+                                        className="mt-2 block w-full rounded-lg border-gray-300 dark:border-gray-600 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                                         value={data.description}
                                         onChange={e => setData('description', e.target.value)}
                                     />
@@ -362,18 +362,18 @@ const CreateDocument = ({ auth, departments }: Props) => {
                     </div>
 
                     {/* Recipients Section */}
-                    <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200 dark:border-gray-700">
                         <div className="p-8">
                             <div className="flex items-center gap-3 mb-8">
                                 <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                                     <Users className="w-5 h-5 text-white" />
                                 </div>
-                                <h2 className="text-2xl font-bold text-gray-900">Recipients</h2>
+                                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Recipients</h2>
                             </div>
 
                             {data.document_type === 'for_info' ? (
-                                <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                                    <label className="text-sm font-semibold text-red-700 mb-2 flex items-center gap-2">
+                                <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
+                                    <label className="text-sm font-semibold text-red-700 dark:text-red-400 mb-2 flex items-center gap-2">
                                         <Users className="w-4 h-4" />
                                         Send To <span className="text-red-500">*</span>
                                     </label>
@@ -392,8 +392,8 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                 </div>
                             ) : (
                                 <div className="space-y-6">
-                                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                                        <label className="text-sm font-semibold text-red-700 mb-2 flex items-center gap-2">
+                                    <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
+                                        <label className="text-sm font-semibold text-red-700 dark:text-red-400 mb-2 flex items-center gap-2">
                                             <UserIcon className="w-4 h-4" />
                                             Send To <span className="text-red-500">*</span>
                                         </label>
@@ -403,7 +403,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                                 setSendToId(value ? parseInt(value) : null);
                                             }}
                                         >
-                                            <SelectTrigger className="mt-2 block w-full rounded-lg border-red-300 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition truncate bg-white">
+                                            <SelectTrigger className="mt-2 block w-full rounded-lg border-red-300 dark:border-red-600 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition truncate bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
                                                 <SelectValue placeholder="Select main recipient" />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -419,10 +419,10 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                         )}
                                     </div>
 
-                                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                                        <label className="text-sm font-semibold text-red-700 mb-2 flex items-center gap-2">
+                                    <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
+                                        <label className="text-sm font-semibold text-red-700 dark:text-red-400 mb-2 flex items-center gap-2">
                                             <Users className="w-4 h-4" />
-                                            Send Through <span className="text-gray-400">(optional)</span>
+                                            Send Through <span className="text-gray-400 dark:text-gray-500">(optional)</span>
                                         </label>
                                         <MultiSelect
                                             options={recipientOptions}
@@ -432,7 +432,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                             }}
                                             placeholder="Select optional through users"
                                         />
-                                        <p className="text-xs text-red-600 mt-2">
+                                        <p className="text-xs text-red-600 dark:text-red-400 mt-2">
                                             Document will be sent to the first selected through user, then to the main recipient.
                                         </p>
                                     </div>
@@ -442,17 +442,17 @@ const CreateDocument = ({ auth, departments }: Props) => {
                     </div>
 
                     {/* Files Section */}
-                    <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200 dark:border-gray-700">
                         <div className="p-8">
                             <div className="flex items-center gap-3 mb-8">
                                 <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                                     <Upload className="w-5 h-5 text-white" />
                                 </div>
-                                <h2 className="text-2xl font-bold text-gray-900">Upload Documents</h2>
+                                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Upload Documents</h2>
                             </div>
 
-                            <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                                <label htmlFor="files" className="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
+                            <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
+                                <label htmlFor="files" className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2 flex items-center gap-2">
                                     <Upload className="w-4 h-4" />
                                     Select Files <span className="text-red-500">*</span>
                                 </label>
@@ -462,7 +462,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                     id="files"
                                     multiple
                                     required
-                                    className="mt-2 block w-full text-sm text-gray-500 file:px-4 file:py-2 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-200 transition bg-white"
+                                    className="mt-2 block w-full text-sm text-gray-500 dark:text-gray-400 file:px-4 file:py-2 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-red-50 dark:file:bg-red-900/20 file:text-red-700 dark:file:text-red-400 hover:file:bg-red-100 dark:hover:file:bg-red-900/30 focus:outline-none focus:ring-2 focus:ring-red-200 transition bg-white dark:bg-gray-800"
                                     onChange={handleFileChange}
                                 />
                                 {errors.files && <div className="text-red-500 text-xs mt-1">{errors.files}</div>}
@@ -471,14 +471,14 @@ const CreateDocument = ({ auth, departments }: Props) => {
                             {/* File Previews */}
                             {filePreviews.length > 0 && (
                                 <div className="mt-6">
-                                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
                                         <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                                         File Previews
                                     </h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                                         {filePreviews.map((preview, index) => (
                                             preview && (
-                                                <div key={index} className="relative group rounded-xl overflow-hidden shadow-lg border border-gray-200 bg-white hover:shadow-xl transition-all duration-200">
+                                                <div key={index} className="relative group rounded-xl overflow-hidden shadow-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:shadow-xl transition-all duration-200">
                                                     <img
                                                         src={preview}
                                                         alt={`Preview ${index + 1}`}
@@ -497,13 +497,13 @@ const CreateDocument = ({ auth, departments }: Props) => {
                     </div>
 
                     {/* Actions Section */}
-                    <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200 dark:border-gray-700">
                         <div className="p-8">
                             <div className="flex items-center gap-3 mb-8">
                                 <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                                     <FileCheck className="w-5 h-5 text-white" />
                                 </div>
-                                <h2 className="text-2xl font-bold text-gray-900">Submit Document</h2>
+                                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Submit Document</h2>
                             </div>
 
                             <div className="flex flex-col sm:flex-row justify-end gap-4">
@@ -511,7 +511,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                     type="button"
                                     onClick={() => window.history.back()}
                                     disabled={isSubmitting || processing}
-                                    className="px-6 py-3 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     Cancel
                                 </button>

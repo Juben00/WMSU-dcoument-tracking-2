@@ -219,67 +219,67 @@ const ForwardModal: React.FC<ForwardModalProps> = ({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto dark:bg-gray-900 dark:border-gray-700">
                 <DialogHeader>
-                    <DialogTitle>Forward Document</DialogTitle>
+                    <DialogTitle className="dark:text-gray-100">Forward Document</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
-                        <Label>Select Recipient</Label>
+                        <Label className="dark:text-gray-200">Select Recipient</Label>
                         <Select
                             value={selectedUser}
                             onValueChange={setSelectedUser}
                         >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a recipient" />
+                            <SelectTrigger className="dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100">
+                                <SelectValue placeholder="Select a recipient" className="dark:text-gray-400" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="dark:bg-gray-800 dark:border-gray-600">
                                 {users.length > 0 ? users.map((user) => (
-                                    <SelectItem key={user.id} value={user.id.toString()}>
+                                    <SelectItem key={user.id} value={user.id.toString()} className="dark:text-gray-100 dark:hover:bg-gray-700">
                                         {user.first_name} {user.last_name} | {user.department?.name || 'No Department'} | {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                                     </SelectItem>
-                                )) : <SelectItem value="no-users">No users found</SelectItem>}
+                                )) : <SelectItem value="no-users" className="dark:text-gray-100 dark:hover:bg-gray-700">No users found</SelectItem>}
                             </SelectContent>
                         </Select>
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Comments (Optional)</Label>
+                        <Label className="dark:text-gray-200">Comments (Optional)</Label>
                         <Textarea
                             value={comments}
                             onChange={(e) => setComments(e.target.value)}
                             placeholder="Add any comments about forwarding this document..."
-                            className="min-h-[100px]"
+                            className="min-h-[100px] dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400"
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Response Attachments (Optional)</Label>
-                        <p className="text-sm text-gray-500 mb-2">These files will be added as response attachments to the document.</p>
+                        <Label className="dark:text-gray-200">Response Attachments (Optional)</Label>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">These files will be added as response attachments to the document.</p>
                         <Input
                             type="file"
                             multiple
                             accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.gif"
                             onChange={handleFileChange}
-                            className="cursor-pointer"
+                            className="cursor-pointer dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 file:dark:bg-gray-700 file:dark:text-gray-100 file:dark:border-gray-600"
                         />
 
                         {files.length > 0 && (
                             <div className="mt-4 space-y-3">
-                                <h4 className="text-sm font-medium text-gray-700">Selected Files:</h4>
+                                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Selected Files:</h4>
                                 {files.map((fileWithPreview) => (
-                                    <div key={fileWithPreview.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                                    <div key={fileWithPreview.id} className="flex items-start space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600">
                                         <div className="flex-shrink-0">
                                             {isImageFile(fileWithPreview.file) ? (
                                                 <ImageIcon className="h-8 w-8 text-blue-500" />
                                             ) : (
-                                                <FileText className="h-8 w-8 text-gray-500" />
+                                                <FileText className="h-8 w-8 text-gray-500 dark:text-gray-400" />
                                             )}
                                         </div>
 
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center justify-between">
-                                                <p className="text-sm font-medium text-gray-900 truncate">
+                                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                                                     {fileWithPreview.file.name}
                                                 </p>
                                                 <Button
@@ -287,12 +287,12 @@ const ForwardModal: React.FC<ForwardModalProps> = ({
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => removeFile(fileWithPreview.id)}
-                                                    className="ml-2 h-6 w-6 p-0"
+                                                    className="ml-2 h-6 w-6 p-0 dark:text-gray-400 dark:hover:text-gray-200"
                                                 >
                                                     <X className="h-4 w-4" />
                                                 </Button>
                                             </div>
-                                            <p className="text-xs text-gray-500">
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">
                                                 {formatFileSize(fileWithPreview.file.size)}
                                             </p>
 
@@ -302,7 +302,7 @@ const ForwardModal: React.FC<ForwardModalProps> = ({
                                                     <img
                                                         src={fileWithPreview.preview}
                                                         alt={fileWithPreview.file.name}
-                                                        className="max-w-full h-32 object-cover rounded border"
+                                                        className="max-w-full h-32 object-cover rounded border border-gray-200 dark:border-gray-600"
                                                     />
                                                 </div>
                                             )}
@@ -319,12 +319,14 @@ const ForwardModal: React.FC<ForwardModalProps> = ({
                             variant="outline"
                             onClick={onClose}
                             disabled={processing || isSubmitting}
+                            className="dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
                         >
                             Cancel
                         </Button>
                         <Button
                             type="submit"
                             disabled={!selectedUser || processing || isSubmitting}
+                            className="dark:bg-blue-600 dark:hover:bg-blue-700"
                         >
                             {processing || isSubmitting ? 'Forwarding...' : 'Forward'}
                         </Button>

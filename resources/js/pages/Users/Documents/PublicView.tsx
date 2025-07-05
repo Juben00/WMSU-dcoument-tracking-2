@@ -54,17 +54,17 @@ const PublicView: React.FC<Props> = ({ document }) => {
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'approved':
-                return 'bg-green-100 text-green-800';
+                return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
             case 'pending':
-                return 'bg-yellow-100 text-yellow-800';
+                return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
             case 'rejected':
-                return 'bg-red-100 text-red-800';
+                return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
             case 'returned':
-                return 'bg-orange-100 text-orange-800';
+                return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
             case 'in_review':
-                return 'bg-blue-100 text-blue-800';
+                return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
             default:
-                return 'bg-gray-100 text-gray-800';
+                return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
         }
     };
 
@@ -84,24 +84,24 @@ const PublicView: React.FC<Props> = ({ document }) => {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
             <div className="mb-8 flex items-center gap-3">
                 <FileText className="w-7 h-7 text-red-600" />
-                <h1 className="text-3xl font-bold text-gray-800">Public Document Details</h1>
+                <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Public Document Details</h1>
             </div>
 
             {/* Document Information Card */}
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-100">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-100 dark:border-gray-700">
                 <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
                         <div className="flex items-center gap-2 mb-4">
-                            <FileCheck className="w-5 h-5 text-gray-500" />
-                            <h2 className="text-xl font-semibold text-gray-900">Document Information</h2>
+                            <FileCheck className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Document Information</h2>
                         </div>
                         <dl className="space-y-5">
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Subject</dt>
-                                <dd className="mt-1 text-base text-gray-900 font-semibold">{document.subject}</dd>
+                                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Subject</dt>
+                                <dd className="mt-1 text-base text-gray-900 dark:text-gray-100 font-semibold">{document.subject}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Status</dt>
+                                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Status</dt>
                                 <dd className="mt-1">
                                     <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(document.status)}`}>
                                         {document.status.charAt(0).toUpperCase() + document.status.slice(1)}
@@ -109,17 +109,17 @@ const PublicView: React.FC<Props> = ({ document }) => {
                                 </dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Created By</dt>
-                                <dd className="mt-1 text-base text-gray-900">{document.owner.first_name} {document.owner.last_name}</dd>
+                                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Created By</dt>
+                                <dd className="mt-1 text-base text-gray-900 dark:text-gray-100">{document.owner.first_name} {document.owner.last_name}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Date Created</dt>
-                                <dd className="mt-1 text-base text-gray-900">{new Date(document.created_at).toLocaleDateString()}</dd>
+                                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Date Created</dt>
+                                <dd className="mt-1 text-base text-gray-900 dark:text-gray-100">{new Date(document.created_at).toLocaleDateString()}</dd>
                             </div>
                             {document.description && (
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Description</dt>
-                                    <dd className="mt-1 text-base text-gray-900">{document.description}</dd>
+                                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Description</dt>
+                                    <dd className="mt-1 text-base text-gray-900 dark:text-gray-100">{document.description}</dd>
                                 </div>
                             )}
                         </dl>
@@ -127,42 +127,42 @@ const PublicView: React.FC<Props> = ({ document }) => {
 
                     {/* QR Code Section */}
                     {document.barcode_path && (
-                        <div className="flex flex-col items-center justify-center bg-gray-50 rounded-xl p-6 border border-dashed border-gray-200">
+                        <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-xl p-6 border border-dashed border-gray-200 dark:border-gray-600">
                             <div className="flex items-center gap-2 mb-2">
-                                <BarChart3 className="w-5 h-5 text-gray-500" />
-                                <h2 className="text-lg font-semibold text-gray-900">Scan to View</h2>
+                                <BarChart3 className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Scan to View</h2>
                             </div>
                             <img src={`/storage/${document.barcode_path}`} alt="Barcode" className="w-64 h-32 mb-3" />
                             <div className="text-center">
-                                <p className="text-xs text-gray-500 mb-1">Barcode Value:</p>
-                                <p className="text-sm font-mono text-gray-700 bg-white px-3 py-1 rounded border">
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Barcode Value:</p>
+                                <p className="text-sm font-mono text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 px-3 py-1 rounded border dark:border-gray-600">
                                     {document.barcode_value || document.public_token}
                                 </p>
                             </div>
-                            <span className="text-xs text-gray-500 mt-2">Scan this barcode to access the document online.</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400 mt-2">Scan this barcode to access the document online.</span>
                         </div>
                     )}
                 </div>
             </div>
 
             {/* Files Section */}
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-100">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-100 dark:border-gray-700">
                 <div className="p-8">
                     <div className="flex items-center gap-2 mb-6">
-                        <FileText className="w-5 h-5 text-gray-500" />
-                        <h2 className="text-xl font-semibold text-gray-900">Files</h2>
+                        <FileText className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Files</h2>
                     </div>
                     <div className="space-y-8">
                         {/* Original Files Section */}
                         <div>
-                            <h3 className="text-lg font-semibold text-gray-800 mb-4">Original Files</h3>
+                            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Original Files</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                                 {originalFiles.length === 0 && (
-                                    <div className="col-span-full text-center text-gray-400">No original files uploaded.</div>
+                                    <div className="col-span-full text-center text-gray-400 dark:text-gray-500">No original files uploaded.</div>
                                 )}
                                 {originalFiles.map((file) => (
-                                    <div key={file.id} className="bg-gray-50 rounded-xl shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col items-center border border-gray-200">
-                                        <div className="w-full h-40 flex items-center justify-center bg-white rounded-lg mb-3 overflow-hidden border border-gray-100">
+                                    <div key={file.id} className="bg-gray-50 dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col items-center border border-gray-200 dark:border-gray-600">
+                                        <div className="w-full h-40 flex items-center justify-center bg-white dark:bg-gray-700 rounded-lg mb-3 overflow-hidden border border-gray-100 dark:border-gray-600">
                                             {file.original_filename.match(/\.(jpg|jpeg|png|gif)$/i) ? (
                                                 <img
                                                     src={file.file_path ? `/storage/${file.file_path}` : '#'}
@@ -176,15 +176,15 @@ const PublicView: React.FC<Props> = ({ document }) => {
                                                     className="w-full h-full"
                                                 />
                                             ) : (
-                                                <div className="flex flex-col items-center justify-center text-gray-300">
+                                                <div className="flex flex-col items-center justify-center text-gray-300 dark:text-gray-500">
                                                     <FileText className="h-12 w-12 mb-2" />
                                                     <span className="text-xs">No Preview</span>
                                                 </div>
                                             )}
                                         </div>
                                         <div className="w-full text-center">
-                                            <p className="text-sm font-medium text-gray-900 truncate" title={file.original_filename}>{file.original_filename}</p>
-                                            <p className="text-xs text-gray-500 mb-2">{formatFileSize(file.file_size)}</p>
+                                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate" title={file.original_filename}>{file.original_filename}</p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{formatFileSize(file.file_size)}</p>
                                             <a
                                                 href={file.file_path ? `/storage/${file.file_path}` : '#'}
                                                 download={file.original_filename}
@@ -202,11 +202,11 @@ const PublicView: React.FC<Props> = ({ document }) => {
                         {/* Response Files Section */}
                         {responseFiles.length > 0 && (
                             <div>
-                                <h3 className="text-lg font-semibold text-blue-800 mb-4">Response Files</h3>
+                                <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-300 mb-4">Response Files</h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                                     {responseFiles.map((file) => (
-                                        <div key={file.id} className="bg-blue-50 rounded-xl shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col items-center border border-blue-200">
-                                            <div className="w-full h-40 flex items-center justify-center bg-white rounded-lg mb-3 overflow-hidden border border-blue-100">
+                                        <div key={file.id} className="bg-blue-50 dark:bg-blue-900/20 rounded-xl shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col items-center border border-blue-200 dark:border-blue-700">
+                                            <div className="w-full h-40 flex items-center justify-center bg-white dark:bg-gray-700 rounded-lg mb-3 overflow-hidden border border-blue-100 dark:border-blue-600">
                                                 {file.original_filename.match(/\.(jpg|jpeg|png|gif)$/i) ? (
                                                     <img
                                                         src={file.file_path ? `/storage/${file.file_path}` : '#'}
@@ -220,15 +220,15 @@ const PublicView: React.FC<Props> = ({ document }) => {
                                                         className="w-full h-full"
                                                     />
                                                 ) : (
-                                                    <div className="flex flex-col items-center justify-center text-blue-300">
+                                                    <div className="flex flex-col items-center justify-center text-blue-300 dark:text-blue-400">
                                                         <FileText className="h-12 w-12 mb-2" />
                                                         <span className="text-xs">No Preview</span>
                                                     </div>
                                                 )}
                                             </div>
                                             <div className="w-full text-center">
-                                                <p className="text-sm font-medium text-gray-900 truncate" title={file.original_filename}>{file.original_filename}</p>
-                                                <p className="text-xs text-gray-500 mb-2">{formatFileSize(file.file_size)}</p>
+                                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate" title={file.original_filename}>{file.original_filename}</p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{formatFileSize(file.file_size)}</p>
                                                 <a
                                                     href={file.file_path ? `/storage/${file.file_path}` : '#'}
                                                     download={file.original_filename}
@@ -249,23 +249,23 @@ const PublicView: React.FC<Props> = ({ document }) => {
 
             {/* Approval Chain Timeline */}
             {document.recipients.length > 0 && (
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-100">
+                <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-100 dark:border-gray-700">
                     <div className="p-8">
                         <div className="flex items-center gap-2 mb-6">
-                            <Users className="w-5 h-5 text-gray-500" />
-                            <h2 className="text-xl font-semibold text-gray-900">Approval Chain</h2>
+                            <Users className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Approval Chain</h2>
                         </div>
                         <div className="relative ml-4">
-                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gray-200 rounded-full" style={{ zIndex: 0 }}></div>
+                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gray-200 dark:bg-gray-600 rounded-full" style={{ zIndex: 0 }}></div>
                             <div className="space-y-8">
                                 {document.recipients.map((recipient, idx) => (
                                     <div key={recipient.id} className="relative flex items-start gap-4">
                                         <div className="z-10">
-                                            <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${getStatusColor(recipient.status)} bg-white`}></div>
+                                            <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${getStatusColor(recipient.status)} bg-white dark:bg-gray-800`}></div>
                                         </div>
-                                        <div className="flex-1 bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                        <div className="flex-1 bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
                                             <div className="flex items-center justify-between">
-                                                <p className="text-base font-medium text-gray-900">
+                                                <p className="text-base font-medium text-gray-900 dark:text-gray-100">
                                                     {recipient.user.first_name} {recipient.user.last_name} | {recipient.user.department?.name || 'No Department'} | {recipient.user.role.charAt(0).toUpperCase() + recipient.user.role.slice(1)}
                                                 </p>
                                                 <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(recipient.status)}`}>
@@ -273,10 +273,10 @@ const PublicView: React.FC<Props> = ({ document }) => {
                                                 </span>
                                             </div>
                                             {recipient.comments && (
-                                                <p className="text-sm text-gray-500 mt-2">{recipient.comments}</p>
+                                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{recipient.comments}</p>
                                             )}
                                             {recipient.responded_at && (
-                                                <div className="text-xs text-gray-400 mt-2">
+                                                <div className="text-xs text-gray-400 dark:text-gray-500 mt-2">
                                                     Responded: {new Date(recipient.responded_at).toLocaleDateString()}
                                                 </div>
                                             )}

@@ -185,47 +185,47 @@ const ApproveModal: React.FC<ApproveModalProps> = ({ isOpen, onClose, documentId
         >
             <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
             <div className="fixed inset-0 flex items-center justify-center p-4">
-                <Dialog.Panel className="mx-auto max-w-md rounded bg-white p-6 max-h-[90vh] overflow-y-auto">
-                    <Dialog.Title className="text-lg font-medium mb-4">Document Approval Form</Dialog.Title>
+                <Dialog.Panel className="mx-auto max-w-md rounded bg-white dark:bg-gray-900 p-6 max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700">
+                    <Dialog.Title className="text-lg font-medium mb-4 text-gray-900 dark:text-gray-100">Document Approval Form</Dialog.Title>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <Label>Comments</Label>
+                            <Label className="dark:text-gray-200">Comments</Label>
                             <Textarea
                                 value={comments}
                                 onChange={(e) => setComments(e.target.value)}
-                                className="mt-1"
+                                className="mt-1 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400"
                                 rows={3}
                                 placeholder="Please provide a comment..."
                             />
                         </div>
 
                         <div>
-                            <Label>Response Attachments (Optional)</Label>
-                            <p className="text-sm text-gray-500 mb-2">These files will be added as response attachments to the document.</p>
+                            <Label className="dark:text-gray-200">Response Attachments (Optional)</Label>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">These files will be added as response attachments to the document.</p>
                             <Input
                                 type="file"
                                 multiple
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.gif"
                                 onChange={handleFileChange}
-                                className="cursor-pointer"
+                                className="cursor-pointer dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 file:dark:bg-gray-700 file:dark:text-gray-100 file:dark:border-gray-600"
                             />
 
                             {files.length > 0 && (
                                 <div className="mt-4 space-y-3">
-                                    <h4 className="text-sm font-medium text-gray-700">Selected Files:</h4>
+                                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Selected Files:</h4>
                                     {files.map((fileWithPreview) => (
-                                        <div key={fileWithPreview.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                                        <div key={fileWithPreview.id} className="flex items-start space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600">
                                             <div className="flex-shrink-0">
                                                 {isImageFile(fileWithPreview.file) ? (
                                                     <ImageIcon className="h-8 w-8 text-blue-500" />
                                                 ) : (
-                                                    <FileText className="h-8 w-8 text-gray-500" />
+                                                    <FileText className="h-8 w-8 text-gray-500 dark:text-gray-400" />
                                                 )}
                                             </div>
 
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center justify-between">
-                                                    <p className="text-sm font-medium text-gray-900 truncate">
+                                                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                                                         {fileWithPreview.file.name}
                                                     </p>
                                                     <Button
@@ -233,12 +233,12 @@ const ApproveModal: React.FC<ApproveModalProps> = ({ isOpen, onClose, documentId
                                                         variant="ghost"
                                                         size="sm"
                                                         onClick={() => removeFile(fileWithPreview.id)}
-                                                        className="ml-2 h-6 w-6 p-0"
+                                                        className="ml-2 h-6 w-6 p-0 dark:text-gray-400 dark:hover:text-gray-200"
                                                     >
                                                         <X className="h-4 w-4" />
                                                     </Button>
                                                 </div>
-                                                <p className="text-xs text-gray-500">
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">
                                                     {formatFileSize(fileWithPreview.file.size)}
                                                 </p>
 
@@ -248,7 +248,7 @@ const ApproveModal: React.FC<ApproveModalProps> = ({ isOpen, onClose, documentId
                                                         <img
                                                             src={fileWithPreview.preview}
                                                             alt={fileWithPreview.file.name}
-                                                            className="max-w-full h-32 object-cover rounded border"
+                                                            className="max-w-full h-32 object-cover rounded border border-gray-200 dark:border-gray-600"
                                                         />
                                                     </div>
                                                 )}
@@ -274,13 +274,14 @@ const ApproveModal: React.FC<ApproveModalProps> = ({ isOpen, onClose, documentId
                                     });
                                     setFiles([]);
                                 }}
+                                className="dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
                             >
                                 Cancel
                             </Button>
                             <Button
                                 type="submit"
                                 disabled={processing}
-                                className="bg-green-600 hover:bg-green-700"
+                                className="bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
                             >
                                 {processing ? 'Processing...' : 'Approve'}
                             </Button>
