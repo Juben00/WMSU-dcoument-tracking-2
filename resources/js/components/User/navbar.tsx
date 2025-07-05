@@ -2,15 +2,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import WmsuLogo from '../WmsuLogo';
-import { NavMain } from '../nav-main';
 import { usePage } from '@inertiajs/react';
 import { PageProps as InertiaPageProps } from '@inertiajs/core';
-import { FileText, Users, User, LogOut, Building, Bell, XCircle, Inbox, LayoutGrid } from 'lucide-react';
+import { FileText, Users, User, LogOut, Building, Bell, XCircle, Inbox, LayoutGrid, Menu, ChevronDown } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from "../ui/tooltip";
 import AppearanceToggleDropdown from '../appearance-dropdown';
 
 interface AuthUser {
     role?: string;
+    name?: string;
+    email?: string;
 }
 
 interface NavItem {
@@ -34,8 +35,10 @@ interface NavbarProps {
 const Navbar = ({ notifications = [] }: NavbarProps) => {
     const [menuOpen, setMenuOpen] = useState(false);
     const [notifOpen, setNotifOpen] = useState(false);
+    const [profileOpen, setProfileOpen] = useState(false);
     const notifRef = useRef<HTMLDivElement>(null);
     const menuRef = useRef<HTMLDivElement>(null);
+    const profileRef = useRef<HTMLDivElement>(null);
 
     const page = usePage<PageProps>();
     const { auth } = page.props;
@@ -49,232 +52,191 @@ const Navbar = ({ notifications = [] }: NavbarProps) => {
     const handleMarkAllAsRead = () => {
         router.post(route('notifications.readAll'), {}, {
             onSuccess: () => {
-                // refresh the entire page
                 window.location.reload();
             }
         });
     };
 
-    // Close notification dropdown on outside click
+    // Close dropdowns on outside click
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
                 setNotifOpen(false);
             }
-        }
-        if (notifOpen) {
-            document.addEventListener('mousedown', handleClickOutside);
-        } else {
-            document.removeEventListener('mousedown', handleClickOutside);
-        }
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [notifOpen]);
-
-    // For closing mobile menu on outside click
-    useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
+            if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+                setProfileOpen(false);
+            }
             if (menuOpen && menuRef.current && !menuRef.current.contains(event.target as Node)) {
                 setMenuOpen(false);
             }
         }
-        if (menuOpen) {
-            document.addEventListener('mousedown', handleClickOutside);
-        } else {
-            document.removeEventListener('mousedown', handleClickOutside);
-        }
+        
+        document.addEventListener('mousedown', handleClickOutside);
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [menuOpen]);
+    }, [notifOpen, profileOpen, menuOpen]);
 
     const NavItems: NavItem[] = [
         {
             label: 'Dashboard',
             href: '/dashboard',
-            icon: <LayoutGrid className="w-4 h-4" />,
+            icon: <LayoutGrid className="w-5 h-5" />,
         },
         {
             label: 'Documents',
             href: '/documents',
-            icon: <FileText className="w-4 h-4" />,
-        },
-        {
-            label: 'Profile',
-            href: '/profile',
-            icon: <User className="w-4 h-4" />,
-        },
-        {
-            label: 'Logout',
-            href: route('logout'),
-            method: 'post',
-            icon: <LogOut className="w-4 h-4" />,
+            icon: <FileText className="w-5 h-5" />,
         },
     ];
 
     const AdminNavItems: NavItem[] = [
         {
+            label: 'Dashboard',
+            href: '/dashboard',
+            icon: <LayoutGrid className="w-5 h-5" />,
+        },
+        {
             label: 'Departments',
             href: '/departments',
-            icon: <Building className="w-4 h-4" />,
+            icon: <Building className="w-5 h-5" />,
         },
-        ...NavItems,
+        {
+            label: 'Documents',
+            href: '/documents',
+            icon: <FileText className="w-5 h-5" />,
+        },
     ];
 
     const currentNavItems = role === 'admin' ? AdminNavItems : NavItems;
 
+    const getInitials = (name: string) => {
+        return name
+            .split(' ')
+            .map(word => word.charAt(0))
+            .join('')
+            .toUpperCase()
+            .slice(0, 2);
+    };
+
     return (
-        <nav className="bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 shadow-md border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+        <nav className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-lg border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center h-20 w-full">
+                <div className="flex items-center justify-between h-16">
                     {/* Left: Logo and Title */}
                     <div className="flex items-center flex-shrink-0">
                         <Link
                             href="/dashboard"
-                            className="flex items-center gap-4 hover:opacity-80 transition-all duration-200 group"
+                            className="flex items-center gap-3 hover:opacity-90 transition-all duration-200 group"
                         >
-                            <div className="rounded-xl p-2 transition-all duration-200">
-                                <WmsuLogo className="h-12 w-12 text-white" />
+                            <div className="rounded-lg p-2">
+                                <WmsuLogo className="h-8 w-8 text-red-600 dark:text-red-400" />
                             </div>
                             <div className="flex flex-col">
-                                <span className="font-bold text-xl tracking-wide text-gray-900 dark:text-gray-100">WMSU DMTS</span>
-                                <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">Document Management</span>
+                                <span className="font-bold text-lg tracking-wide text-gray-900 dark:text-white">WMSU DMTS</span>
+                                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Document Management</span>
                             </div>
                         </Link>
                     </div>
-                    {/* Center: Theme Toggle */}
-                    <div className="flex-1 flex justify-center">
+
+                    {/* Center: Navigation Items (Desktop) */}
+                    <div className="hidden md:flex items-center space-x-1">
+                        {currentNavItems.map((item) => {
+                            const isActive = currentUrl === item.href || (currentUrl.startsWith(item.href) && item.href !== '/');
+                            return (
+                                <Link
+                                    key={item.label}
+                                    href={item.href}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                                        isActive
+                                            ? 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20'
+                                            : 'text-gray-700 hover:text-red-600 hover:bg-red-50 dark:text-gray-300 dark:hover:text-red-400 dark:hover:bg-red-900/20'
+                                    }`}
+                                >
+                                    {item.icon}
+                                    <span>{item.label}</span>
+                                </Link>
+                            );
+                        })}
+                    </div>
+
+                    {/* Right: Actions */}
+                    <div className="flex items-center gap-2">
+                        {/* Theme Toggle */}
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <div className="flex items-center justify-center w-12 h-12 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 shadow-sm border border-gray-200 bg-white hover:bg-red-50 active:scale-95 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-red-900/20 hover:shadow-md">
-                                    <AppearanceToggleDropdown className="w-full h-full flex items-center justify-center" />
+                                <div className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                                    <AppearanceToggleDropdown />
                                 </div>
                             </TooltipTrigger>
                             <TooltipContent>Toggle theme</TooltipContent>
                         </Tooltip>
-                    </div>
-                    {/* Right: Main Nav Items */}
-                    <div className="hidden md:flex items-center gap-2 flex-shrink-0">
-                        {/* Dashboard */}
-                        {currentNavItems.filter(item => item.label === 'Dashboard').map((item) => {
-                            const isActive = currentUrl === item.href || (item.href !== route('logout') && currentUrl.startsWith(item.href));
-                            return (
-                                <Tooltip key={item.label}>
-                                    <TooltipTrigger asChild>
-                                        <Link
-                                            href={item.href}
-                                            {...(item.method ? { method: item.method as any } : {})}
-                                            aria-label={item.label}
-                                            className={`flex items-center justify-center w-11 h-11 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 shadow-sm border ${isActive
-                                                ? 'text-red-700 bg-red-50 border-red-200 ring-2 ring-red-500 dark:text-red-400 dark:bg-red-900/20 dark:border-red-700'
-                                                : 'text-gray-700 bg-white border-gray-200 hover:text-red-700 hover:bg-red-50 hover:border-red-300 active:scale-95 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:hover:text-red-400 dark:hover:bg-red-900/20 dark:hover:border-red-600'
-                                                }`}
-                                        >
-                                            {item.icon}
-                                        </Link>
-                                    </TooltipTrigger>
-                                    <TooltipContent>{item.label}</TooltipContent>
-                                </Tooltip>
-                            );
-                        })}
-                        {/* Department */}
-                        {currentNavItems.filter(item => item.label === 'Departments').map((item) => {
-                            const isActive = currentUrl === item.href || (item.href !== route('logout') && currentUrl.startsWith(item.href));
-                            return (
-                                <Tooltip key={item.label}>
-                                    <TooltipTrigger asChild>
-                                        <Link
-                                            href={item.href}
-                                            {...(item.method ? { method: item.method as any } : {})}
-                                            aria-label={item.label}
-                                            className={`flex items-center justify-center w-11 h-11 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 shadow-sm border ${isActive
-                                                ? 'text-red-700 bg-red-50 border-red-200 ring-2 ring-red-500 dark:text-red-400 dark:bg-red-900/20 dark:border-red-700'
-                                                : 'text-gray-700 bg-white border-gray-200 hover:text-red-700 hover:bg-red-50 hover:border-red-300 active:scale-95 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:hover:text-red-400 dark:hover:bg-red-900/20 dark:hover:border-red-600'
-                                                }`}
-                                        >
-                                            {item.icon}
-                                        </Link>
-                                    </TooltipTrigger>
-                                    <TooltipContent>{item.label}</TooltipContent>
-                                </Tooltip>
-                            );
-                        })}
-                        {/* Documents */}
-                        {currentNavItems.filter(item => item.label === 'Documents').map((item) => {
-                            const isActive = currentUrl === item.href || (item.href !== route('logout') && currentUrl.startsWith(item.href));
-                            return (
-                                <Tooltip key={item.label}>
-                                    <TooltipTrigger asChild>
-                                        <Link
-                                            href={item.href}
-                                            {...(item.method ? { method: item.method as any } : {})}
-                                            aria-label={item.label}
-                                            className={`flex items-center justify-center w-11 h-11 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 shadow-sm border ${isActive
-                                                ? 'text-red-700 bg-red-50 border-red-200 ring-2 ring-red-500 dark:text-red-400 dark:bg-red-900/20 dark:border-red-700'
-                                                : 'text-gray-700 bg-white border-gray-200 hover:text-red-700 hover:bg-red-50 hover:border-red-300 active:scale-95 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:hover:text-red-400 dark:hover:bg-red-900/20 dark:hover:border-red-600'
-                                                }`}
-                                        >
-                                            {item.icon}
-                                        </Link>
-                                    </TooltipTrigger>
-                                    <TooltipContent>{item.label}</TooltipContent>
-                                </Tooltip>
-                            );
-                        })}
-                        {/* Notification Bell */}
+
+                        {/* Notifications */}
                         <div className="relative" ref={notifRef}>
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <button
-                                        className={`relative flex items-center justify-center w-11 h-11 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 shadow-sm border border-gray-200 bg-white hover:bg-red-50 active:scale-95 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-red-900/20 ${notifOpen ? 'ring-2 ring-red-500' : ''}`}
-                                        onClick={() => setNotifOpen((open) => !open)}
+                                        className={`relative p-2 rounded-lg transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 ${
+                                            notifOpen ? 'bg-gray-100 dark:bg-gray-800' : ''
+                                        }`}
+                                        onClick={() => setNotifOpen(!notifOpen)}
                                         aria-label="Notifications"
                                     >
-                                        <Bell className={`w-4 h-4 ${unreadCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'} transition-colors`} />
+                                        <Bell className={`w-5 h-5 ${unreadCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}`} />
                                         {unreadCount > 0 && (
-                                            <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full px-1.5 py-0.5 shadow-md border-2 border-white dark:border-gray-800 font-bold">
-                                                {unreadCount}
+                                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                                                {unreadCount > 9 ? '9+' : unreadCount}
                                             </span>
                                         )}
                                     </button>
                                 </TooltipTrigger>
                                 <TooltipContent>Notifications</TooltipContent>
                             </Tooltip>
-                            {/* Dropdown */}
+
+                            {/* Notifications Dropdown */}
                             {notifOpen && (
-                                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 animate-fade-in">
-                                    <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-                                        <span className="font-semibold text-gray-800 dark:text-gray-200">Notifications</span>
+                                <div className="absolute right-0 mt-2 w-96 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-50 animate-in slide-in-from-top-2 duration-200">
+                                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                                        <h3 className="font-semibold text-gray-900 dark:text-white">Notifications</h3>
                                         {notifications.length > 0 && (
                                             <button
                                                 onClick={handleMarkAllAsRead}
-                                                className="text-xs text-red-600 dark:text-red-400 hover:underline font-semibold px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                                                className="text-xs text-red-600 dark:text-red-400 hover:underline font-medium px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
                                             >
                                                 Mark all as read
                                             </button>
                                         )}
                                     </div>
-                                    <div className="max-h-80 overflow-y-auto divide-y divide-gray-200 dark:divide-gray-700">
+                                    <div className="max-h-80 overflow-y-auto">
                                         {notifications.length === 0 ? (
-                                            <div className="flex flex-col items-center justify-center p-6 text-gray-500 dark:text-gray-400 text-center gap-2">
-                                                <Inbox className="w-10 h-10 text-gray-300 dark:text-gray-600 mb-2" />
-                                                <span>No new notifications</span>
+                                            <div className="flex flex-col items-center justify-center p-8 text-gray-500 dark:text-gray-400">
+                                                <Inbox className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" />
+                                                <p className="text-sm">No new notifications</p>
                                             </div>
                                         ) : (
-                                            notifications.map((notif: any) => (
-                                                <div key={notif.id} className={`p-4 transition-all flex items-center gap-3 cursor-pointer rounded ${notif.read_at ? 'bg-gray-50 dark:bg-gray-700' : 'hover:bg-red-100 dark:hover:bg-red-900/20'}`}>
-                                                    {/* Icon */}
-                                                    <div className="flex-shrink-0 flex items-center justify-center w-11 h-11 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 shadow-sm border text-red-500 bg-red-50 dark:bg-red-900/20 dark:border-red-700">
-                                                        <Bell className="w-5 h-5" />
-                                                    </div>
-                                                    {/* Content */}
-                                                    <div className="flex-1 flex flex-col gap-1 min-w-0">
-                                                        <div className="text-sm text-gray-800 dark:text-gray-200 font-medium break-words">{notif.data.message}</div>
-                                                        {notif.data.document_name && (
-                                                            <div className="text-xs text-gray-700 dark:text-gray-300 font-semibold truncate">Document: {notif.data.document_name}</div>
+                                            notifications.map((notif: any, index) => (
+                                                <div key={notif.id} className={`p-4 border-b border-gray-100 dark:border-gray-700 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${!notif.read_at ? 'bg-red-50/50 dark:bg-red-900/10' : ''}`}>
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="flex-shrink-0 w-8 h-8 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+                                                            <Bell className="w-4 h-4 text-red-600 dark:text-red-400" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm text-gray-900 dark:text-white font-medium">
+                                                                {notif.data.message}
+                                                            </p>
+                                                            {notif.data.document_name && (
+                                                                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                                                    Document: {notif.data.document_name}
+                                                                </p>
+                                                            )}
+                                                            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                                                                {new Date(notif.created_at).toLocaleDateString()}
+                                                            </p>
+                                                        </div>
+                                                        {!notif.read_at && (
+                                                            <div className="w-2 h-2 bg-red-500 rounded-full flex-shrink-0 mt-2"></div>
                                                         )}
-                                                        <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">{new Date(notif.created_at).toLocaleString()}</div>
                                                     </div>
                                                 </div>
                                             ))
@@ -283,106 +245,121 @@ const Navbar = ({ notifications = [] }: NavbarProps) => {
                                 </div>
                             )}
                         </div>
-                        {/* Profile */}
-                        {currentNavItems.filter(item => item.label === 'Profile').map((item) => {
-                            const isActive = currentUrl === item.href || (item.href !== route('logout') && currentUrl.startsWith(item.href));
-                            return (
-                                <Tooltip key={item.label}>
-                                    <TooltipTrigger asChild>
-                                        <Link
-                                            href={item.href}
-                                            {...(item.method ? { method: item.method as any } : {})}
-                                            aria-label={item.label}
-                                            className={`flex items-center justify-center w-11 h-11 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 shadow-sm border ${isActive
-                                                ? 'text-red-700 bg-red-50 border-red-200 ring-2 ring-red-500 dark:text-red-400 dark:bg-red-900/20 dark:border-red-700'
-                                                : 'text-gray-700 bg-white border-gray-200 hover:text-red-700 hover:bg-red-50 hover:border-red-300 active:scale-95 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:hover:text-red-400 dark:hover:bg-red-900/20 dark:hover:border-red-600'
-                                                }`}
-                                        >
-                                            {item.icon}
-                                        </Link>
-                                    </TooltipTrigger>
-                                    <TooltipContent>{item.label}</TooltipContent>
-                                </Tooltip>
-                            );
-                        })}
-                        {/* Logout */}
-                        {currentNavItems.filter(item => item.label === 'Logout').map((item) => {
-                            return (
-                                <Tooltip key={item.label}>
-                                    <TooltipTrigger asChild>
-                                        <Link
-                                            href={item.href}
-                                            {...(item.method ? { method: item.method as any } : {})}
-                                            aria-label={item.label}
-                                            className={`flex items-center justify-center w-11 h-11 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 shadow-sm border text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 border-red-700 hover:shadow-lg transform hover:scale-105 dark:from-red-500 dark:to-red-600 dark:hover:from-red-600 dark:hover:to-red-700`}
-                                        >
-                                            {item.icon}
-                                        </Link>
-                                    </TooltipTrigger>
-                                    <TooltipContent>{item.label}</TooltipContent>
-                                </Tooltip>
-                            );
-                        })}
-                    </div>
 
-                    {/* Mobile menu button */}
-                    <div className="md:hidden flex items-center">
-                        <button
-                            onClick={() => setMenuOpen(!menuOpen)}
-                            className="p-3 rounded-xl text-gray-600 dark:text-gray-300 hover:text-red-700 dark:hover:text-red-400 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 dark:hover:from-red-900/20 dark:hover:to-red-800/20 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-all duration-200"
-                            aria-expanded={menuOpen}
-                            aria-controls="mobile-menu"
-                            aria-label="Toggle menu"
-                        >
-                            {menuOpen ? (
-                                <XCircle className="h-6 w-6" />
-                            ) : (
-                                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                                </svg>
+                        {/* Profile Dropdown */}
+                        <div className="relative" ref={profileRef}>
+                            <button
+                                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 ${
+                                    profileOpen ? 'bg-gray-100 dark:bg-gray-800' : ''
+                                }`}
+                                onClick={() => setProfileOpen(!profileOpen)}
+                            >
+                                <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                                    {auth?.user?.name ? getInitials(auth.user.name) : 'U'}
+                                </div>
+                                <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {/* Profile Dropdown Menu */}
+                            {profileOpen && (
+                                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-50 animate-in slide-in-from-top-2 duration-200">
+                                    <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold">
+                                                {auth?.user?.name ? getInitials(auth.user.name) : 'U'}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                                    {auth?.user?.name || 'User'}
+                                                </p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                                    {auth?.user?.email || 'user@example.com'}
+                                                </p>
+                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400 mt-1">
+                                                    {role === 'admin' ? 'Administrator' : 'User'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="p-2">
+                                        <Link
+                                            href="/profile"
+                                            className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                        >
+                                            <User className="w-4 h-4" />
+                                            Profile Settings
+                                        </Link>
+                                        <Link
+                                            href={route('logout')}
+                                            method="post"
+                                            className="flex items-center gap-3 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                        >
+                                            <LogOut className="w-4 h-4" />
+                                            Sign out
+                                        </Link>
+                                    </div>
+                                </div>
                             )}
+                        </div>
+
+                        {/* Mobile menu button */}
+                        <button
+                            className="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            onClick={() => setMenuOpen(!menuOpen)}
+                            aria-expanded={menuOpen}
+                        >
+                            {menuOpen ? <XCircle className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                         </button>
                     </div>
                 </div>
             </div>
 
             {/* Mobile Menu */}
-            <div
-                id="mobile-menu"
-                ref={menuRef}
-                className={`md:hidden transition-all duration-300 ease-in-out ${menuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'} overflow-hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 shadow-lg z-40`}
-            >
-                <div className="px-4 py-6 space-y-3">
-                    {/* Navigation Items */}
-                    {currentNavItems.map((item, index) => {
-                        const isActive = currentUrl === item.href || (item.href !== route('logout') && currentUrl.startsWith(item.href));
-                        const isLogout = item.label === 'Logout';
-                        return (
-                            <Tooltip key={index}>
-                                <TooltipTrigger asChild>
-                                    <Link
-                                        href={item.href}
-                                        {...(item.method ? { method: item.method as any } : {})}
-                                        aria-label={item.label}
-                                        className={`flex items-center gap-3 justify-start w-full h-12 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 shadow-sm border px-4 ${isLogout
-                                            ? 'text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 border-red-700 shadow-lg dark:from-red-500 dark:to-red-600 dark:hover:from-red-600 dark:hover:to-red-700'
-                                            : isActive
-                                                ? 'text-red-700 bg-red-50 border-red-200 ring-2 ring-red-500 dark:text-red-400 dark:bg-red-900/20 dark:border-red-700'
-                                                : 'text-gray-700 bg-white border-gray-200 hover:text-red-700 hover:bg-red-50 hover:border-red-300 active:scale-95 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:hover:text-red-400 dark:hover:bg-red-900/20 dark:hover:border-red-600'
-                                            }`}
-                                    >
-                                        {item.icon}
-                                        <span className="text-sm">{item.label}</span>
-                                    </Link>
-                                </TooltipTrigger>
-                                <TooltipContent>{item.label}</TooltipContent>
-                            </Tooltip>
-                        );
-                    })}
+            {menuOpen && (
+                <div
+                    ref={menuRef}
+                    className="md:hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 animate-in slide-in-from-top-2 duration-200"
+                >
+                    <div className="px-4 py-4 space-y-2">
+                        {currentNavItems.map((item) => {
+                            const isActive = currentUrl === item.href || (currentUrl.startsWith(item.href) && item.href !== '/');
+                            return (
+                                <Link
+                                    key={item.label}
+                                    href={item.href}
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                                        isActive
+                                            ? 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20'
+                                            : 'text-gray-700 hover:text-red-600 hover:bg-red-50 dark:text-gray-300 dark:hover:text-red-400 dark:hover:bg-red-900/20'
+                                    }`}
+                                >
+                                    {item.icon}
+                                    <span>{item.label}</span>
+                                </Link>
+                            );
+                        })}
+                        <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
+                            <Link
+                                href="/profile"
+                                className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-700 hover:text-red-600 hover:bg-red-50 dark:text-gray-300 dark:hover:text-red-400 dark:hover:bg-red-900/20 transition-colors"
+                            >
+                                <User className="w-5 h-5" />
+                                Profile Settings
+                            </Link>
+                            <Link
+                                href={route('logout')}
+                                method="post"
+                                className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors"
+                            >
+                                <LogOut className="w-5 h-5" />
+                                Sign out
+                            </Link>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            )}
         </nav>
     );
-}
+};
 
 export default Navbar;
