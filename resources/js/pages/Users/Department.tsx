@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Plus, Pencil, Trash2, Users, Building, UserPlus, User } from 'lucide-react'
 import InputError from '@/components/input-error'
+import Swal from 'sweetalert2'
 import {
     Table,
     TableBody,
@@ -113,16 +114,30 @@ const Offices = ({ auth, users }: Props) => {
     };
 
     const handleDeleteUser = (userId: number) => {
-        if (confirm('Are you sure you want to delete this user?')) {
-            destroy(route('users.destroy', userId), {
-                onSuccess: () => {
-                    // The page will automatically refresh with the updated data
-                },
-                onError: (errors) => {
-                    console.error(errors);
-                }
-            });
-        }
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'You will not be able to recover this user!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                destroy(route('users.destroy', userId), {
+                    onSuccess: () => {
+                        Swal.fire({
+                            title: 'User deleted successfully',
+                            icon: 'success',
+                            timer: 1500
+                        });
+                    },
+                    onError: (errors) => {
+                        console.error(errors);
+                    }
+                });
+            }
+        });
     };
 
     useEffect(() => {

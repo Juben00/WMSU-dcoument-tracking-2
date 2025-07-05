@@ -568,10 +568,11 @@ class UserController extends Controller
             ->get()
             ->map(function($activity) {
                 return [
-                    'document_id' => $activity->document_id,
+                    'order_number' => $activity->document->order_number,
                     'subject' => $activity->document->subject ?? 'Untitled',
                     'status' => $activity->status,
                     'responded_at' => $activity->responded_at,
+                    'created_at' => $activity->document->created_at,
                     'comments' => $activity->comments,
                 ];
             });

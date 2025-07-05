@@ -167,21 +167,16 @@ const Dashboard = () => {
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-3 mb-2">
                                                     <p className="font-semibold text-gray-900 text-lg">
-                                                        Document #{activity.document_id}: {activity.title}
+                                                        Order No. {activity.order_number} : {activity.subject}
                                                     </p>
                                                     <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getStatusColor(activity.status)}`}>
                                                         {activity.status.charAt(0).toUpperCase() + activity.status.slice(1)}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center justify-between">
-                                                    {activity.comments && (
-                                                        <p className="text-sm text-gray-600 italic">
-                                                            "{activity.comments}"
-                                                        </p>
-                                                    )}
                                                     <p className="text-sm text-gray-500 flex items-center gap-2">
                                                         <Clock className="w-4 h-4" />
-                                                        {activity.responded_at ? new Date(activity.responded_at).toLocaleString() : ''}
+                                                        {activity.created_at ? new Date(activity.created_at).toLocaleString() : ''}
                                                     </p>
                                                 </div>
                                             </div>
