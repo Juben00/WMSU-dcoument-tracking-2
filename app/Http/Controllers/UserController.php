@@ -221,9 +221,27 @@ class UserController extends Controller
     {
         try {
 
+        // Get the current user's department
+        $currentUser = Auth::user();
+        $departmentId = $currentUser->department_id;
+        $department = $currentUser->department;
+
+        // Check if this is the President's office (OP)
+        $isPresidentOffice = $department && $department->code === 'OP';
+
+        // Define validation rules based on department type
+        $orderNumberRule = 'required|string|max:255';
+        if ($isPresidentOffice) {
+            // For President's office: unique per department, document_type, and order_number
+            $orderNumberRule .= '|unique:documents,order_number,NULL,id,department_id,' . $departmentId . ',document_type,' . $request->input('document_type');
+        } else {
+            // For other departments: unique per department and order_number
+            $orderNumberRule .= '|unique:documents,order_number,NULL,id,department_id,' . $departmentId;
+        }
+
         $validated = $request->validate([
             'subject' => 'required|string|max:255',
-            'order_number' => 'required|string|max:255|unique:documents,order_number',
+            'order_number' => $orderNumberRule,
             'document_type' => 'required|in:special_order,order,memorandum,for_info',
             'description' => 'nullable|string',
             'files' => 'required|array',
@@ -238,6 +256,7 @@ class UserController extends Controller
         // Create the document
         $document = Document::create([
             'owner_id' => Auth::id(),
+            'department_id' => $departmentId,
             'subject' => $validated['subject'],
             'order_number' => $validated['order_number'],
             'document_type' => $validated['document_type'],
@@ -393,8 +412,22 @@ class UserController extends Controller
             $lastRecipient->save();
         }
 
+        // Check if this is the President's office (OP)
+        $department = $doc->department;
+        $isPresidentOffice = $department && $department->code === 'OP';
+
+        // Define validation rules based on department type
+        $orderNumberRule = 'required|string|max:255';
+        if ($isPresidentOffice) {
+            // For President's office: unique per department, document_type, and order_number
+            $orderNumberRule .= '|unique:documents,order_number,' . $doc->id . ',id,department_id,' . $doc->department_id . ',document_type,' . $doc->document_type;
+        } else {
+            // For other departments: unique per department and order_number
+            $orderNumberRule .= '|unique:documents,order_number,' . $doc->id . ',id,department_id,' . $doc->department_id;
+        }
+
         $validated = $request->validate([
-            'order_number' => 'required|string|max:255|unique:documents,order_number,' . $doc->id,
+            'order_number' => $orderNumberRule,
             'subject' => 'required|string|max:255',
             'description' => 'nullable|string',
             'files' => 'nullable|array',
