@@ -49,7 +49,7 @@ export default function Register() {
             <form className="flex flex-col gap-6" onSubmit={submit}>
                 <div className="grid gap-6">
                     <div className="grid gap-2">
-                        <Label htmlFor="first_name">First Name</Label>
+                        <Label htmlFor="first_name" className="text-gray-700 dark:text-gray-200">First Name</Label>
                         <Input
                             id="first_name"
                             type="text"
@@ -61,12 +61,13 @@ export default function Register() {
                             onChange={(e) => setData('first_name', e.target.value)}
                             disabled={processing}
                             placeholder="First name"
+                            className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                         />
                         <InputError message={errors.first_name} className="mt-2" />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="last_name">Last Name</Label>
+                        <Label htmlFor="last_name" className="text-gray-700 dark:text-gray-200">Last Name</Label>
                         <Input
                             id="last_name"
                             type="text"
@@ -77,12 +78,13 @@ export default function Register() {
                             onChange={(e) => setData('last_name', e.target.value)}
                             disabled={processing}
                             placeholder="Last name"
+                            className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                         />
                         <InputError message={errors.last_name} className="mt-2" />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="middle_name">Middle Name</Label>
+                        <Label htmlFor="middle_name" className="text-gray-700 dark:text-gray-200">Middle Name</Label>
                         <Input
                             id="middle_name"
                             type="text"
@@ -92,12 +94,13 @@ export default function Register() {
                             onChange={(e) => setData('middle_name', e.target.value)}
                             disabled={processing}
                             placeholder="Middle name"
+                            className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                         />
                         <InputError message={errors.middle_name} className="mt-2" />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="suffix">Suffix</Label>
+                        <Label htmlFor="suffix" className="text-gray-700 dark:text-gray-200">Suffix</Label>
                         <Input
                             id="suffix"
                             type="text"
@@ -107,12 +110,13 @@ export default function Register() {
                             onChange={(e) => setData('suffix', e.target.value)}
                             disabled={processing}
                             placeholder="Suffix (e.g. Jr., Sr., III)"
+                            className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                         />
                         <InputError message={errors.suffix} className="mt-2" />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="gender">Gender</Label>
+                        <Label htmlFor="gender" className="text-gray-700 dark:text-gray-200">Gender</Label>
                         <select
                             id="gender"
                             required
@@ -120,7 +124,7 @@ export default function Register() {
                             value={data.gender}
                             onChange={(e) => setData('gender', e.target.value)}
                             disabled={processing}
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50  dark:bg-gray-700  dark:border-gray-600 text-gray-900 dark:text-white"
                         >
                             <option value="">Select gender</option>
                             <option value="Male">Male</option>
@@ -130,7 +134,7 @@ export default function Register() {
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="position">Position</Label>
+                        <Label htmlFor="position" className="text-gray-700 dark:text-gray-200">Position</Label>
                         <Input
                             id="position"
                             type="text"
@@ -140,12 +144,13 @@ export default function Register() {
                             onChange={(e) => setData('position', e.target.value)}
                             disabled={processing}
                             placeholder="Position"
+                            className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                         />
                         <InputError message={errors.position} className="mt-2" />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="department">Department</Label>
+                        <Label htmlFor="department" className="text-gray-700 dark:text-gray-200">Department</Label>
                         <Input
                             id="department"
                             type="text"
@@ -155,12 +160,13 @@ export default function Register() {
                             onChange={(e) => setData('department', e.target.value)}
                             disabled={processing}
                             placeholder="Department"
+                            className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                         />
                         <InputError message={errors.department} className="mt-2" />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="email">Email</Label>
+                        <Label htmlFor="email" className="text-gray-700 dark:text-gray-200">Email</Label>
                         <Input
                             id="email"
                             type="email"
@@ -171,12 +177,13 @@ export default function Register() {
                             onChange={(e) => setData('email', e.target.value)}
                             disabled={processing}
                             placeholder="Email address"
+                            className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                         />
                         <InputError message={errors.email} className="mt-2" />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="password">Password</Label>
+                        <Label htmlFor="password" className="text-gray-700 dark:text-gray-200">Password</Label>
                         <Input
                             id="password"
                             type="password"
@@ -187,12 +194,13 @@ export default function Register() {
                             onChange={(e) => setData('password', e.target.value)}
                             disabled={processing}
                             placeholder="Password"
+                            className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                         />
                         <InputError message={errors.password} className="mt-2" />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="password_confirmation">Confirm Password</Label>
+                        <Label htmlFor="password_confirmation" className="text-gray-700 dark:text-gray-200">Confirm Password</Label>
                         <Input
                             id="password_confirmation"
                             type="password"
@@ -203,6 +211,7 @@ export default function Register() {
                             onChange={(e) => setData('password_confirmation', e.target.value)}
                             disabled={processing}
                             placeholder="Confirm password"
+                            className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                         />
                         <InputError message={errors.password_confirmation} className="mt-2" />
                     </div>
@@ -219,9 +228,9 @@ export default function Register() {
                     )}
                 </Button>
 
-                <div className="text-center text-sm">
+                <div className="text-center text-sm text-gray-600 dark:text-gray-300">
                     Already have an account?{' '}
-                    <TextLink href={route('login')} className="font-medium">
+                    <TextLink href={route('login')} className="font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white">
                         Sign in
                     </TextLink>
                 </div>

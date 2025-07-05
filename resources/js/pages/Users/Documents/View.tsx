@@ -165,8 +165,8 @@ const formatFileSize = (bytes: number) => {
 
 // FileCard component for previewing and downloading files
 const FileCard = ({ file, documentId, color = 'red' }: { file: any, documentId: number, color?: 'red' | 'blue' }) => (
-    <div className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-5 flex flex-col items-center border ${color === 'red' ? 'border-gray-200 hover:border-gray-300' : 'border-blue-200 hover:border-blue-300'}`}>
-        <div className={`w-full h-48 flex items-center justify-center ${color === 'red' ? 'bg-gradient-to-br from-gray-50 to-gray-100' : 'bg-gradient-to-br from-blue-50 to-blue-100'} rounded-lg mb-4 overflow-hidden`}>
+    <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-5 flex flex-col items-center border ${color === 'red' ? 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500' : 'border-blue-200 dark:border-blue-600 hover:border-blue-300 dark:hover:border-blue-500'}`}>
+        <div className={`w-full h-48 flex items-center justify-center ${color === 'red' ? 'bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600' : 'bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20'} rounded-lg mb-4 overflow-hidden`}>
             <a
                 href={file.file_path ? `/storage/${file.file_path}` : '#'}
                 target="_blank"
@@ -187,7 +187,7 @@ const FileCard = ({ file, documentId, color = 'red' }: { file: any, documentId: 
                         className="w-full h-full"
                     />
                 ) : (
-                    <div className={`flex flex-col items-center justify-center ${color === 'red' ? 'text-gray-400' : 'text-blue-400'}`}>
+                    <div className={`flex flex-col items-center justify-center ${color === 'red' ? 'text-gray-400 dark:text-gray-500' : 'text-blue-400 dark:text-blue-500'}`}>
                         <svg className="h-12 w-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                         </svg>
@@ -197,8 +197,8 @@ const FileCard = ({ file, documentId, color = 'red' }: { file: any, documentId: 
             </a>
         </div>
         <div className="w-full text-center">
-            <p className="text-sm font-semibold text-gray-900 truncate mb-1" title={file.original_filename}>{file.original_filename}</p>
-            <p className="text-xs text-gray-500 mb-3 font-medium">{formatFileSize(file.file_size)}</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate mb-1" title={file.original_filename}>{file.original_filename}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 font-medium">{formatFileSize(file.file_size)}</p>
             <a
                 href={route('documents.download', { document: documentId, file: file.id })}
                 download={file.original_filename}
@@ -287,32 +287,32 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'approved':
-                return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+                return 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900 dark:text-emerald-300 dark:border-emerald-700';
             case 'pending':
-                return 'bg-amber-100 text-amber-800 border-amber-200';
+                return 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900 dark:text-amber-300 dark:border-amber-700';
             case 'rejected':
-                return 'bg-red-100 text-red-800 border-red-200';
+                return 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900 dark:text-red-300 dark:border-red-700';
             case 'returned':
-                return 'bg-orange-100 text-orange-800 border-orange-200';
+                return 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900 dark:text-orange-300 dark:border-orange-700';
             case 'in_review':
-                return 'bg-blue-100 text-blue-800 border-blue-200';
+                return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-700';
             default:
-                return 'bg-gray-100 text-gray-800 border-gray-200';
+                return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700';
         }
     };
 
     const getDocumentTypeColor = (documentType: string) => {
         switch (documentType) {
             case 'special_order':
-                return 'bg-purple-100 text-purple-800 border-purple-200';
+                return 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900 dark:text-purple-300 dark:border-purple-700';
             case 'order':
-                return 'bg-blue-100 text-blue-800 border-blue-200';
+                return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-700';
             case 'memorandum':
-                return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+                return 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900 dark:text-emerald-300 dark:border-emerald-700';
             case 'for_info':
-                return 'bg-gray-100 text-gray-800 border-gray-200';
+                return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700';
             default:
-                return 'bg-gray-100 text-gray-800 border-gray-200';
+                return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700';
         }
     };
 
@@ -427,7 +427,7 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
     return (
         <>
             <Navbar notifications={notifications} />
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* Header Section */}
                     <div className="mb-8">
@@ -437,13 +437,13 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                     <FileText className="w-8 h-8 text-white" />
                                 </div>
                                 <div>
-                                    <h1 className="text-3xl font-bold text-gray-900">Document Details</h1>
-                                    <p className="text-gray-600 mt-1">View and manage document information</p>
+                                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Document Details</h1>
+                                    <p className="text-gray-600 dark:text-gray-400 mt-1">View and manage document information</p>
                                 </div>
                             </div>
                             <Link
                                 href="/documents"
-                                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-gray-700 hover:text-gray-900 font-semibold rounded-lg border border-gray-200 hover:border-gray-300 shadow-sm hover:shadow-md transition-all duration-200"
+                                className="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-gray-100 font-semibold rounded-lg border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 shadow-sm hover:shadow-md transition-all duration-200"
                             >
                                 ← Back to Documents
                             </Link>
@@ -451,20 +451,20 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                     </div>
 
                     {/* Document Information Card */}
-                    <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
+                    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200 dark:border-gray-700">
                         <div className={`p-8 ${document.is_public || document.barcode_path ? 'grid grid-cols-1 lg:grid-cols-2 gap-8' : ''}`}>
                             <div>
                                 <div className="flex items-center gap-3 mb-6">
-                                    <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
+                                    <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                                         <FileCheck className="w-5 h-5 text-white" />
                                     </div>
-                                    <h2 className="text-2xl font-bold text-gray-900">Document Information</h2>
+                                    <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Document Information</h2>
                                 </div>
                                 <dl className="space-y-6">
                                     {/* Document Type and Status */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                                            <dt className="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
+                                        <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
+                                            <dt className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 flex items-center gap-2">
                                                 <Hash className="w-4 h-4" />
                                                 Document Type
                                             </dt>
@@ -475,8 +475,8 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                             </dd>
                                         </div>
 
-                                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                                            <dt className="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
+                                        <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
+                                            <dt className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 flex items-center gap-2">
                                                 <BarChart3 className="w-4 h-4" />
                                                 Status
                                             </dt>
@@ -491,21 +491,21 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                     {/* Document Through Information */}
                                     {document.document_type !== 'for_info' && (
                                         <>
-                                            <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-                                                <dt className="text-sm font-semibold text-blue-700 mb-2 flex items-center gap-2">
+                                            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-100 dark:border-blue-700">
+                                                <dt className="text-sm font-semibold text-blue-700 dark:text-blue-300 mb-2 flex items-center gap-2">
                                                     <User className="w-4 h-4" />
                                                     Sent To
                                                 </dt>
                                                 <dd className="mt-1">
-                                                    <div className="flex items-center gap-3 bg-white rounded-lg p-3 border border-blue-200">
+                                                    <div className="flex items-center gap-3 bg-white dark:bg-gray-700 rounded-lg p-3 border border-blue-200 dark:border-blue-600">
                                                         <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
                                                             {document.final_recipient?.first_name.charAt(0)}{document.final_recipient?.last_name.charAt(0)}
                                                         </div>
                                                         <div>
-                                                            <span className="text-gray-900 font-semibold">
+                                                            <span className="text-gray-900 dark:text-gray-100 font-semibold">
                                                                 {document.final_recipient?.first_name} {document.final_recipient?.last_name}
                                                             </span>
-                                                            <div className="text-sm text-gray-600">
+                                                            <div className="text-sm text-gray-600 dark:text-gray-400">
                                                                 {document.final_recipient?.department?.name || 'No Department'}
                                                             </div>
                                                         </div>
@@ -515,8 +515,8 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
 
                                             {/* Show all through users from the document's through_user_ids */}
                                             {document.through_user_ids && document.through_user_ids.length > 0 && (
-                                                <div className="bg-amber-50 rounded-xl p-4 border border-amber-100">
-                                                    <dt className="text-sm font-semibold text-amber-700 mb-3 flex items-center gap-2">
+                                                <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 border border-amber-100 dark:border-amber-700">
+                                                    <dt className="text-sm font-semibold text-amber-700 dark:text-amber-300 mb-3 flex items-center gap-2">
                                                         <Users className="w-4 h-4" />
                                                         Sent Through
                                                     </dt>
@@ -546,15 +546,15 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
 
                                                                 if (throughUser) {
                                                                     return (
-                                                                        <div key={userId} className="flex items-center gap-3 bg-white rounded-lg p-3 border border-amber-200">
+                                                                        <div key={userId} className="flex items-center gap-3 bg-white dark:bg-gray-700 rounded-lg p-3 border border-amber-200 dark:border-amber-600">
                                                                             <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-amber-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
                                                                                 {throughUser.first_name.charAt(0)}{throughUser.last_name.charAt(0)}
                                                                             </div>
                                                                             <div>
-                                                                                <span className="text-gray-900 font-semibold">
+                                                                                <span className="text-gray-900 dark:text-gray-100 font-semibold">
                                                                                     {throughUser.first_name} {throughUser.last_name}
                                                                                 </span>
-                                                                                <div className="text-sm text-gray-600">
+                                                                                <div className="text-sm text-gray-600 dark:text-gray-400">
                                                                                     {throughUser.department?.name || 'No Department'}
                                                                                 </div>
                                                                             </div>
@@ -562,12 +562,12 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                                                     );
                                                                 }
                                                                 return (
-                                                                    <div key={userId} className="flex items-center gap-3 bg-white rounded-lg p-3 border border-gray-200">
-                                                                        <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-gray-600 font-semibold text-sm">
+                                                                    <div key={userId} className="flex items-center gap-3 bg-white dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+                                                                        <div className="w-8 h-8 bg-gray-300 dark:bg-gray-500 rounded-full flex items-center justify-center text-gray-600 dark:text-gray-300 font-semibold text-sm">
                                                                             ?
                                                                         </div>
                                                                         <div>
-                                                                            <span className="text-gray-400 font-semibold">
+                                                                            <span className="text-gray-400 dark:text-gray-500 font-semibold">
                                                                                 User ID: {userIdNum} (Not Found)
                                                                             </span>
                                                                         </div>
@@ -581,23 +581,23 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
 
                                             {/* Fallback: Show through users directly from throughUsers prop if through_user_ids is empty */}
                                             {(!document.through_user_ids || document.through_user_ids.length === 0) && throughUsers && throughUsers.length > 0 && (
-                                                <div className="bg-amber-50 rounded-xl p-4 border border-amber-100">
-                                                    <dt className="text-sm font-semibold text-amber-700 mb-3 flex items-center gap-2">
+                                                <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 border border-amber-100 dark:border-amber-700">
+                                                    <dt className="text-sm font-semibold text-amber-700 dark:text-amber-300 mb-3 flex items-center gap-2">
                                                         <Users className="w-4 h-4" />
                                                         Sent Through
                                                     </dt>
                                                     <dd className="mt-1">
                                                         <div className="space-y-3">
                                                             {throughUsers.map((user, index) => (
-                                                                <div key={user.id} className="flex items-center gap-3 bg-white rounded-lg p-3 border border-amber-200">
+                                                                <div key={user.id} className="flex items-center gap-3 bg-white dark:bg-gray-700 rounded-lg p-3 border border-amber-200 dark:border-amber-600">
                                                                     <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-amber-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
                                                                         {user.first_name.charAt(0)}{user.last_name.charAt(0)}
                                                                     </div>
                                                                     <div>
-                                                                        <span className="text-gray-900 font-semibold">
+                                                                        <span className="text-gray-900 dark:text-gray-100 font-semibold">
                                                                             {user.first_name} {user.last_name}
                                                                         </span>
-                                                                        <div className="text-sm text-gray-600">
+                                                                        <div className="text-sm text-gray-600 dark:text-gray-400">
                                                                             {user.department?.name || 'No Department'}
                                                                         </div>
                                                                     </div>
@@ -611,23 +611,23 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                     )}
 
                                     {/* Order Number */}
-                                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                                        <dt className="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
+                                    <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
+                                        <dt className="text-sm font-semibold text-gray-600 dark:text-gray-100 mb-2 flex items-center gap-2">
                                             <Hash className="w-4 h-4" />
                                             Order Number
                                         </dt>
-                                        <dd className="mt-1 text-lg text-gray-900 font-bold">{document.order_number}</dd>
+                                        <dd className="mt-1 text-lg text-gray-900 dark:text-gray-200 font-bold">{document.order_number}</dd>
                                     </div>
 
                                     {/* Subject */}
-                                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                                        <dt className="text-sm font-semibold text-gray-600 mb-2">Subject</dt>
-                                        <dd className="mt-1 text-lg text-gray-900 font-semibold leading-relaxed">{document.subject}</dd>
+                                    <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
+                                        <dt className="text-sm font-semibold text-gray-600 dark:text-gray-100 mb-2">Subject</dt>
+                                        <dd className="mt-1 text-lg text-gray-900 dark:text-gray-200 font-semibold leading-relaxed">{document.subject}</dd>
                                     </div>
 
                                     {/* Created By */}
-                                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                                        <dt className="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
+                                    <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
+                                        <dt className="text-sm font-semibold text-gray-600 dark:text-gray-100 mb-2 flex items-center gap-2">
                                             <User className="w-4 h-4" />
                                             Created By
                                         </dt>
@@ -637,10 +637,10 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                                     {document.owner.first_name.charAt(0)}{document.owner.last_name.charAt(0)}
                                                 </div>
                                                 <div>
-                                                    <span className="text-gray-900 font-semibold text-lg">
+                                                    <span className="text-gray-900 dark:text-gray-100 font-semibold text-lg">
                                                         {document.owner.first_name} {document.owner.last_name}
                                                     </span>
-                                                    <div className="text-sm text-gray-600">
+                                                    <div className="text-sm text-gray-600 dark:text-gray-400">
                                                         {document.owner.department?.name || 'No Department'}
                                                     </div>
                                                 </div>
@@ -649,12 +649,12 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                     </div>
 
                                     {/* Date Created */}
-                                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                                        <dt className="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
+                                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 dark:border-gray-600 dark:bg-gray-800">
+                                        <dt className="text-sm font-semibold text-gray-600 dark:text-gray-100 mb-2 flex items-center gap-2">
                                             <Calendar className="w-4 h-4" />
                                             Date Created
                                         </dt>
-                                        <dd className="mt-1 text-lg text-gray-900 font-semibold">{new Date(document.created_at).toLocaleDateString('en-US', {
+                                        <dd className="mt-1 text-lg text-gray-900 dark:text-gray-200 font-semibold">{new Date(document.created_at).toLocaleDateString('en-US', {
                                             weekday: 'long',
                                             year: 'numeric',
                                             month: 'long',
@@ -664,9 +664,9 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
 
                                     {/* Description */}
                                     {document.description && (
-                                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                                            <dt className="text-sm font-semibold text-gray-600 mb-2">Description</dt>
-                                            <dd className="mt-1 text-gray-900 leading-relaxed">{document.description}</dd>
+                                        <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
+                                            <dt className="text-sm font-semibold text-gray-600 dark:text-gray-100 mb-2">Description</dt>
+                                            <dd className="mt-1 text-gray-900 dark:text-gray-200 leading-relaxed">{document.description}</dd>
                                         </div>
                                     )}
                                 </dl>
@@ -674,42 +674,42 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
 
                             {/* Barcode Section */}
                             {(document.barcode_path || document.is_public) && (
-                                <div className="flex flex-col max-h-[650px] items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-8 border-2 border-dashed border-gray-300">
+                                <div className="flex flex-col max-h-[650px] items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 rounded-xl p-8 border-2 border-dashed border-gray-300">
                                     {document.barcode_path && (
                                         <>
                                             <div className="flex items-center gap-3 mb-4">
-                                                <div className="p-2 bg-gradient-to-br from-gray-500 to-gray-600 rounded-lg">
+                                                <div className="p-2 bg-gradient-to-br from-gray-500 to-gray-600 dark:from-gray-700 dark:to-gray-800 rounded-lg">
                                                     <BarChart3 className="w-5 h-5 text-white" />
                                                 </div>
-                                                <h2 className="text-xl font-bold text-gray-900">Scan to View</h2>
+                                                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Scan to View</h2>
                                             </div>
-                                            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 mb-4">
+                                            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-600 mb-4">
                                                 <img src={`/storage/${document.barcode_path}`} alt="Barcode" className="w-64 h-32" />
                                             </div>
-                                            <div className="text-center bg-white rounded-lg p-3 border border-gray-200">
-                                                <p className="text-xs font-semibold text-gray-600 mb-1">Barcode Value:</p>
-                                                <p className="text-sm font-mono text-gray-800 bg-gray-50 px-3 py-2 rounded border">
+                                            <div className="text-center bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+                                                <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Barcode Value:</p>
+                                                <p className="text-sm font-mono text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded border">
                                                     {document.barcode_value || document.public_token}
                                                 </p>
                                             </div>
-                                            <span className="text-xs text-gray-500 mt-3 text-center">Scan this barcode to access the document</span>
+                                            <span className="text-xs text-gray-500 dark:text-gray-200 mt-3 text-center font-semibold">Scan this barcode to access the document</span>
                                         </>
                                     )}
                                     {document.is_public && (
                                         <>
-                                            <div className="w-full mt-6 pt-6 border-t border-gray-300">
+                                            <div className="w-full mt-6 pt-6 border-t border-gray-300 dark:border-gray-600">
                                                 <div className="flex items-center gap-3 mb-4">
-                                                    <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
+                                                    <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-700 dark:to-blue-800 rounded-lg">
                                                         <ExternalLink className="w-4 h-4 text-white" />
                                                     </div>
-                                                    <h3 className="text-lg font-bold text-gray-900">Direct Link</h3>
+                                                    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">Direct Link</h3>
                                                 </div>
-                                                <div className="flex items-center gap-2 bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
+                                                <div className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 p-3 shadow-sm dark:shadow-gray-700">
                                                     <input
                                                         type="text"
                                                         value={getPublicDocumentUrl()}
                                                         readOnly
-                                                        className="flex-1 text-sm font-mono text-gray-700 bg-transparent border-none outline-none"
+                                                        className="flex-1 text-sm font-mono text-gray-700 dark:text-gray-200 dark:bg-gray-700 bg-transparent border-none outline-none"
                                                     />
                                                     <button
                                                         onClick={() => copyToClipboard(getPublicDocumentUrl())}
@@ -728,7 +728,7 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                                         Open
                                                     </a>
                                                 </div>
-                                                <p className="text-xs text-gray-600 mt-3 text-center">
+                                                <p className="text-xs text-gray-600 dark:text-gray-400 mt-3 text-center">
                                                     Share this link for easy access to the document
                                                 </p>
                                             </div>
@@ -740,18 +740,18 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                     </div>
 
                     {/* Files Section */}
-                    <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200 dark:border-gray-600">
                         <div className="p-8">
                             <div className="flex items-center gap-3 mb-8">
-                                <div className="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg">
+                                <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                                     <FileText className="w-5 h-5 text-white" />
                                 </div>
-                                <h2 className="text-2xl font-bold text-gray-900">Files</h2>
+                                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Files</h2>
                             </div>
                             <div className="space-y-10">
                                 {/* Original Files Section */}
                                 <div>
-                                    <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                                    <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6 flex items-center gap-2">
                                         <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                                         Original Files
                                     </h3>
@@ -761,7 +761,7 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                                     <FileText className="w-8 h-8 text-gray-400" />
                                                 </div>
-                                                <p className="text-gray-500 font-medium">No original files uploaded.</p>
+                                                <p className="text-gray-500 dark:text-gray-400 font-medium">No original files uploaded.</p>
                                             </div>
                                         )}
                                         {originalFiles.map((file) => (
@@ -773,7 +773,7 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                 {/* Response Files Section */}
                                 {responseFiles.length > 0 && (
                                     <div>
-                                        <h3 className="text-xl font-bold text-blue-800 mb-6 flex items-center gap-2">
+                                        <h3 className="text-xl font-bold text-blue-800 dark:text-blue-400 mb-6 flex items-center gap-2">
                                             <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                                             Response Files
                                         </h3>
@@ -789,13 +789,13 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                     </div>
 
                     {/* Actions Section */}
-                    <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200 dark:border-gray-600">
                         <div className="p-8">
                             <div className="flex items-center gap-3 mb-8">
-                                <div className="p-2 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg">
+                                <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                                     <FileCheck className="w-5 h-5 text-white" />
                                 </div>
-                                <h2 className="text-2xl font-bold text-gray-900">Document Actions</h2>
+                                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Document Actions</h2>
                             </div>
                             <div className="flex flex-wrap gap-4 mb-6">
                                 {/* Mark as Received Button */}
@@ -1027,16 +1027,16 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
 
                     {/* Approval Chain Timeline */}
                     {approvalChain.length > 0 && (
-                        <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200 dark:border-gray-600">
                             <div className="p-8">
                                 <div className="flex items-center gap-3 mb-8">
-                                    <div className="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg">
+                                    <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                                         <Users className="w-5 h-5 text-white" />
                                     </div>
-                                    <h2 className="text-2xl font-bold text-gray-900">Approval Chain</h2>
+                                    <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Approval Chain</h2>
                                 </div>
                                 <div className="relative ml-4">
-                                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-gray-200 to-gray-300 rounded-full" style={{ zIndex: 0 }}></div>
+                                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 rounded-full" style={{ zIndex: 0 }}></div>
                                     <div className="space-y-8">
                                         {approvalChain.map((recipient: DocumentRecipient, idx: number) => {
                                             // Find all response files uploaded by this recipient
@@ -1051,39 +1051,39 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                                             <div className={`w-3 h-3 rounded-full ${recipient.status === 'approved' ? 'bg-emerald-500' : recipient.status === 'rejected' ? 'bg-red-500' : recipient.status === 'pending' ? 'bg-amber-500' : 'bg-gray-400'}`}></div>
                                                         </div>
                                                     </div>
-                                                    <div className="flex-1 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 shadow-sm">
+                                                    <div className="flex-1 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-xl p-6 border border-gray-200 dark:border-gray-600 shadow-sm dark:shadow-gray-700">
                                                         <div className="flex items-center justify-between mb-4">
                                                             <div className="text-lg font-semibold text-gray-900">
                                                                 {recipient.forwarded_by ? (
                                                                     <div className="space-y-2">
                                                                         <div className="flex items-center gap-3">
-                                                                            <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                                                            <div className="w-8 h-8 bg-gradient-to-br from-red-400 to-red-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
                                                                                 {recipient.forwarded_by.first_name.charAt(0)}{recipient.forwarded_by.last_name.charAt(0)}
                                                                             </div>
                                                                             <div>
-                                                                                <div className="font-semibold text-gray-900">
+                                                                                <div className="font-semibold text-gray-900 dark:text-gray-100">
                                                                                     {recipient.forwarded_by.first_name} {recipient.forwarded_by.last_name}
                                                                                 </div>
-                                                                                <div className="text-sm text-gray-600">
+                                                                                <div className="text-sm text-gray-600 dark:text-gray-400">
                                                                                     {recipient.forwarded_by.department?.name || 'No Department'} • {recipient.forwarded_by.role
                                                                                         ? recipient.forwarded_by.role.charAt(0).toUpperCase() + recipient.forwarded_by.role.slice(1)
                                                                                         : 'Unknown'}
                                                                                 </div>
                                                                             </div>
                                                                         </div>
-                                                                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                                                                        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                                                                             <span>→</span>
                                                                             <span>Forwarded to:</span>
                                                                         </div>
                                                                         <div className="flex items-center gap-3">
-                                                                            <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                                                            <div className="w-8 h-8 bg-gradient-to-br from-red-400 to-red-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
                                                                                 {recipient.user.first_name.charAt(0)}{recipient.user.last_name.charAt(0)}
                                                                             </div>
                                                                             <div>
-                                                                                <div className="font-semibold text-gray-900">
+                                                                                <div className="font-semibold text-gray-900 dark:text-gray-100">
                                                                                     {recipient.user.first_name} {recipient.user.last_name}
                                                                                 </div>
-                                                                                <div className="text-sm text-gray-600">
+                                                                                <div className="text-sm text-gray-600 dark:text-gray-400">
                                                                                     {recipient.user.department?.name || 'No Department'} • {recipient.user.role
                                                                                         ? recipient.user.role.charAt(0).toUpperCase() + recipient.user.role.slice(1)
                                                                                         : 'Unknown'}
@@ -1093,14 +1093,14 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                                                     </div>
                                                                 ) : (
                                                                     <div className="flex items-center gap-3">
-                                                                        <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
+                                                                        <div className="w-10 h-10 bg-gradient-to-br from-red-400 to-red-500 rounded-full flex items-center justify-center text-white font-semibold">
                                                                             {recipient.user.first_name.charAt(0)}{recipient.user.last_name.charAt(0)}
                                                                         </div>
                                                                         <div>
-                                                                            <div className="font-semibold text-gray-900">
+                                                                            <div className="font-semibold text-gray-900 dark:text-gray-100">
                                                                                 {recipient.user.first_name} {recipient.user.last_name}
                                                                             </div>
-                                                                            <div className="text-sm text-gray-600">
+                                                                            <div className="text-sm text-gray-600 dark:text-gray-400">
                                                                                 {recipient.user.department?.name || 'No Department'} • {recipient.user.role
                                                                                     ? recipient.user.role.charAt(0).toUpperCase() + recipient.user.role.slice(1)
                                                                                     : 'Unknown'}
@@ -1109,7 +1109,7 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                                                     </div>
                                                                 )}
                                                             </div>
-                                                            <span className={`px-3 py-1.5 inline-flex text-sm leading-5 font-semibold rounded-full border ${getStatusColor(recipient.status)}`}>
+                                                            <span className={`px-3 py-1.5 inline-flex text-sm leading-5 font-semibold rounded-full border ${getStatusColor(recipient.status)} dark:text-gray-100`}>
                                                                 {recipient.status.charAt(0).toUpperCase() + recipient.status.slice(1)}
                                                             </span>
                                                         </div>
@@ -1120,12 +1120,12 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                                                 {recipientResponseFiles.map((file: any) => {
                                                                     const isImage = file.original_filename.match(/\.(jpg|jpeg|png|gif)$/i);
                                                                     return (
-                                                                        <div key={file.id} className="flex items-center gap-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                                                                        <div key={file.id} className="flex items-center gap-4 p-4 bg-blue-50 dark:bg-blue-900 rounded-lg border border-blue-200 dark:border-blue-600">
                                                                             {isImage ? (
                                                                                 <img
                                                                                     src={file.file_path ? `/storage/${file.file_path}` : '#'}
                                                                                     alt={file.original_filename}
-                                                                                    className="w-16 h-16 object-cover rounded-lg border border-blue-300 shadow-sm"
+                                                                                    className="w-16 h-16 object-cover rounded-lg border border-blue-300 dark:border-blue-600 shadow-sm"
                                                                                 />
                                                                             ) : (
                                                                                 <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-500 rounded-lg flex items-center justify-center text-white">
@@ -1135,14 +1135,14 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                                                                 </div>
                                                                             )}
                                                                             <div className="flex-1">
-                                                                                <div className="text-sm font-semibold text-blue-800 mb-1">
+                                                                                <div className="text-sm font-semibold text-blue-800 dark:text-blue-400 mb-1">
                                                                                     {recipient.status.charAt(0).toUpperCase() + recipient.status.slice(1)} Response
                                                                                 </div>
                                                                                 <a
                                                                                     href={file.file_path ? `/storage/${file.file_path}` : '#'}
                                                                                     target="_blank"
                                                                                     rel="noopener noreferrer"
-                                                                                    className="text-sm text-blue-600 hover:text-blue-800 font-medium underline"
+                                                                                    className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 font-medium underline"
                                                                                     download={file.original_filename}
                                                                                 >
                                                                                     {file.original_filename}
@@ -1155,13 +1155,13 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                                         )}
 
                                                         {recipient.comments && (
-                                                            <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
-                                                                <p className="text-sm text-gray-700 leading-relaxed">{recipient.comments}</p>
+                                                            <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600">
+                                                                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{recipient.comments}</p>
                                                             </div>
                                                         )}
 
                                                         {recipient.responded_at && (
-                                                            <div className="text-sm text-gray-600 mt-4 flex items-center gap-2">
+                                                            <div className="text-sm text-gray-600 dark:text-gray-400 mt-4 flex items-center gap-2">
                                                                 <Calendar className="w-4 h-4" />
                                                                 Responded: {new Date(recipient.responded_at).toLocaleDateString('en-US', {
                                                                     day: '2-digit',

@@ -12,7 +12,7 @@ interface AuthLayoutProps {
 export default function AuthSimpleLayout({ children, title, description }: PropsWithChildren<AuthLayoutProps>) {
     return (
         <div
-            className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10"
+            className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10 dark:bg-gray-900"
             style={{
                 backgroundImage: 'url(/images/login-background-reduced.png)',
                 backgroundSize: 'cover',
@@ -20,7 +20,7 @@ export default function AuthSimpleLayout({ children, title, description }: Props
                 backgroundRepeat: 'no-repeat',
             }}
         >
-            <div className="w-full max-w-sm border border-gray-400 p-10 rounded-lg bg-white/90">
+            <div className="w-full max-w-sm border border-gray-400 dark:border-gray-600 p-10 rounded-lg bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm">
                 <div className="flex flex-col gap-8">
                     <div className="flex flex-col items-center gap-4">
                         <Link href={route('home')} className="flex flex-col items-center gap-2 font-medium">
@@ -31,8 +31,8 @@ export default function AuthSimpleLayout({ children, title, description }: Props
                         </Link>
 
                         <div className="space-y-2 text-center">
-                            <h1 className="text-xl font-medium">{title}</h1>
-                            <p className="text-center text-sm text-muted-foreground">{description}</p>
+                            <h1 className="text-xl font-medium text-gray-900 dark:text-white">{title}</h1>
+                            <p className="text-center text-sm text-muted-foreground dark:text-gray-300">{description}</p>
                         </div>
                     </div>
                     {children}

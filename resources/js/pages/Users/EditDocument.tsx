@@ -36,8 +36,8 @@ const formatFileSize = (bytes: number) => {
 };
 
 const FileCard = ({ file, documentId, color = 'red', onDelete }: { file: any, documentId: number, color?: 'red' | 'blue', onDelete: (fileId: number) => void }) => (
-    <div className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-5 flex flex-col items-center border ${color === 'red' ? 'border-gray-200 hover:border-gray-300' : 'border-red-200 hover:border-red-300'}`}>
-        <div className={`w-full h-32 flex items-center justify-center ${color === 'red' ? 'bg-gradient-to-br from-gray-50 to-gray-100' : 'bg-gradient-to-br from-red-50 to-red-100'} rounded-lg mb-4 overflow-hidden`}>
+    <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-5 flex flex-col items-center border ${color === 'red' ? 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500' : 'border-red-200 dark:border-red-800 hover:border-red-300 dark:hover:border-red-700'}`}>
+        <div className={`w-full h-32 flex items-center justify-center ${color === 'red' ? 'bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600' : 'bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20'} rounded-lg mb-4 overflow-hidden`}>
             <a
                 href={file.file_path ? `/storage/${file.file_path}` : '#'}
                 target="_blank"
@@ -58,7 +58,7 @@ const FileCard = ({ file, documentId, color = 'red', onDelete }: { file: any, do
                         className="w-full h-full"
                     />
                 ) : (
-                    <div className={`flex flex-col items-center justify-center ${color === 'red' ? 'text-gray-400' : 'text-red-400'}`}>
+                    <div className={`flex flex-col items-center justify-center ${color === 'red' ? 'text-gray-400 dark:text-gray-500' : 'text-red-400 dark:text-red-500'}`}>
                         <svg className="h-8 w-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                         </svg>
@@ -68,11 +68,11 @@ const FileCard = ({ file, documentId, color = 'red', onDelete }: { file: any, do
             </a>
         </div>
         <div className="w-full text-center">
-            <p className="text-sm font-semibold text-gray-900 truncate mb-1" title={file.original_filename}>{file.original_filename}</p>
-            <p className="text-xs text-gray-500 mb-3 font-medium">{formatFileSize(file.file_size)}</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate mb-1" title={file.original_filename}>{file.original_filename}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 font-medium">{formatFileSize(file.file_size)}</p>
             <button
                 type="button"
-                className="text-xs cursor-pointer text-red-600 hover:underline ml-2"
+                className="text-xs cursor-pointer text-red-600 dark:text-red-400 hover:underline ml-2"
                 onClick={() => onDelete(file.id)}
             >
                 Delete
@@ -160,56 +160,56 @@ const EditDocument = ({ document }: Props) => {
     return (
         <>
             <Navbar />
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
                 <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-200">
-                        <h1 className="text-2xl font-bold mb-6 text-gray-900">Edit & Resend Document</h1>
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
+                        <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Edit & Resend Document</h1>
                         <form onSubmit={handleSubmit}>
                             <div className="mb-4">
-                                <label className="block text-gray-700 font-semibold mb-2">Order Number</label>
+                                <label className="block text-gray-700 dark:text-gray-200 font-semibold mb-2">Order Number</label>
                                 <Input
                                     type="text"
                                     value={data.order_number}
                                     onChange={e => setData('order_number', e.target.value)}
-                                    className="w-full"
+                                    className="w-full bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                                     required
                                 />
                             </div>
                             <div className="mb-4">
-                                <label className="block text-gray-700 font-semibold mb-2">Subject</label>
+                                <label className="block text-gray-700 dark:text-gray-200 font-semibold mb-2">Subject</label>
                                 <Input
                                     type="text"
                                     value={data.subject}
                                     onChange={e => setData('subject', e.target.value)}
-                                    className="w-full"
+                                    className="w-full bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                                     required
                                 />
                             </div>
                             <div className="mb-4">
-                                <label className="block text-gray-700 font-semibold mb-2">Description</label>
+                                <label className="block text-gray-700 dark:text-gray-200 font-semibold mb-2">Description</label>
                                 <Textarea
                                     value={data.description}
                                     onChange={e => setData('description', e.target.value)}
-                                    className="w-full"
+                                    className="w-full bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                                 />
                             </div>
                             <div className="mb-4">
-                                <label className="block text-gray-700 font-semibold mb-2">Replace Files (optional)</label>
+                                <label className="block text-gray-700 dark:text-gray-200 font-semibold mb-2">Replace Files (optional)</label>
                                 <Input
                                     type="file"
                                     multiple
                                     onChange={handleFileChange}
-                                    className="w-full"
+                                    className="w-full bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                                 />
                                 {/* Preview replaced files */}
                                 {filePreviews.length > 0 && (
                                     <div className="mt-4">
-                                        <h3 className="text-sm font-semibold text-red-700 mb-2">Replaced Files Preview</h3>
+                                        <h3 className="text-sm font-semibold text-red-700 dark:text-red-400 mb-2">Replaced Files Preview</h3>
                                         <div className="flex flex-wrap gap-4">
                                             {data.files.map((file, idx) => (
                                                 <div key={idx} className="flex flex-col items-center">
-                                                    <img src={filePreviews[idx]} alt="Preview" className="w-20 h-20 object-cover rounded border mb-1" />
-                                                    <span className="text-xs text-gray-700">{file.name}</span>
+                                                    <img src={filePreviews[idx]} alt="Preview" className="w-20 h-20 object-cover rounded border border-gray-200 dark:border-gray-600 mb-1" />
+                                                    <span className="text-xs text-gray-700 dark:text-gray-300">{file.name}</span>
                                                 </div>
                                             ))}
                                         </div>
@@ -218,7 +218,7 @@ const EditDocument = ({ document }: Props) => {
                                 {/* Show original files if no replaced files selected */}
                                 {existingFiles.length > 0 && filePreviews.length === 0 && (
                                     <div className="mt-4">
-                                        <h3 className="text-sm font-semibold text-red-700 mb-2">Original Files</h3>
+                                        <h3 className="text-sm font-semibold text-red-700 dark:text-red-400 mb-2">Original Files</h3>
                                         <div className="flex flex-wrap gap-4">
                                             {existingFiles.map(file => (
                                                 <FileCard key={file.id} file={file} documentId={document.id} color="red" onDelete={handleDeleteFile} />
