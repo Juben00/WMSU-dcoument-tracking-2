@@ -70,7 +70,7 @@ const Navbar = ({ notifications = [] }: NavbarProps) => {
                 setMenuOpen(false);
             }
         }
-
+        
         document.addEventListener('mousedown', handleClickOutside);
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
@@ -85,7 +85,7 @@ const Navbar = ({ notifications = [] }: NavbarProps) => {
         },
         {
             label: 'Documents',
-            href: '/document',
+            href: '/documents',
             icon: <FileText className="w-5 h-5" />,
         },
     ];
@@ -103,7 +103,7 @@ const Navbar = ({ notifications = [] }: NavbarProps) => {
         },
         {
             label: 'Documents',
-            href: '/document',
+            href: '/documents',
             icon: <FileText className="w-5 h-5" />,
         },
     ];
@@ -147,10 +147,11 @@ const Navbar = ({ notifications = [] }: NavbarProps) => {
                                 <Link
                                     key={item.label}
                                     href={item.href}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
-                                        ? 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20'
-                                        : 'text-gray-700 hover:text-red-600 hover:bg-red-50 dark:text-gray-300 dark:hover:text-red-400 dark:hover:bg-red-900/20'
-                                        }`}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                                        isActive
+                                            ? 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20'
+                                            : 'text-gray-700 hover:text-red-600 hover:bg-red-50 dark:text-gray-300 dark:hover:text-red-400 dark:hover:bg-red-900/20'
+                                    }`}
                                 >
                                     {item.icon}
                                     <span>{item.label}</span>
@@ -176,8 +177,9 @@ const Navbar = ({ notifications = [] }: NavbarProps) => {
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <button
-                                        className={`relative p-2 rounded-lg transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 ${notifOpen ? 'bg-gray-100 dark:bg-gray-800' : ''
-                                            }`}
+                                        className={`relative p-2 rounded-lg transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 ${
+                                            notifOpen ? 'bg-gray-100 dark:bg-gray-800' : ''
+                                        }`}
                                         onClick={() => setNotifOpen(!notifOpen)}
                                         aria-label="Notifications"
                                     >
@@ -247,8 +249,9 @@ const Navbar = ({ notifications = [] }: NavbarProps) => {
                         {/* Profile Dropdown */}
                         <div className="relative" ref={profileRef}>
                             <button
-                                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 ${profileOpen ? 'bg-gray-100 dark:bg-gray-800' : ''
-                                    }`}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 ${
+                                    profileOpen ? 'bg-gray-100 dark:bg-gray-800' : ''
+                                }`}
                                 onClick={() => setProfileOpen(!profileOpen)}
                             >
                                 <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
@@ -324,10 +327,11 @@ const Navbar = ({ notifications = [] }: NavbarProps) => {
                                 <Link
                                     key={item.label}
                                     href={item.href}
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${isActive
-                                        ? 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20'
-                                        : 'text-gray-700 hover:text-red-600 hover:bg-red-50 dark:text-gray-300 dark:hover:text-red-400 dark:hover:bg-red-900/20'
-                                        }`}
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                                        isActive
+                                            ? 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20'
+                                            : 'text-gray-700 hover:text-red-600 hover:bg-red-50 dark:text-gray-300 dark:hover:text-red-400 dark:hover:bg-red-900/20'
+                                    }`}
                                 >
                                     {item.icon}
                                     <span>{item.label}</span>
