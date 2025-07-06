@@ -57,12 +57,12 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
                     </span>
                 </Button>
             </PopoverPrimitive.Trigger>
-            <PopoverPrimitive.Content className="w-full p-2 bg-white rounded shadow-md z-50">
+            <PopoverPrimitive.Content className="w-full p-2 bg-white dark:bg-gray-800 rounded shadow-md z-50 border border-gray-200 dark:border-gray-700">
                 <div className="flex flex-col gap-1 max-h-60 overflow-y-auto">
                     {options.map((option) => (
                         <label
                             key={option.value}
-                            className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-accent"
+                            className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-accent dark:hover:bg-gray-700 text-gray-900 dark:text-white"
                         >
                             <Checkbox
                                 checked={selected.includes(option.value)}

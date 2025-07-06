@@ -165,6 +165,7 @@ const formatFileSize = (bytes: number) => {
 
 // FileCard component for previewing and downloading files
 const FileCard = ({ file, documentId, color = 'red' }: { file: any, documentId: number, color?: 'red' | 'blue' }) => (
+    console.log('file', file),
     <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-5 flex flex-col items-center border ${color === 'red' ? 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500' : 'border-blue-200 dark:border-blue-600 hover:border-blue-300 dark:hover:border-blue-500'}`}>
         <div className={`w-full h-48 flex items-center justify-center ${color === 'red' ? 'bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600' : 'bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20'} rounded-lg mb-4 overflow-hidden`}>
             <a
@@ -442,7 +443,7 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                 </div>
                             </div>
                             <Link
-                                href="/documents"
+                                href="/document"
                                 className="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-gray-100 font-semibold rounded-lg border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 shadow-sm hover:shadow-md transition-all duration-200"
                             >
                                 ← Back to Documents
@@ -1004,7 +1005,7 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                                             text: 'The document has been deleted.',
                                                             timer: 1500,
                                                             showConfirmButton: false
-                                                        }).then(() => window.location.href = route('users.documents'));
+                                                        }).then(() => window.location.href = route('users.document'));
                                                     },
                                                     onError: (errors: any) => {
                                                         Swal.fire({
