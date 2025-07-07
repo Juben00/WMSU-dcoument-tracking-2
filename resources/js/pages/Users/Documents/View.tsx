@@ -443,7 +443,7 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                 </div>
                             </div>
                             <Link
-                                href="/document"
+                                href="/documents"
                                 className="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-gray-100 font-semibold rounded-lg border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 shadow-sm hover:shadow-md transition-all duration-200"
                             >
                                 ← Back to Documents
@@ -1005,7 +1005,7 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                                             text: 'The document has been deleted.',
                                                             timer: 1500,
                                                             showConfirmButton: false
-                                                        }).then(() => window.location.href = route('users.document'));
+                                                        }).then(() => window.location.href = route('users.documents'));
                                                     },
                                                     onError: (errors: any) => {
                                                         Swal.fire({

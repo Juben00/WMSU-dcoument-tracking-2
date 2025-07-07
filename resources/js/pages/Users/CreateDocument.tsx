@@ -186,7 +186,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
                     text: 'Your document has been sent successfully.',
                     confirmButtonColor: '#b91c1c',
                 }).then(() => {
-                    window.location.href = '/document';
+                    window.location.href = '/documents';
                 });
             },
             onError: (errors) => {

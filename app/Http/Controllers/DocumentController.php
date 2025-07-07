@@ -517,6 +517,6 @@ class DocumentController extends Controller
     public function destroy(Document $document)
     {
         $document->delete();
-        return redirect()->route('users.document')->with('success', 'Document deleted successfully.');
+        return redirect()->route('users.documents')->with('success', 'Document deleted successfully.');
     }
 }

@@ -56,7 +56,7 @@ Route::middleware(['auth', 'verified', 'require_password_change'])->group(functi
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
     Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
     Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
-    Route::get('/document', [UserController::class, 'documents'])->name('users.document');
+    Route::get('/documents', [UserController::class, 'documents'])->name('users.documents');
     Route::get('/profile', [UserController::class, 'profile'])->name('users.profile');
     Route::patch('/profile', [UserController::class, 'updateProfile'])->name('profile.update');
     Route::put('/profile/password', [UserController::class, 'updatePassword'])->name('users.password.update');
