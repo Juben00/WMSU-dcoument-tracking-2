@@ -267,9 +267,9 @@ class UserController extends Controller
 
         // Handle multiple file uploads
         foreach ($request->file('files') as $file) {
-            $filePath =  'public/' . $file->store('documents', 'public');
+            $filePath = $file->store('documents', 'public');
             $document->files()->create([
-                'file_path' => $filePath,
+                'file_path' => 'public/' . $filePath,
                 'original_filename' => $file->getClientOriginalName(),
                 'mime_type' => $file->getMimeType(),
                 'file_size' => $file->getSize(),
@@ -458,7 +458,7 @@ class UserController extends Controller
             foreach ($request->file('files') as $file) {
                 $filePath = $file->store('documents', 'public');
                 $doc->files()->create([
-                    'file_path' => $filePath,
+                    'file_path' => 'public/' . $filePath,
                     'original_filename' => $file->getClientOriginalName(),
                     'mime_type' => $file->getMimeType(),
                     'file_size' => $file->getSize(),

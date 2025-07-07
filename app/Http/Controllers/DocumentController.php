@@ -76,9 +76,9 @@ class DocumentController extends Controller
         // Handle multiple file uploads if present
         if ($request->hasFile('files')) {
             foreach ($request->file('files') as $file) {
-                $filePath = 'public/' . $file->store('document-attachments', 'public');
+                $filePath = $file->store('documents', 'public');
                 $document->files()->create([
-                    'file_path' => $filePath,
+                    'file_path' => 'public/' . $filePath,
                     'original_filename' => $file->getClientOriginalName(),
                     'mime_type' => $file->getMimeType(),
                     'file_size' => $file->getSize(),
@@ -160,9 +160,9 @@ class DocumentController extends Controller
         // Handle multiple file uploads if present
         if ($request->hasFile('attachment_files')) {
             foreach ($request->file('attachment_files') as $file) {
-                $filePath = 'public/' . $file->store('document-attachments', 'public');
+                $filePath = $file->store('documents', 'public');
                 $document->files()->create([
-                    'file_path' => $filePath,
+                    'file_path' => 'public/' . $filePath,
                     'original_filename' => $file->getClientOriginalName(),
                     'mime_type' => $file->getMimeType(),
                     'file_size' => $file->getSize(),
