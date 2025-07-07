@@ -32,9 +32,9 @@ class UserSeeder extends Seeder
 
         // OP
         User::factory()->create([
-            'first_name' => 'Test',
+            'first_name' => 'President',
             'last_name' => 'User',
-            'middle_name' => 'Middle',
+            'middle_name' => '',
             'suffix' => 'Suffix',
             'gender' => 'Male',
             'position' => 'University President',
@@ -47,8 +47,8 @@ class UserSeeder extends Seeder
 
         // OVP
         User::factory()->create([
-            'first_name' => 'Joevin',
-            'last_name' => 'Ansoc',
+            'first_name' => 'Vice',
+            'last_name' => 'President',
             'middle_name' => '',
             'suffix' => 'Suffix',
             'gender' => 'Male',
@@ -62,8 +62,8 @@ class UserSeeder extends Seeder
 
         // OVP-R&D
         User::factory()->create([
-            'first_name' => 'Jorica',
-            'last_name' => 'Alejandro',
+            'first_name' => 'Vice',
+            'last_name' => 'President for Research and Development',
             'middle_name' => '',
             'suffix' => 'Suffix',
             'gender' => 'Female',
@@ -77,8 +77,8 @@ class UserSeeder extends Seeder
 
         // OVP-AA
         User::factory()->create([
-            'first_name' => 'Joreen',
-            'last_name' => 'Jeay',
+            'first_name' => 'Vice',
+            'last_name' => 'President for Academic Affairs',
             'middle_name' => '',
             'suffix' => 'Suffix',
             'gender' => 'Female',
@@ -92,8 +92,8 @@ class UserSeeder extends Seeder
 
         // OVP-Finance
         User::factory()->create([
-            'first_name' => 'Joev',
-            'last_name' => 'Ansoc',
+            'first_name' => 'Vice',
+            'last_name' => 'President for Finance',
             'middle_name' => '',
             'suffix' => 'Suffix',
             'gender' => 'Male',
@@ -107,8 +107,8 @@ class UserSeeder extends Seeder
 
         // CCS
         User::factory()->create([
-            'first_name' => 'Joevin',
-            'last_name' => 'Ansoc',
+            'first_name' => 'Dean',
+            'last_name' => 'User',
             'middle_name' => '',
             'suffix' => 'Suffix',
             'gender' => 'Male',

@@ -51,7 +51,7 @@ class DepartmentsController extends Controller
         Departments::create($request->all());
 
         // Notify all admins about the new department
-        $admins = User::where('role', 'admin')->get();
+        $admins = User::where('role', 'superadmin')->get();
         foreach ($admins as $admin) {
             $admin->notify(new InAppNotification('A new department has been created.', ['department_name' => $request->name]));
         }
@@ -96,7 +96,7 @@ class DepartmentsController extends Controller
         $department->update($request->all());
 
         // Notify all admins about the department update
-        $admins = User::where('role', 'admin')->get();
+        $admins = User::where('role', 'superadmin')->get();
         foreach ($admins as $admin) {
             $admin->notify(new InAppNotification('A department has been updated.', ['department_name' => $department->name]));
         }
@@ -122,7 +122,7 @@ class DepartmentsController extends Controller
             $department->delete();
 
             // Notify all admins about the department deletion
-            $admins = User::where('role', 'admin')->get();
+            $admins = User::where('role', 'superadmin')->get();
             foreach ($admins as $admin) {
                 $admin->notify(new InAppNotification('A department has been deleted.', ['department_name' => $department->name]));
             }
