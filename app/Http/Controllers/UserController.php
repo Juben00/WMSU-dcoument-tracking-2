@@ -359,10 +359,22 @@ class UserController extends Controller
                 }
             }
         } else {
+            // For memorandum, order, special_order documents
             $sendToId = $request->input('recipient_ids')[0];
-            $recipient = User::find($sendToId);
-            if ($recipient) {
-                $recipient->notify(new InAppNotification('A new document has been sent to you.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+            $throughUserIds = $request->input('through_user_ids', []);
+
+            if (!empty($throughUserIds)) {
+                // If there are through users, notify only the first through user
+                $firstThroughUser = User::find($throughUserIds[0]);
+                if ($firstThroughUser) {
+                    $firstThroughUser->notify(new InAppNotification('A new document has been sent to you.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+                }
+            } else {
+                // If no through users, notify the main recipient
+                $recipient = User::find($sendToId);
+                if ($recipient) {
+                    $recipient->notify(new InAppNotification('A new document has been sent to you.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+                }
             }
         }
 
