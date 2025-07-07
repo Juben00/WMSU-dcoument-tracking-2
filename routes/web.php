@@ -11,6 +11,9 @@ use App\Http\Controllers\FirstTimePasswordController;
 use App\Http\Controllers\NotificationController;
 
 Route::get('/', function () {
+    if (Auth::check()) {
+        return redirect()->route('dashboard');
+    }
     return Inertia::render('welcome');
 })->name('home');
 
