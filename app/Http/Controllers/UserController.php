@@ -267,7 +267,7 @@ class UserController extends Controller
 
         // Handle multiple file uploads
         foreach ($request->file('files') as $file) {
-            $filePath = $file->store('documents', 'public');
+            $filePath =  'public/' . $file->store('documents', 'public');
             $document->files()->create([
                 'file_path' => $filePath,
                 'original_filename' => $file->getClientOriginalName(),
@@ -340,6 +340,7 @@ class UserController extends Controller
         // Save SVG to storage
         $barcodePath = 'barcodes/document_' . $document->id . '_' . $barcodeValue . '.svg';
         Storage::disk('public')->put($barcodePath, $barcodeSvg);
+        $barcodePath = 'public/' . $barcodePath;
 
         // Save to document
         $document->update([

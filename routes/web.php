@@ -68,10 +68,8 @@ Route::middleware(['auth', 'verified', 'require_password_change'])->group(functi
     // send document to recipients
     Route::post('/users/documents/send', [UserController::class, 'sendDocument'])->name('users.documents.send');
 
-    // Route::get('/users/documents/{document}', [UserController::class, 'showDocument'])->name('users.documents.show');
     Route::get('/users/documents/{document}/edit', [UserController::class, 'editDocument'])->name('users.documents.edit');
     Route::put('/users/documents/{document}', [UserController::class, 'updateDocument'])->name('users.documents.update');
-    // Route::delete('/users/documents/{document}', [UserController::class, 'destroyDocument'])->name('users.documents.destroy');
 
     // User's Published Documents Management
     Route::get('/published-documents', [UserController::class, 'publishedDocuments'])->name('users.published-documents');

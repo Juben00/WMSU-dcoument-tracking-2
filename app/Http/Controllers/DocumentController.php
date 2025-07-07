@@ -76,7 +76,7 @@ class DocumentController extends Controller
         // Handle multiple file uploads if present
         if ($request->hasFile('files')) {
             foreach ($request->file('files') as $file) {
-                $filePath = $file->store('document-attachments', 'public');
+                $filePath = 'public/' . $file->store('document-attachments', 'public');
                 $document->files()->create([
                     'file_path' => $filePath,
                     'original_filename' => $file->getClientOriginalName(),
@@ -160,7 +160,7 @@ class DocumentController extends Controller
         // Handle multiple file uploads if present
         if ($request->hasFile('attachment_files')) {
             foreach ($request->file('attachment_files') as $file) {
-                $filePath = $file->store('document-attachments', 'public');
+                $filePath = 'public/' . $file->store('document-attachments', 'public');
                 $document->files()->create([
                     'file_path' => $filePath,
                     'original_filename' => $file->getClientOriginalName(),
@@ -517,6 +517,6 @@ class DocumentController extends Controller
     public function destroy(Document $document)
     {
         $document->delete();
-        return redirect()->route('users.documents')->with('success', 'Document deleted successfully.');
+        return redirect()->route('users.document')->with('success', 'Document deleted successfully.');
     }
 }
