@@ -519,4 +519,31 @@ class DocumentController extends Controller
         $document->delete();
         return redirect()->route('users.documents')->with('success', 'Document deleted successfully.');
     }
+
+    public function unpublishDocument(Document $document)
+    {
+        // Only owner can unpublish
+        if ($document->owner_id !== Auth::id()) {
+            abort(403, 'Only the owner can unpublish this document.');
+        }
+
+        if (!$document->is_public) {
+            return redirect()->back()->with('info', 'Document is not published.');
+        }
+
+        // Delete barcode file if exists
+        if ($document->barcode_path) {
+            Storage::disk('public')->delete($document->barcode_path);
+        }
+
+        // Update document
+        $document->update([
+            'is_public' => false,
+            'public_token' => null,
+            'barcode_path' => null,
+            'barcode_value' => null,
+        ]);
+
+        return redirect()->back()->with('success', 'Document unpublished successfully.');
+    }
 }

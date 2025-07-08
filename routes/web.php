@@ -85,6 +85,7 @@ Route::middleware(['auth', 'verified', 'require_password_change'])->group(functi
     Route::post('/documents/{document}/received', [DocumentController::class, 'markAsReceived'])->name('documents.received');
     Route::get('/documents/{document}/chain', [DocumentController::class, 'getDocumentChain'])->name('documents.chain');
     Route::post('/documents/{document}/publish', [DocumentController::class, 'publishDocument'])->name('documents.publish');
+    Route::post('/documents/{document}/unpublish', [DocumentController::class, 'unpublishDocument'])->name('documents.unpublish');
     Route::get('/documents/public', [DocumentController::class, 'publicDocuments'])->name('documents.public');
     Route::get('/documents/public/{public_token}', [DocumentController::class, 'publicView'])->name('documents.public_view');
     Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');

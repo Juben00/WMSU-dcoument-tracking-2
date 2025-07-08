@@ -281,6 +281,10 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
         return ['approved', 'received'].includes(document.status) && !document.is_public && isOwner();
     };
 
+    const canUnpublish = () => {
+        return document.is_public && isOwner();
+    };
+
     const canCancelDocument = () => {
         return isOwner() && ['pending', 'in_review', 'approved', 'returned', 'rejected'].includes(document.status);
     };
@@ -936,7 +940,7 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                 )}
                             </div>
 
-                            {/* Publish Publicly Button for Owner */}
+                            {/* Publish/Unpublish Publicly Button for Owner */}
                             {canPublishPublicly() && (
                                 <div className="mt-6">
                                     <button
@@ -976,6 +980,50 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                         disabled={processing}
                                     >
                                         Publish Publicly
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Unpublish Button for Owner */}
+                            {canUnpublish() && (
+                                <div className="mt-6">
+                                    <button
+                                        className="px-6 py-3 bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-lg hover:from-orange-700 hover:to-orange-800 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                                        onClick={async () => {
+                                            const result = await Swal.fire({
+                                                title: 'Are you sure?',
+                                                text: 'Do you want to unpublish this document? It will no longer be publicly accessible.',
+                                                icon: 'warning',
+                                                showCancelButton: true,
+                                                confirmButtonColor: '#ea580c',
+                                                cancelButtonColor: '#d1d5db',
+                                                confirmButtonText: 'Yes, unpublish it!',
+                                                cancelButtonText: 'Cancel'
+                                            });
+                                            if (result.isConfirmed) {
+                                                post(route('documents.unpublish', { document: document.id }), {
+                                                    onSuccess: () => {
+                                                        Swal.fire({
+                                                            icon: 'success',
+                                                            title: 'Unpublished!',
+                                                            text: 'The document is no longer public.',
+                                                            timer: 1500,
+                                                            showConfirmButton: false
+                                                        }).then(() => window.location.reload());
+                                                    },
+                                                    onError: (errors) => {
+                                                        Swal.fire({
+                                                            icon: 'error',
+                                                            title: 'Error',
+                                                            text: errors?.message || 'An error occurred while unpublishing the document.'
+                                                        });
+                                                    }
+                                                });
+                                            }
+                                        }}
+                                        disabled={processing}
+                                    >
+                                        Unpublish Document
                                     </button>
                                 </div>
                             )}
