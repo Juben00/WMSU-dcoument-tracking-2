@@ -540,8 +540,6 @@ class DocumentController extends Controller
         $document->update([
             'is_public' => false,
             'public_token' => null,
-            'barcode_path' => null,
-            'barcode_value' => null,
         ]);
 
         return redirect()->back()->with('success', 'Document unpublished successfully.');
