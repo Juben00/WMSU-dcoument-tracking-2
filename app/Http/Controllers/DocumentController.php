@@ -531,11 +531,6 @@ class DocumentController extends Controller
             return redirect()->back()->with('info', 'Document is not published.');
         }
 
-        // Delete barcode file if exists
-        if ($document->barcode_path) {
-            Storage::disk('public')->delete($document->barcode_path);
-        }
-
         // Update document
         $document->update([
             'is_public' => false,
