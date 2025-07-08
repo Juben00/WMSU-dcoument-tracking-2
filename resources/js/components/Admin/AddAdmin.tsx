@@ -150,17 +150,6 @@ const AddNewAdmin = ({ setIsCreateDialogOpen, departments }: { setIsCreateDialog
                         </Select>
                         <InputError message={errors.gender} />
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="avatar" className="dark:text-gray-200">Avatar</Label>
-                        <Input
-                            id="avatar"
-                            type="file"
-                            accept="image/*"
-                            onChange={e => setData('avatar', e.target.files?.[0] || null)}
-                            className="dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 file:dark:bg-gray-700 file:dark:text-gray-100 file:dark:border-gray-600"
-                        />
-                        <InputError message={errors.avatar} />
-                    </div>
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="department" className="dark:text-gray-200">Department</Label>
