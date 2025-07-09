@@ -95,6 +95,7 @@ Route::middleware(['auth', 'verified', 'require_password_change'])->group(functi
     Route::delete('/users/documents/{document}/files/{file}', [UserController::class, 'deleteDocumentFile'])->name('users.documents.files.delete');
 
     Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.readAll');
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
 });

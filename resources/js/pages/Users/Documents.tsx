@@ -66,7 +66,6 @@ const Documents = ({ documents, auth }: Props) => {
     const [sortBy, setSortBy] = useState("latest")
     const [fiscalYearFilter, setFiscalYearFilter] = useState("all")
     const [archivedFilter, setArchivedFilter] = useState("all")
-    const [notifications, setNotifications] = useState<any[]>([])
 
     // Get current fiscal year (January to December)
     const getCurrentFiscalYear = () => {
@@ -326,13 +325,6 @@ const Documents = ({ documents, auth }: Props) => {
         ))
     }
 
-    useEffect(() => {
-        fetch("/notifications")
-            .then((res) => res.json())
-            .then((data) => setNotifications(data))
-            .catch(() => setNotifications([]))
-    }, [])
-
     const tabConfig = [
         { id: "received", label: "Received", icon: Users, count: received.length },
         { id: "sent", label: "Sent", icon: FileCheck2, count: sent.length },
@@ -341,7 +333,7 @@ const Documents = ({ documents, auth }: Props) => {
 
     return (
         <>
-            <Navbar notifications={notifications} />
+            <Navbar />
             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* Enhanced Header Section */}

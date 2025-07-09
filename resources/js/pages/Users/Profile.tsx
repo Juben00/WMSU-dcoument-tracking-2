@@ -33,7 +33,6 @@ interface PasswordFormData {
 
 const Profile = ({ user }: Props) => {
     const [activeTab, setActiveTab] = useState(0);
-    const [notifications, setNotifications] = useState<any[]>([]);
 
     const { data: profileData, setData: setProfileData, patch, processing: profileProcessing, errors: profileErrors } = useForm<ProfileFormData>({
         first_name: user.first_name,
@@ -50,13 +49,6 @@ const Profile = ({ user }: Props) => {
         password: '',
         password_confirmation: '',
     });
-
-    useEffect(() => {
-        fetch('/notifications')
-            .then(res => res.json())
-            .then(data => setNotifications(data))
-            .catch(() => setNotifications([]));
-    }, []);
 
     const handleProfileSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -104,7 +96,7 @@ const Profile = ({ user }: Props) => {
     return (
         <>
             <Head title="Profile Settings" />
-            <Navbar notifications={notifications} />
+            <Navbar />
             <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* Header Section */}

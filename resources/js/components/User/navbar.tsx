@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, router } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import WmsuLogo from '../WmsuLogo';
-import { usePage } from '@inertiajs/react';
-import { PageProps as InertiaPageProps } from '@inertiajs/core';
 import { FileText, Users, User, LogOut, Building, Bell, XCircle, Inbox, LayoutGrid, Menu, ChevronDown } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from "../ui/tooltip";
 import AppearanceToggleDropdown from '../appearance-dropdown';
+import { PageProps as InertiaPageProps } from '@inertiajs/core';
 
 interface AuthUser {
     role?: string;
@@ -27,36 +26,88 @@ interface PageProps extends InertiaPageProps {
     notifications: any[];
 }
 
-interface NavbarProps {
-    notifications?: any[];
-}
+const Navbar = () => {
+    const page = usePage<PageProps>();
+    const { auth, notifications } = page.props;
 
-const Navbar = ({ notifications = [] }: NavbarProps) => {
     const [menuOpen, setMenuOpen] = useState(false);
     const [notifOpen, setNotifOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
+    const [localNotifications, setLocalNotifications] = useState(notifications || []);
+    const [isMarkingAsRead, setIsMarkingAsRead] = useState(false);
+    const [markingNotifications, setMarkingNotifications] = useState<Set<string>>(new Set());
     const notifRef = useRef<HTMLDivElement>(null);
     const menuRef = useRef<HTMLDivElement>(null);
     const profileRef = useRef<HTMLDivElement>(null);
 
-    const page = usePage<PageProps>();
-    const { auth } = page.props;
     const role = auth?.user?.role || 'user';
     const currentUrl = page.url;
 
-    // Calculate unread notifications
-    const unreadCount = notifications.filter(n => !n.read_at).length;
+    // Update local notifications when props change
+    useEffect(() => {
+        setLocalNotifications(notifications || []);
+    }, [notifications]);
 
-    // Handler to mark all as read and refetch notifications
+    const unreadCount = localNotifications.filter((n: any) => !n.read_at).length;
+
     const handleMarkAllAsRead = () => {
-        router.post(route('/notifications/read-all'), {}, {
+        if (isMarkingAsRead) return;
+
+        setIsMarkingAsRead(true);
+
+        // Use Inertia router instead of fetch
+        router.post('/notifications/read-all', {}, {
             onSuccess: () => {
-                window.location.reload();
+                // Update local state to mark all notifications as read
+                setLocalNotifications((prev: any[]) =>
+                    prev.map((notif: any) => ({
+                        ...notif,
+                        read_at: notif.read_at || new Date().toISOString()
+                    }))
+                );
+                setNotifOpen(false);
+                setIsMarkingAsRead(false);
+            },
+            onError: () => {
+                console.error('Failed to mark notifications as read');
+                setIsMarkingAsRead(false);
             }
         });
     };
 
-    // Close dropdowns on outside click
+    const handleMarkAsRead = (notificationId: string) => {
+        if (markingNotifications.has(notificationId)) return;
+
+        setMarkingNotifications(prev => new Set(prev).add(notificationId));
+
+        // Use Inertia router instead of fetch
+        router.post(`/notifications/${notificationId}/read`, {}, {
+            onSuccess: () => {
+                // Update local state to mark this notification as read
+                setLocalNotifications((prev: any[]) =>
+                    prev.map((notif: any) =>
+                        notif.id === notificationId
+                            ? { ...notif, read_at: notif.read_at || new Date().toISOString() }
+                            : notif
+                    )
+                );
+                setMarkingNotifications(prev => {
+                    const newSet = new Set(prev);
+                    newSet.delete(notificationId);
+                    return newSet;
+                });
+            },
+            onError: () => {
+                console.error('Error marking notification as read');
+                setMarkingNotifications(prev => {
+                    const newSet = new Set(prev);
+                    newSet.delete(notificationId);
+                    return newSet;
+                });
+            }
+        });
+    };
+
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
@@ -122,12 +173,8 @@ const Navbar = ({ notifications = [] }: NavbarProps) => {
         <nav className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-lg border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16">
-                    {/* Left: Logo and Title */}
                     <div className="flex items-center flex-shrink-0">
-                        <Link
-                            href="/dashboard"
-                            className="flex items-center gap-3 hover:opacity-90 transition-all duration-200 group"
-                        >
+                        <Link href="/dashboard" className="flex items-center gap-3 hover:opacity-90 transition-all duration-200 group">
                             <div className="rounded-lg p-2">
                                 <WmsuLogo className="h-8 w-8 text-red-600 dark:text-red-400" />
                             </div>
@@ -138,7 +185,6 @@ const Navbar = ({ notifications = [] }: NavbarProps) => {
                         </Link>
                     </div>
 
-                    {/* Center: Navigation Items (Desktop) */}
                     <div className="hidden md:flex items-center space-x-1">
                         {currentNavItems.map((item) => {
                             const isActive = currentUrl === item.href || (currentUrl.startsWith(item.href) && item.href !== '/');
@@ -158,9 +204,7 @@ const Navbar = ({ notifications = [] }: NavbarProps) => {
                         })}
                     </div>
 
-                    {/* Right: Actions */}
                     <div className="flex items-center gap-2">
-                        {/* Theme Toggle */}
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <div className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
@@ -170,7 +214,6 @@ const Navbar = ({ notifications = [] }: NavbarProps) => {
                             <TooltipContent>Toggle theme</TooltipContent>
                         </Tooltip>
 
-                        {/* Notifications */}
                         <div className="relative" ref={notifRef}>
                             <Tooltip>
                                 <TooltipTrigger asChild>
@@ -191,37 +234,43 @@ const Navbar = ({ notifications = [] }: NavbarProps) => {
                                 <TooltipContent>Notifications</TooltipContent>
                             </Tooltip>
 
-                            {/* Notifications Dropdown */}
                             {notifOpen && (
                                 <div className="absolute right-0 mt-2 w-96 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-50 animate-in slide-in-from-top-2 duration-200">
                                     <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                                         <h3 className="font-semibold text-gray-900 dark:text-white">Notifications</h3>
-                                        {notifications.length > 0 && (
+                                        {localNotifications.length > 0 && (
                                             <button
                                                 onClick={handleMarkAllAsRead}
                                                 className="text-xs text-red-600 dark:text-red-400 hover:underline font-medium px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                                                disabled={isMarkingAsRead}
                                             >
-                                                Mark all as read
+                                                {isMarkingAsRead ? 'Marking...' : 'Mark all as read'}
                                             </button>
                                         )}
                                     </div>
                                     <div className="max-h-80 overflow-y-auto">
-                                        {notifications.length === 0 ? (
+                                        {localNotifications.length === 0 ? (
                                             <div className="flex flex-col items-center justify-center p-8 text-gray-500 dark:text-gray-400">
                                                 <Inbox className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" />
                                                 <p className="text-sm">No new notifications</p>
                                             </div>
                                         ) : (
-                                            notifications.map((notif: any, index) => (
-                                                <div key={notif.id} className={`p-4 border-b border-gray-100 dark:border-gray-700 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${!notif.read_at ? 'bg-red-50/50 dark:bg-red-900/10' : ''}`}>
+                                            localNotifications.map((notif: any) => (
+                                                <div
+                                                    key={notif.id}
+                                                    className={`p-4 border-b border-gray-100 dark:border-gray-700 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${!notif.read_at ? 'cursor-pointer bg-red-50/50 dark:bg-red-900/10' : ''} ${markingNotifications.has(notif.id) ? 'opacity-50' : ''}`}
+                                                    onClick={() => !notif.read_at && !markingNotifications.has(notif.id) && handleMarkAsRead(notif.id)}
+                                                >
                                                     <div className="flex items-start gap-3">
                                                         <div className="flex-shrink-0 w-8 h-8 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
-                                                            <Bell className="w-4 h-4 text-red-600 dark:text-red-400" />
+                                                            {markingNotifications.has(notif.id) ? (
+                                                                <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                                                            ) : (
+                                                                <Bell className="w-4 h-4 text-red-600 dark:text-red-400" />
+                                                            )}
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="text-sm text-gray-900 dark:text-white font-medium">
-                                                                {notif.data.message}
-                                                            </p>
+                                                            <p className="text-sm text-gray-900 dark:text-white font-medium">{notif.data.message}</p>
                                                             {notif.data.document_name && (
                                                                 <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                                                                     Document: {notif.data.document_name}
@@ -231,9 +280,7 @@ const Navbar = ({ notifications = [] }: NavbarProps) => {
                                                                 {new Date(notif.created_at).toLocaleDateString()}
                                                             </p>
                                                         </div>
-                                                        {!notif.read_at && (
-                                                            <div className="w-2 h-2 bg-red-500 rounded-full flex-shrink-0 mt-2"></div>
-                                                        )}
+                                                        {!notif.read_at && !markingNotifications.has(notif.id) && <div className="w-2 h-2 bg-red-500 rounded-full flex-shrink-0 mt-2"></div>}
                                                     </div>
                                                 </div>
                                             ))
@@ -243,7 +290,6 @@ const Navbar = ({ notifications = [] }: NavbarProps) => {
                             )}
                         </div>
 
-                        {/* Profile Dropdown */}
                         <div className="relative" ref={profileRef}>
                             <button
                                 className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 ${profileOpen ? 'bg-gray-100 dark:bg-gray-800' : ''
@@ -256,7 +302,6 @@ const Navbar = ({ notifications = [] }: NavbarProps) => {
                                 <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
                             </button>
 
-                            {/* Profile Dropdown Menu */}
                             {profileOpen && (
                                 <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-50 animate-in slide-in-from-top-2 duration-200">
                                     <div className="p-4 border-b border-gray-200 dark:border-gray-700">
@@ -265,12 +310,8 @@ const Navbar = ({ notifications = [] }: NavbarProps) => {
                                                 {auth?.user?.name ? getInitials(auth.user.name) : 'U'}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                                    {auth?.user?.name || 'User'}
-                                                </p>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                                                    {auth?.user?.email || 'user@example.com'}
-                                                </p>
+                                                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{auth?.user?.name || 'User'}</p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{auth?.user?.email || 'user@example.com'}</p>
                                                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400 mt-1">
                                                     {role === 'admin' ? 'Administrator' : 'User'}
                                                 </span>
@@ -288,6 +329,7 @@ const Navbar = ({ notifications = [] }: NavbarProps) => {
                                         <Link
                                             href="/logout"
                                             method="post"
+                                            as="button"
                                             className="flex items-center gap-3 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                                         >
                                             <LogOut className="w-4 h-4" />
@@ -298,7 +340,6 @@ const Navbar = ({ notifications = [] }: NavbarProps) => {
                             )}
                         </div>
 
-                        {/* Mobile menu button */}
                         <button
                             className="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                             onClick={() => setMenuOpen(!menuOpen)}
@@ -310,12 +351,8 @@ const Navbar = ({ notifications = [] }: NavbarProps) => {
                 </div>
             </div>
 
-            {/* Mobile Menu */}
             {menuOpen && (
-                <div
-                    ref={menuRef}
-                    className="md:hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 animate-in slide-in-from-top-2 duration-200"
-                >
+                <div ref={menuRef} className="md:hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 animate-in slide-in-from-top-2 duration-200">
                     <div className="px-4 py-4 space-y-2">
                         {currentNavItems.map((item) => {
                             const isActive = currentUrl === item.href || (currentUrl.startsWith(item.href) && item.href !== '/');
@@ -344,6 +381,7 @@ const Navbar = ({ notifications = [] }: NavbarProps) => {
                             <Link
                                 href="/logout"
                                 method="post"
+                                as="button"
                                 className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors"
                             >
                                 <LogOut className="w-5 h-5" />

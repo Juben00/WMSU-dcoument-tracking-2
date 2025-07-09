@@ -23,7 +23,8 @@ class AppServiceProvider extends ServiceProvider
     {
         Inertia::share('notifications', function () {
             if (Auth::check()) {
-                return Auth::user()->unreadNotifications()->orderBy('created_at', 'desc')->get();
+                // Share all notifications (read and unread), latest first, limit 20
+                return Auth::user()->notifications()->orderBy('created_at', 'desc')->take(20)->get();
             }
             return [];
         });
