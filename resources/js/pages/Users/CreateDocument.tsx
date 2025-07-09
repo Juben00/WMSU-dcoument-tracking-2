@@ -182,9 +182,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
                     title: 'Document Submitted!',
                     text: 'Your document has been sent successfully.',
                     confirmButtonColor: '#b91c1c',
-                }).then(() => {
-                    window.location.href = '/documents';
-                });
+                })
             },
             onError: (errors) => {
                 setIsSubmitting(false);

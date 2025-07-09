@@ -109,11 +109,14 @@ class DocumentController extends Controller
         $document->owner->notify(new InAppNotification('Your document has been forwarded.', ['document_id' => $document->id, 'document_name' => $document->subject]));
 
         // After forwarding document
+        $forwardedTo = User::with('department')->find($request->forward_to_id);
+        $forwardedToName = $forwardedTo ? $forwardedTo->first_name . ' ' . $forwardedTo->last_name : 'Unknown User';
+        $forwardedToDept = $forwardedTo && $forwardedTo->department ? $forwardedTo->department->name : 'No Department';
         DocumentActivityLog::create([
             'document_id' => $document->id,
             'user_id' => Auth::id(),
             'action' => 'forwarded',
-            'description' => 'Document forwarded to user ID: ' . $request->forward_to_id,
+            'description' => "Document forwarded to {$forwardedToName} ({$forwardedToDept})",
             'created_at' => now(),
         ]);
 
@@ -222,31 +225,37 @@ class DocumentController extends Controller
         if ($isFinalApprover && $request->status === 'approved') {
             $document->update(['status' => 'approved']);
             $document->owner->notify(new InAppNotification('Your document was approved by the final approver.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+            $user = Auth::user();
+            $dept = $user->department ? $user->department->name : 'No Department';
             DocumentActivityLog::create([
                 'document_id' => $document->id,
                 'user_id' => Auth::id(),
                 'action' => 'approved',
-                'description' => 'Document approved by user.',
+                'description' => "Document approved by {$user->first_name} {$user->last_name} ({$dept})",
                 'created_at' => now(),
             ]);
         } elseif ($isFinalApprover && $request->status === 'rejected') {
             $document->update(['status' => 'rejected']);
             $document->owner->notify(new InAppNotification('Your document was rejected by the final approver.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+            $user = Auth::user();
+            $dept = $user->department ? $user->department->name : 'No Department';
             DocumentActivityLog::create([
                 'document_id' => $document->id,
                 'user_id' => Auth::id(),
                 'action' => 'rejected',
-                'description' => 'Document rejected by user.',
+                'description' => "Document rejected by {$user->first_name} {$user->last_name} ({$dept})",
                 'created_at' => now(),
             ]);
         } elseif ($isFinalApprover && $request->status === 'returned') {
             $document->update(['status' => 'returned']);
             $document->owner->notify(new InAppNotification('Your document was returned by the final approver.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+            $user = Auth::user();
+            $dept = $user->department ? $user->department->name : 'No Department';
             DocumentActivityLog::create([
                 'document_id' => $document->id,
                 'user_id' => Auth::id(),
                 'action' => 'returned',
-                'description' => 'Document returned by user.',
+                'description' => "Document returned by {$user->first_name} {$user->last_name} ({$dept})",
                 'created_at' => now(),
             ]);
         }
@@ -607,11 +616,13 @@ class DocumentController extends Controller
         $document->delete();
 
         // Log document deletion (history)
+        $user = Auth::user();
+        $dept = $user->department ? $user->department->name : 'No Department';
         DocumentActivityLog::create([
             'document_id' => $document->id,
             'user_id' => Auth::id(),
             'action' => 'deleted',
-            'description' => 'Document deleted by user.',
+            'description' => "Document deleted by {$user->first_name} {$user->last_name} ({$dept})",
             'created_at' => now(),
         ]);
 
@@ -644,11 +655,15 @@ class DocumentController extends Controller
             'public_token' => null,
         ]);
 
+        // Get user and department information for logging
+        $user = Auth::user();
+        $dept = $user->department ? $user->department->name : 'No Department';
+
         DocumentActivityLog::create([
             'document_id' => $document->id,
             'user_id' => Auth::id(),
             'action' => 'unpublished',
-            'description' => 'Document unpublished.',
+            'description' => "Document unpublished by {$user->first_name} {$user->last_name} ({$dept})",
             'created_at' => now(),
         ]);
 

@@ -304,7 +304,11 @@ class UserController extends Controller
             'document_id' => $document->id,
             'user_id' => Auth::id(),
             'action' => 'document_sent',
-            'description' => 'Sent document: ' . $document->subject . ' (ID: ' . $document->id . ')',
+            'description' => 'Sent document: ' . $document->subject . ' to ' . $document->recipients->map(function($recipient) {
+                $user = $recipient->user;
+                $dept = $user && $user->department ? $user->department->name : 'No Department';
+                return $user->first_name . ' ' . $user->last_name . ' (' . $dept . ')';
+            })->implode(', '),
             'created_at' => now(),
         ]);
 
