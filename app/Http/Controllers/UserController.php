@@ -269,7 +269,7 @@ class UserController extends Controller
         foreach ($request->file('files') as $file) {
             $filePath = $file->store('documents', 'public');
             $document->files()->create([
-                'file_path' => 'public/' . $filePath,
+                'file_path' => $filePath,
                 'original_filename' => $file->getClientOriginalName(),
                 'mime_type' => $file->getMimeType(),
                 'file_size' => $file->getSize(),
@@ -340,7 +340,6 @@ class UserController extends Controller
         // Save SVG to storage
         $barcodePath = 'barcodes/document_' . $document->id . '_' . $barcodeValue . '.svg';
         Storage::disk('public')->put($barcodePath, $barcodeSvg);
-        $barcodePath = 'public/' . $barcodePath;
 
         // Save to document
         $document->update([
@@ -458,7 +457,7 @@ class UserController extends Controller
             foreach ($request->file('files') as $file) {
                 $filePath = $file->store('documents', 'public');
                 $doc->files()->create([
-                    'file_path' => 'public/' . $filePath,
+                    'file_path' => $filePath,
                     'original_filename' => $file->getClientOriginalName(),
                     'mime_type' => $file->getMimeType(),
                     'file_size' => $file->getSize(),
