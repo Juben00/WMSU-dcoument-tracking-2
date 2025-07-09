@@ -336,6 +336,32 @@ class UserController extends Controller
             ]);
         }
 
+        // Generate barcode at the moment the document is sent
+        $currentUser = Auth::user();
+        $department = $currentUser->department;
+        $departmentCode = $department ? $department->code : 'NOCODE';
+        $timestamp = now()->format('YmdHis'); // Format: YYYYMMDDHHMMSS
+        $userId = $currentUser->id;
+
+        // Generate unique barcode value: Department Code + Timestamp + User ID
+        $barcodeValue = $departmentCode . $timestamp . $userId;
+
+        // Generate barcode SVG
+        $generator = new BarcodeGeneratorSVG();
+        $barcodeSvg = $generator->getBarcode($barcodeValue, $generator::TYPE_CODE_128);
+
+        // Save SVG to storage
+        $barcodePath = 'barcodes/document_' . $document->id . '_' . $barcodeValue . '.svg';
+        Storage::disk('public')->put($barcodePath, $barcodeSvg);
+        $barcodePath = 'public/'. $barcodePath;
+
+        // Save to document
+        $document->update([
+            'barcode_path' => $barcodePath,
+            'barcode_value' => $barcodeValue,
+        ]);
+
+
         // Reload recipients and their users so the activity log can access user info
         $document->load('recipients.user');
 
