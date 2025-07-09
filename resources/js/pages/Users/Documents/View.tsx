@@ -245,8 +245,8 @@ const formatActivityLogAction = (action: string) => {
             return 'Document Deleted';
         case 'document_deleted':
             return 'Document Deleted';
-        case 'document_sent':
-            return 'Document Sent';
+        default:
+            return action;
     }
 };
 
