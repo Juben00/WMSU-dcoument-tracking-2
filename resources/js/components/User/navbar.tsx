@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, router } from '@inertiajs/react';
-import { route } from 'ziggy-js';
 import WmsuLogo from '../WmsuLogo';
 import { usePage } from '@inertiajs/react';
 import { PageProps as InertiaPageProps } from '@inertiajs/core';
@@ -50,7 +49,7 @@ const Navbar = ({ notifications = [] }: NavbarProps) => {
 
     // Handler to mark all as read and refetch notifications
     const handleMarkAllAsRead = () => {
-        router.post(route('notifications.readAll'), {}, {
+        router.post(route('/notifications/read-all'), {}, {
             onSuccess: () => {
                 window.location.reload();
             }
@@ -287,7 +286,7 @@ const Navbar = ({ notifications = [] }: NavbarProps) => {
                                             Profile Settings
                                         </Link>
                                         <Link
-                                            href={route('logout')}
+                                            href="/logout"
                                             method="post"
                                             className="flex items-center gap-3 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                                         >
@@ -343,7 +342,7 @@ const Navbar = ({ notifications = [] }: NavbarProps) => {
                                 Profile Settings
                             </Link>
                             <Link
-                                href={route('logout')}
+                                href="/logout"
                                 method="post"
                                 className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors"
                             >
