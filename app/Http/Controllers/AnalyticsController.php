@@ -493,20 +493,176 @@ class AnalyticsController extends Controller
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
-        $callback = function() use ($data) {
+        $callback = function() use ($data, $reportType) {
             $file = fopen('php://output', 'w');
 
-            // Write headers based on data structure
-            if (isset($data['user_activity'])) {
-                fputcsv($file, ['Name', 'Email', 'Role', 'Activity Count']);
-                foreach ($data['user_activity'] as $row) {
+            // Title and metadata
+            fputcsv($file, [ucwords(str_replace('_', ' ', $reportType)) . ' Report']);
+            fputcsv($file, ['Generated:', date('Y-m-d H:i')]);
+            if (isset($data['period'])) {
+                fputcsv($file, ['Period:', $data['period']]);
+            }
+            fputcsv($file, []); // Blank line
+
+            switch ($reportType) {
+                case 'user_activity':
+                    fputcsv($file, ['Name', 'Email', 'Role', 'Activity Count']);
+                    fputcsv($file, ['Full name of the user', "User's email address", "User's role", 'Number of activities performed']);
+                    $totalUsers = 0;
+                    $totalActivities = 0;
+                    if (isset($data['user_activity'])) {
+                        foreach ($data['user_activity'] as $row) {
+                            fputcsv($file, [
+                                $row->first_name . ' ' . $row->last_name,
+                                $row->email,
+                                ucfirst($row->role),
+                                number_format($row->activity_count),
+                            ]);
+                            $totalUsers++;
+                            $totalActivities += $row->activity_count;
+                        }
+                    }
+                    fputcsv($file, []);
+                    fputcsv($file, ['Total Users', $totalUsers]);
+                    fputcsv($file, ['Total Activities', number_format($totalActivities)]);
+                    break;
+                case 'document_flow':
+                    // Document Creation Summary
+                    if (isset($data['document_creation'])) {
+                        fputcsv($file, ['Document Creation Summary']);
+                        fputcsv($file, ['Date', 'Created Count']);
+                        fputcsv($file, ['Date of creation', 'Number of documents created on this date']);
+                        $totalCreated = 0;
+                        foreach ($data['document_creation'] as $row) {
+                            fputcsv($file, [
+                                date('Y-m-d', strtotime($row->date)),
+                                number_format($row->created_count),
+                            ]);
+                            $totalCreated += $row->created_count;
+                        }
+                        fputcsv($file, []);
+                        fputcsv($file, ['Total Documents Created', number_format($totalCreated)]);
+                        fputcsv($file, []);
+                    }
+                    // Status Changes
+                    if (isset($data['status_changes'])) {
+                        fputcsv($file, ['Document Status Distribution']);
+                        fputcsv($file, ['Status', 'Count']);
+                        fputcsv($file, ['Document status', 'Number of documents with this status']);
+                        $statusTotal = 0;
+                        foreach ($data['status_changes'] as $row) {
+                            fputcsv($file, [
+                                ucfirst($row->status),
+                                number_format($row->count),
+                            ]);
+                            $statusTotal += $row->count;
+                        }
+                        fputcsv($file, []);
+                        fputcsv($file, ['Total Status Changes', number_format($statusTotal)]);
+                        fputcsv($file, []);
+                    }
+                    // Published Documents
+                    if (isset($data['published_documents'])) {
+                        fputcsv($file, ['Published Documents Summary']);
+                        fputcsv($file, ['Date', 'Published Count']);
+                        fputcsv($file, ['Date of publication', 'Number of documents published on this date']);
+                        $totalPublished = 0;
+                        foreach ($data['published_documents'] as $row) {
+                            fputcsv($file, [
+                                date('Y-m-d', strtotime($row->date)),
+                                number_format($row->published_count),
+                            ]);
+                            $totalPublished += $row->published_count;
+                        }
+                        fputcsv($file, []);
+                        fputcsv($file, ['Total Published Documents', number_format($totalPublished)]);
+                        fputcsv($file, []);
+                    }
+                    break;
+                case 'department_performance':
+                    fputcsv($file, ['Department Performance Summary']);
+                    fputcsv($file, ['Department', 'Total Documents', 'Approved', 'Rejected', 'Avg Processing Time (Hours)']);
                     fputcsv($file, [
-                        $row->first_name . ' ' . $row->last_name,
-                        $row->email,
-                        $row->role,
-                        $row->activity_count,
+                        'Department name',
+                        'Total number of documents processed',
+                        'Number of approved documents',
+                        'Number of rejected documents',
+                        'Average processing time in hours',
                     ]);
-                }
+                    $totalDepartments = 0;
+                    $totalDocs = 0;
+                    $totalApproved = 0;
+                    $totalRejected = 0;
+                    $totalAvgTime = 0;
+                    if (isset($data['department_stats'])) {
+                        foreach ($data['department_stats'] as $row) {
+                            fputcsv($file, [
+                                $row->name,
+                                number_format($row->total_documents),
+                                number_format($row->approved_documents),
+                                number_format($row->rejected_documents),
+                                number_format(round($row->avg_processing_time, 2), 2),
+                            ]);
+                            $totalDepartments++;
+                            $totalDocs += $row->total_documents;
+                            $totalApproved += $row->approved_documents;
+                            $totalRejected += $row->rejected_documents;
+                            $totalAvgTime += $row->avg_processing_time;
+                        }
+                    }
+                    fputcsv($file, []);
+                    fputcsv($file, ['Total Departments', $totalDepartments]);
+                    fputcsv($file, ['Total Documents', number_format($totalDocs)]);
+                    fputcsv($file, ['Total Approved', number_format($totalApproved)]);
+                    fputcsv($file, ['Total Rejected', number_format($totalRejected)]);
+                    if ($totalDepartments > 0) {
+                        fputcsv($file, ['Average Processing Time (All Departments)', number_format($totalAvgTime / $totalDepartments, 2)]);
+                    }
+                    break;
+                case 'processing_times':
+                    fputcsv($file, ['Processing Times Summary']);
+                    fputcsv($file, ['Status', 'Average Hours', 'Min Hours', 'Max Hours', 'Total Count']);
+                    fputcsv($file, [
+                        'Document status',
+                        'Average processing time in hours',
+                        'Minimum processing time in hours',
+                        'Maximum processing time in hours',
+                        'Total number of documents with this status',
+                    ]);
+                    $totalCount = 0;
+                    $totalAvg = 0;
+                    $totalMin = 0;
+                    $totalMax = 0;
+                    $statusRows = 0;
+                    if (isset($data['processing_times'])) {
+                        foreach ($data['processing_times'] as $row) {
+                            fputcsv($file, [
+                                ucfirst($row->status),
+                                number_format(round($row->avg_hours, 2), 2),
+                                number_format(round($row->min_hours, 2), 2),
+                                number_format(round($row->max_hours, 2), 2),
+                                number_format($row->total_count),
+                            ]);
+                            $totalCount += $row->total_count;
+                            $totalAvg += $row->avg_hours;
+                            $totalMin += $row->min_hours;
+                            $totalMax += $row->max_hours;
+                            $statusRows++;
+                        }
+                    }
+                    fputcsv($file, []);
+                    fputcsv($file, ['Total Statuses', $statusRows]);
+                    fputcsv($file, ['Total Documents', number_format($totalCount)]);
+                    if ($statusRows > 0) {
+                        fputcsv($file, ['Average of Averages', number_format($totalAvg / $statusRows, 2)]);
+                        fputcsv($file, ['Average of Minimums', number_format($totalMin / $statusRows, 2)]);
+                        fputcsv($file, ['Average of Maximums', number_format($totalMax / $statusRows, 2)]);
+                    }
+                    break;
+                default:
+                    // Unknown report type
+                    fputcsv($file, ['No data available for this report type.']);
+                    break;
             }
 
             fclose($file);
