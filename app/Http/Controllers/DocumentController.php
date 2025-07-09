@@ -81,8 +81,8 @@ class DocumentController extends Controller
             foreach ($request->file('files') as $file) {
                 $filePath = $file->store('documents', 'public');
                 $document->files()->create([
-                    'file_path' => $filePath,
-                    'original_filename' => $file->getClientOriginalName(),
+                    'file_path' => 'public/'. $filePath,
+                    'original_filename' =>  $file->getClientOriginalName(),
                     'mime_type' => $file->getMimeType(),
                     'file_size' => $file->getSize(),
                     'uploaded_by' => Auth::id(),
@@ -177,7 +177,7 @@ class DocumentController extends Controller
             foreach ($request->file('attachment_files') as $file) {
                 $filePath = $file->store('documents', 'public');
                 $document->files()->create([
-                    'file_path' => $filePath,
+                    'file_path' => 'public/'. $filePath,
                     'original_filename' => $file->getClientOriginalName(),
                     'mime_type' => $file->getMimeType(),
                     'file_size' => $file->getSize(),
