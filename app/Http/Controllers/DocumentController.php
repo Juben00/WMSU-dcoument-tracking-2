@@ -619,16 +619,16 @@ class DocumentController extends Controller
         // Delete the document (this will cascade delete files and recipients)
         $document->delete();
 
-        // Log document deletion (history)
-        $user = Auth::user();
-        $dept = $user->department ? $user->department->name : 'No Department';
-        DocumentActivityLog::create([
-            'document_id' => $document->id,
-            'user_id' => Auth::id(),
-            'action' => 'deleted',
-            'description' => "Document deleted by {$user->first_name} {$user->last_name} ({$dept})",
-            'created_at' => now(),
-        ]);
+        // // Log document deletion (history)
+        // $user = Auth::user();
+        // $dept = $user->department ? $user->department->name : 'No Department';
+        // DocumentActivityLog::create([
+        //     'document_id' => $document->id,
+        //     'user_id' => Auth::id(),
+        //     'action' => 'deleted',
+        //     'description' => "Document deleted by {$user->first_name} {$user->last_name} ({$dept})",
+        //     'created_at' => now(),
+        // ]);
 
         // Log document deletion
         UserActivityLog::create([
