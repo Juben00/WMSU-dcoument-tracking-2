@@ -34,6 +34,7 @@ import ReportGenerator from '@/components/Admin/ReportGenerator';
 
 // Chart components (we'll use a simple chart library)
 import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart as RechartsBarChart, Bar, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
+import { BreadcrumbItem } from '@/types';
 
 interface AnalyticsProps {
     userAnalytics: {
@@ -114,8 +115,15 @@ export default function Analytics({
         }
     };
 
+    const breadcrumbs: BreadcrumbItem[] = [
+        {
+            title: 'Analytics & Reporting',
+            href: '/Admins/analytics',
+        },
+    ];
+
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Analytics & Reporting" />
             <div className="flex h-full flex-1 flex-col gap-6 p-6">
                 {/* Header */}

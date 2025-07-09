@@ -6,6 +6,8 @@ import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
 import { BookOpen, Building, Folder, LayoutGrid, Users, Users2, FileText, ListChecks, BarChart3 } from 'lucide-react';
 import AppLogo from './app-logo';
+import WmsuLogo from './WmsuLogo';
+import { useSidebar } from '@/components/ui/sidebar';
 
 const mainNavItems: NavItem[] = [
     {
@@ -54,6 +56,7 @@ const footerNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
+    const { state } = useSidebar();
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -61,7 +64,13 @@ export function AppSidebar() {
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
                             <Link href="/dashboard" prefetch>
-                                <AppLogo />
+                                {state === 'collapsed' ? (
+                                    <div className="flex items-center justify-center">
+                                        <WmsuLogo className="size-8" />
+                                    </div>
+                                ) : (
+                                    <AppLogo />
+                                )}
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>

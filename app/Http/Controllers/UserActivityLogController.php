@@ -30,7 +30,8 @@ class UserActivityLogController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        $logs = $query->orderByDesc('created_at')->paginate(20);
+        $logs = $query->orderBy('created_at', 'asc')->paginate(20);
+
         $users = User::select('id', 'first_name', 'last_name', 'email')->get();
 
         return Inertia::render('Admins/ActivityLogs', [
