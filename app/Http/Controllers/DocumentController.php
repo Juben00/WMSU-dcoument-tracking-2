@@ -516,7 +516,56 @@ class DocumentController extends Controller
 
     public function destroy(Document $document)
     {
+        // Delete physical files from storage
+        foreach ($document->files as $file) {
+            if (Storage::disk('public')->exists($file->file_path)) {
+                Storage::disk('public')->delete($file->file_path);
+            }
+        }
+
+        // Delete barcode file if exists
+        if ($document->barcode_path && Storage::disk('public')->exists($document->barcode_path)) {
+            Storage::disk('public')->delete($document->barcode_path);
+        }
+
+        // Delete notifications related to this document
+        // Get all users involved with this document (owner and recipients)
+        $involvedUserIds = collect([$document->owner_id])
+            ->merge($document->recipients->pluck('user_id'))
+            ->unique();
+
+                // Delete notifications for all involved users that reference this document
+        foreach ($involvedUserIds as $userId) {
+            $user = User::find($userId);
+            if ($user) {
+                // Delete notifications that contain this document_id in their data
+                $deletedCount = $user->notifications()
+                    ->whereRaw("JSON_EXTRACT(data, '$.data.document_id') = ?", [$document->id])
+                    ->delete();
+
+                // Log the deletion for debugging
+                Log::info('Deleted notifications for user', [
+                    'user_id' => $userId,
+                    'document_id' => $document->id,
+                    'deleted_count' => $deletedCount
+                ]);
+            }
+        }
+
+        // Also delete any notifications for all users that might reference this document
+        // This is a fallback to catch any notifications that might have been missed
+        $totalDeleted = \Illuminate\Notifications\DatabaseNotification::whereRaw("JSON_EXTRACT(data, '$.data.document_id') = ?", [$document->id])->delete();
+
+        if ($totalDeleted > 0) {
+            Log::info('Deleted additional notifications for document', [
+                'document_id' => $document->id,
+                'total_deleted' => $totalDeleted
+            ]);
+        }
+
+        // Delete the document (this will cascade delete files and recipients)
         $document->delete();
+
         return redirect()->route('users.documents')->with('success', 'Document deleted successfully.');
     }
 
