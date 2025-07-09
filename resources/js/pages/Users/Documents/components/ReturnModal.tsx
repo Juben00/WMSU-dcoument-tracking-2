@@ -210,7 +210,7 @@ const ReturnModal: React.FC<ReturnModalProps> = ({ isOpen, onClose, documentId }
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center justify-between">
-                                                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate max-w-[200px]">
                                                         {fileWithPreview.file.name}
                                                     </p>
                                                     <Button

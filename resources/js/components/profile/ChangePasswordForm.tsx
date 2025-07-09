@@ -52,7 +52,7 @@ const ChangePasswordForm: React.FC<Props> = ({ data, errors, processing, onChang
                             type="password"
                             value={data.current_password}
                             onChange={(e) => onChange("current_password", e.target.value)}
-                            className={`h-12 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 ${errors.current_password ? "border-red-500 focus:border-red-500 focus:ring-red-200 dark:focus:ring-red-800" : "focus:border-blue-500 focus:ring-blue-200 dark:focus:border-blue-400 dark:focus:ring-blue-800"}`}
+                            className={`bg-white dark:bg-gray-800 h-12 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 ${errors.current_password ? "border-red-500 focus:border-red-500 focus:ring-red-200 dark:focus:ring-red-800" : "focus:border-blue-500 focus:ring-blue-200 dark:focus:border-blue-400 dark:focus:ring-blue-800"}`}
                             placeholder="Enter your current password"
                             required
                         />
@@ -74,7 +74,7 @@ const ChangePasswordForm: React.FC<Props> = ({ data, errors, processing, onChang
                             type="password"
                             value={data.password}
                             onChange={(e) => onChange("password", e.target.value)}
-                            className={`h-12 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 ${errors.password ? "border-red-500 focus:border-red-500 focus:ring-red-200 dark:focus:ring-red-800" : "focus:border-blue-500 focus:ring-blue-200 dark:focus:border-blue-400 dark:focus:ring-blue-800"}`}
+                            className={`bg-white dark:bg-gray-800 h-12 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 ${errors.password ? "border-red-500 focus:border-red-500 focus:ring-red-200 dark:focus:ring-red-800" : "focus:border-blue-500 focus:ring-blue-200 dark:focus:border-blue-400 dark:focus:ring-blue-800"}`}
                             placeholder="Enter your new password"
                             required
                         />
@@ -96,7 +96,7 @@ const ChangePasswordForm: React.FC<Props> = ({ data, errors, processing, onChang
                             type="password"
                             value={data.password_confirmation}
                             onChange={(e) => onChange("password_confirmation", e.target.value)}
-                            className={`h-12 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 ${errors.password_confirmation ? "border-red-500 focus:border-red-500 focus:ring-red-200 dark:focus:ring-red-800" : "focus:border-blue-500 focus:ring-blue-200 dark:focus:border-blue-400 dark:focus:ring-blue-800"}`}
+                            className={`bg-white dark:bg-gray-800 h-12 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 ${errors.password_confirmation ? "border-red-500 focus:border-red-500 focus:ring-red-200 dark:focus:ring-red-800" : "focus:border-blue-500 focus:ring-blue-200 dark:focus:border-blue-400 dark:focus:ring-blue-800"}`}
                             placeholder="Confirm your new password"
                             required
                         />

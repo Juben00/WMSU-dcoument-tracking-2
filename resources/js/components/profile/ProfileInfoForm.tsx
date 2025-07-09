@@ -65,9 +65,9 @@ const ProfileInfoForm: React.FC<Props> = ({ data, errors, processing, onChange, 
                                 id="first_name"
                                 value={data.first_name}
                                 onChange={(e) => handleInputChange("first_name", e.target.value)}
-                                className={`h-12 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 ${errors.first_name
-                                        ? "border-rose-500 focus:border-rose-500 focus:ring-rose-200 dark:focus:ring-rose-800"
-                                        : "focus:border-rose-500 focus:ring-rose-200 dark:focus:border-rose-400 dark:focus:ring-rose-800"
+                                className={`bg-white dark:bg-gray-800 h-12 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 ${errors.first_name
+                                    ? "border-rose-500 focus:border-rose-500 focus:ring-rose-200 dark:focus:ring-rose-800"
+                                    : "focus:border-rose-500 focus:ring-rose-200 dark:focus:border-rose-400 dark:focus:ring-rose-800"
                                     }`}
                                 placeholder="Enter your first name"
                                 required
@@ -88,9 +88,9 @@ const ProfileInfoForm: React.FC<Props> = ({ data, errors, processing, onChange, 
                                 id="last_name"
                                 value={data.last_name}
                                 onChange={(e) => handleInputChange("last_name", e.target.value)}
-                                className={`h-12 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 ${errors.last_name
-                                        ? "border-rose-500 focus:border-rose-500 focus:ring-rose-200 dark:focus:ring-rose-800"
-                                        : "focus:border-rose-500 focus:ring-rose-200 dark:focus:border-rose-400 dark:focus:ring-rose-800"
+                                className={`bg-white dark:bg-gray-800 h-12 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 ${errors.last_name
+                                    ? "border-rose-500 focus:border-rose-500 focus:ring-rose-200 dark:focus:ring-rose-800"
+                                    : "focus:border-rose-500 focus:ring-rose-200 dark:focus:border-rose-400 dark:focus:ring-rose-800"
                                     }`}
                                 placeholder="Enter your last name"
                                 required
@@ -114,9 +114,9 @@ const ProfileInfoForm: React.FC<Props> = ({ data, errors, processing, onChange, 
                                 id="middle_name"
                                 value={data.middle_name}
                                 onChange={(e) => handleInputChange("middle_name", e.target.value)}
-                                className={`h-12 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 ${errors.middle_name
-                                        ? "border-rose-500 focus:border-rose-500 focus:ring-rose-200 dark:focus:ring-rose-800"
-                                        : "focus:border-rose-500 focus:ring-rose-200 dark:focus:border-rose-400 dark:focus:ring-rose-800"
+                                className={`bg-white dark:bg-gray-800 h-12 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 ${errors.middle_name
+                                    ? "border-rose-500 focus:border-rose-500 focus:ring-rose-200 dark:focus:ring-rose-800"
+                                    : "focus:border-rose-500 focus:ring-rose-200 dark:focus:border-rose-400 dark:focus:ring-rose-800"
                                     }`}
                                 placeholder="Enter your middle name"
                             />
@@ -136,9 +136,9 @@ const ProfileInfoForm: React.FC<Props> = ({ data, errors, processing, onChange, 
                                 id="suffix"
                                 value={data.suffix}
                                 onChange={(e) => handleInputChange("suffix", e.target.value)}
-                                className={`h-12 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 ${errors.suffix
-                                        ? "border-rose-500 focus:border-rose-500 focus:ring-rose-200 dark:focus:ring-rose-800"
-                                        : "focus:border-rose-500 focus:ring-rose-200 dark:focus:border-rose-400 dark:focus:ring-rose-800"
+                                className={`bg-white dark:bg-gray-800 h-12 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 ${errors.suffix
+                                    ? "border-rose-500 focus:border-rose-500 focus:ring-rose-200 dark:focus:ring-rose-800"
+                                    : "focus:border-rose-500 focus:ring-rose-200 dark:focus:border-rose-400 dark:focus:ring-rose-800"
                                     }`}
                                 placeholder="Jr., Sr., III, etc."
                             />
@@ -169,9 +169,9 @@ const ProfileInfoForm: React.FC<Props> = ({ data, errors, processing, onChange, 
                             </Label>
                             <Select value={data.gender} onValueChange={(value) => handleInputChange("gender", value)}>
                                 <SelectTrigger
-                                    className={`h-12 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 ${errors.gender
-                                            ? "border-rose-500 focus:border-rose-500 focus:ring-rose-200 dark:focus:ring-rose-800"
-                                            : "focus:border-rose-500 focus:ring-rose-200 dark:focus:border-rose-400 dark:focus:ring-rose-800"
+                                    className={`bg-white dark:bg-gray-800 h-12 dark:border-gray-600 dark:text-gray-100 ${errors.gender
+                                        ? "border-rose-500 focus:border-rose-500 focus:ring-rose-200 dark:focus:ring-rose-800"
+                                        : "focus:border-rose-500 focus:ring-rose-200 dark:focus:border-rose-400 dark:focus:ring-rose-800"
                                         }`}
                                 >
                                     <SelectValue placeholder="Select your gender" className="dark:text-gray-400" />
@@ -207,9 +207,9 @@ const ProfileInfoForm: React.FC<Props> = ({ data, errors, processing, onChange, 
                                 id="position"
                                 value={data.position}
                                 onChange={(e) => handleInputChange("position", e.target.value)}
-                                className={`h-12 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 ${errors.position
-                                        ? "border-rose-500 focus:border-rose-500 focus:ring-rose-200 dark:focus:ring-rose-800"
-                                        : "focus:border-rose-500 focus:ring-rose-200 dark:focus:border-rose-400 dark:focus:ring-rose-800"
+                                className={`bg-white dark:bg-gray-800 h-12 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 ${errors.position
+                                    ? "border-rose-500 focus:border-rose-500 focus:ring-rose-200 dark:focus:ring-rose-800"
+                                    : "focus:border-rose-500 focus:ring-rose-200 dark:focus:border-rose-400 dark:focus:ring-rose-800"
                                     }`}
                                 placeholder="Enter your position"
                                 required
@@ -243,9 +243,9 @@ const ProfileInfoForm: React.FC<Props> = ({ data, errors, processing, onChange, 
                             type="email"
                             value={data.email}
                             onChange={(e) => handleInputChange("email", e.target.value)}
-                            className={`h-12 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 ${errors.email
-                                    ? "border-rose-500 focus:border-rose-500 focus:ring-rose-200 dark:focus:ring-rose-800"
-                                    : "focus:border-rose-500 focus:ring-rose-200 dark:focus:border-rose-400 dark:focus:ring-rose-800"
+                            className={`bg-white dark:bg-gray-800 h-12 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 ${errors.email
+                                ? "border-rose-500 focus:border-rose-500 focus:ring-rose-200 dark:focus:ring-rose-800"
+                                : "focus:border-rose-500 focus:ring-rose-200 dark:focus:border-rose-400 dark:focus:ring-rose-800"
                                 }`}
                             placeholder="Enter your email address"
                             required

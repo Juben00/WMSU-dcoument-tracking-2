@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Navbar from '@/components/User/navbar';
 import { useForm, router } from '@inertiajs/react';
 import { User } from '@/types';
@@ -51,9 +51,12 @@ const Spinner = () => (
 );
 
 const CreateDocument = ({ auth, departments }: Props) => {
-    const [filePreviews, setFilePreviews] = useState<string[]>([]);
+    // Use a ref to store object URLs for cleanup
+    const fileObjectUrls = useRef<string[]>([]);
+    const [filePreviews, setFilePreviews] = useState<Array<{ type: 'image' | 'file', value: string, name: string }>>([]);
     const [sendToId, setSendToId] = useState<number | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isDragActive, setIsDragActive] = useState(false);
     const { data, setData, post, processing, errors } = useForm<FormData>({
         subject: '',
         order_number: '',
@@ -65,6 +68,8 @@ const CreateDocument = ({ auth, departments }: Props) => {
         initial_recipient_id: null,
         through_user_ids: []
     });
+
+    const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -193,30 +198,64 @@ const CreateDocument = ({ auth, departments }: Props) => {
         });
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files) {
-            const files = Array.from(e.target.files);
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent<HTMLDivElement>) => {
+        let files: File[] = [];
+        if ('dataTransfer' in e) {
+            e.preventDefault();
+            files = Array.from(e.dataTransfer.files);
+        } else if (e.target.files) {
+            files = Array.from(e.target.files);
+        }
+        if (files.length > 0) {
+            // Clean up old object URLs
+            fileObjectUrls.current.forEach(url => URL.revokeObjectURL(url));
+            fileObjectUrls.current = [];
             setData('files', files);
-
-            // Create previews for image files
-            const previews = files.map(file => {
+            // Only create previews for images
+            const previews = files.map((file): { type: 'image' | 'file', value: string, name: string } => {
                 if (file.type.startsWith('image/')) {
-                    return URL.createObjectURL(file);
+                    const url = URL.createObjectURL(file);
+                    fileObjectUrls.current.push(url);
+                    return { type: 'image', value: url, name: file.name };
                 }
-                return '';
+                return { type: 'file', value: '', name: file.name };
             });
             setFilePreviews(previews);
+        }
+        setIsDragActive(false);
+    };
+
+    // Handle removal of a selected file
+    const handleRemoveFile = (index: number) => {
+        const newFiles = data.files.filter((_, i) => i !== index);
+        setData('files', newFiles);
+        // Clean up and regenerate previews
+        if (filePreviews[index] && filePreviews[index].type === 'image') {
+            URL.revokeObjectURL(filePreviews[index].value);
+        }
+        // Regenerate previews for remaining files
+        const previews = newFiles.map((file): { type: 'image' | 'file', value: string, name: string } => {
+            if (file.type.startsWith('image/')) {
+                const url = URL.createObjectURL(file);
+                fileObjectUrls.current.push(url);
+                return { type: 'image', value: url, name: file.name };
+            }
+            return { type: 'file', value: '', name: file.name };
+        });
+        setFilePreviews(previews);
+        // If no files left, clear the file input value
+        if (newFiles.length === 0 && fileInputRef.current) {
+            fileInputRef.current.value = '';
         }
     };
 
     // Cleanup preview URLs when component unmounts
     React.useEffect(() => {
         return () => {
-            filePreviews.forEach(preview => {
-                if (preview) URL.revokeObjectURL(preview);
-            });
+            fileObjectUrls.current.forEach(url => URL.revokeObjectURL(url));
+            fileObjectUrls.current = [];
         };
-    }, [filePreviews]);
+    }, []);
 
     const recipientOptions = departments
         .filter((department) => department.contact_person)
@@ -313,6 +352,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                             name="order_number"
                                             id="order_number"
                                             required
+                                            placeholder="e.g. 2024-00123"
                                             className="mt-2 block w-full rounded-lg border-gray-300 dark:border-gray-600 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                                             value={data.order_number}
                                             onChange={e => setData('order_number', e.target.value)}
@@ -329,6 +369,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                         name="subject"
                                         id="subject"
                                         required
+                                        placeholder="Enter document subject"
                                         className="mt-2 block w-full rounded-lg border-gray-300 dark:border-gray-600 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                                         value={data.subject}
                                         onChange={e => setData('subject', e.target.value)}
@@ -343,6 +384,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                         name="description"
                                         id="description"
                                         rows={4}
+                                        placeholder="Describe the document's purpose, details, or instructions"
                                         className="mt-2 block w-full rounded-lg border-gray-300 dark:border-gray-600 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                                         value={data.description}
                                         onChange={e => setData('description', e.target.value)}
@@ -376,7 +418,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                             setData('recipient_ids', selected);
                                             setData('initial_recipient_id', selected[0] ?? null);
                                         }}
-                                        placeholder="Select recipients"
+                                        placeholder="Select one or more recipients"
                                     />
                                     {errors.recipient_ids && (
                                         <div className="text-red-500 text-xs mt-1">{errors.recipient_ids}</div>
@@ -422,7 +464,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                             onChange={(selected) => {
                                                 setData('through_user_ids', selected);
                                             }}
-                                            placeholder="Select optional through users"
+                                            placeholder="Select optional through users (optional)"
                                         />
                                         <p className="text-xs text-red-600 dark:text-red-400 mt-2">
                                             Document will be sent to the first selected through user, then to the main recipient.
@@ -448,15 +490,34 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                     <Upload className="w-4 h-4" />
                                     Select Files <span className="text-red-500">*</span>
                                 </label>
-                                <Input
-                                    type="file"
-                                    name="files"
-                                    id="files"
-                                    multiple
-                                    required
-                                    className="mt-2 block w-full text-sm text-gray-500 dark:text-gray-400 file:px-4 file:py-2 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-red-50 dark:file:bg-red-900/20 file:text-red-700 dark:file:text-red-400 hover:file:bg-red-100 dark:hover:file:bg-red-900/30 focus:outline-none focus:ring-2 focus:ring-red-200 transition bg-white dark:bg-gray-800"
-                                    onChange={handleFileChange}
-                                />
+                                <div
+                                    className={`relative flex flex-col items-center justify-center border-2 border-dashed ${isDragActive ? 'border-red-600 bg-red-50 dark:bg-red-900/20' : 'border-red-400 dark:border-red-600'} rounded-lg p-6 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/10 transition cursor-pointer`}
+                                    onClick={() => fileInputRef.current?.click()}
+                                    style={{ minHeight: 120 }}
+                                    tabIndex={0}
+                                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click(); }}
+                                    role="button"
+                                    aria-label="Upload files"
+                                    onDrop={handleFileChange}
+                                    onDragOver={e => { e.preventDefault(); setIsDragActive(true); }}
+                                    onDragLeave={e => { e.preventDefault(); setIsDragActive(false); }}
+                                >
+                                    <Upload className="w-10 h-10 text-red-500 dark:text-red-400 mb-2" />
+                                    <span className="text-gray-700 dark:text-gray-200 font-medium">Drag & drop files here, or <span className="underline text-red-600 dark:text-red-400">browse</span></span>
+                                    <span className="text-xs text-gray-400 dark:text-gray-500 mt-1">You can select multiple files</span>
+                                    <Input
+                                        type="file"
+                                        name="files"
+                                        id="files"
+                                        multiple
+                                        required
+                                        ref={fileInputRef}
+                                        className="absolute inset-0 opacity-0 cursor-pointer"
+                                        onChange={handleFileChange}
+                                        tabIndex={-1}
+                                        aria-label="Select files to upload"
+                                    />
+                                </div>
                                 {errors.files && <div className="text-red-500 text-xs mt-1">{errors.files}</div>}
                             </div>
 
@@ -469,18 +530,35 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                     </h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                                         {filePreviews.map((preview, index) => (
-                                            preview && (
-                                                <div key={index} className="relative group rounded-xl overflow-hidden shadow-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:shadow-xl transition-all duration-200">
+                                            <div key={index} className="relative group rounded-xl overflow-hidden shadow-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:shadow-xl transition-all duration-200 flex flex-col items-center justify-center h-48">
+                                                {/* Delete button */}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveFile(index)}
+                                                    className="absolute size-6 top-2 right-2 bg-red-600 text-white cursor-pointer rounded-full hover:bg-red-700 transition z-10"
+                                                    title="Remove file"
+                                                >
+                                                    &times;
+                                                </button>
+                                                {preview.type === 'image' && (
                                                     <img
-                                                        src={preview}
+                                                        src={preview.value}
                                                         alt={`Preview ${index + 1}`}
-                                                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-200"
+                                                        className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-200"
                                                     />
-                                                    <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white px-4 py-3 text-sm font-medium">
-                                                        {data.files[index]?.name}
+                                                )}
+                                                {preview.type === 'file' && (
+                                                    <div className="flex flex-col items-center justify-center h-full w-full">
+                                                        <FileText className="w-12 h-12 text-gray-400 mb-2" />
+                                                        <span className="text-gray-700 dark:text-gray-200 text-sm text-center px-2 break-all">{preview.name}</span>
                                                     </div>
-                                                </div>
-                                            )
+                                                )}
+                                                {preview.type === 'image' && (
+                                                    <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white px-4 py-3 text-sm font-medium">
+                                                        {preview.name}
+                                                    </div>
+                                                )}
+                                            </div>
                                         ))}
                                     </div>
                                 </div>

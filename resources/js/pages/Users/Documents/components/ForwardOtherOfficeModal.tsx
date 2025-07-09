@@ -223,7 +223,7 @@ const ForwardOtherOfficeModal: React.FC<ForwardModalProps> = ({
                             <SelectContent className="dark:bg-gray-800 dark:border-gray-600">
                                 {users.length > 0 ? users.map((user) => (
                                     <SelectItem key={user.id} value={user.id.toString()} className="dark:text-gray-100 dark:hover:bg-gray-700">
-                                        {user.first_name} {user.last_name} | {user.department?.name || 'No Department'} | {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                                        <span className="truncate max-w-[320px] block">{user.first_name} {user.last_name} | {user.department?.name || 'No Department'} | {user.role.charAt(0).toUpperCase() + user.role.slice(1)}</span>
                                     </SelectItem>
                                 )) : <SelectItem value="no-users" className="dark:text-gray-100 dark:hover:bg-gray-700">No users found</SelectItem>}
                             </SelectContent>
@@ -266,7 +266,7 @@ const ForwardOtherOfficeModal: React.FC<ForwardModalProps> = ({
 
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center justify-between">
-                                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate max-w-[200px]">
                                                     {fileWithPreview.file.name}
                                                 </p>
                                                 <Button

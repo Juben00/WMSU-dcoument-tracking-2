@@ -372,7 +372,7 @@ const Documents = ({ documents, auth }: Props) => {
                                         <button
                                             key={tab.id}
                                             onClick={() => setActiveTab(tab.id)}
-                                            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${activeTab === tab.id
+                                            className={`bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${activeTab === tab.id
                                                 ? "bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg"
                                                 : "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
                                                 }`}
@@ -387,7 +387,7 @@ const Documents = ({ documents, auth }: Props) => {
                                 })}
                                 <Link
                                     href="/published-documents"
-                                    className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${typeof window !== "undefined" && window.location.pathname === "/published-documents"
+                                    className={`bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${typeof window !== "undefined" && window.location.pathname === "/published-documents"
                                         ? "bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg"
                                         : "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
                                         }`}
@@ -420,7 +420,7 @@ const Documents = ({ documents, auth }: Props) => {
                                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
                                         <Input
                                             type="text"
-                                            className="pl-10 h-12 border-slate-200 dark:border-slate-700 focus:ring-red-500 focus:border-red-500"
+                                            className="bg-white dark:bg-gray-800 pl-10 h-12 border-slate-200 dark:border-slate-700 focus:ring-red-500 focus:border-red-500"
                                             placeholder="Search by subject, ID, order number, or barcode..."
                                             value={search}
                                             onChange={(e) => setSearch(e.target.value)}
@@ -430,7 +430,7 @@ const Documents = ({ documents, auth }: Props) => {
 
                                 {/* Status Filter */}
                                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                    <SelectTrigger className="h-12">
+                                    <SelectTrigger className="bg-white dark:bg-gray-800 h-12">
                                         <Filter className="w-4 h-4 mr-2" />
                                         <SelectValue placeholder="All Status" />
                                     </SelectTrigger>
@@ -446,7 +446,7 @@ const Documents = ({ documents, auth }: Props) => {
 
                                 {/* Document Type Filter */}
                                 <Select value={documentTypeFilter} onValueChange={setDocumentTypeFilter}>
-                                    <SelectTrigger className="h-12">
+                                    <SelectTrigger className="bg-white dark:bg-gray-800 h-12">
                                         <FileSearch className="w-4 h-4 mr-2" />
                                         <SelectValue placeholder="All Types" />
                                     </SelectTrigger>
@@ -462,7 +462,7 @@ const Documents = ({ documents, auth }: Props) => {
                                 {/* Fiscal Year Filter - Only show for archived tab */}
                                 {activeTab === "archived" && (
                                     <Select value={fiscalYearFilter} onValueChange={setFiscalYearFilter}>
-                                        <SelectTrigger className="h-12">
+                                        <SelectTrigger className="bg-white dark:bg-gray-800 h-12">
                                             <Calendar className="w-4 h-4 mr-2" />
                                             <SelectValue placeholder="All Years" />
                                         </SelectTrigger>
@@ -480,7 +480,7 @@ const Documents = ({ documents, auth }: Props) => {
                                 {/* Archived Type Filter - Only show for archived tab */}
                                 {activeTab === "archived" && (
                                     <Select value={archivedFilter} onValueChange={setArchivedFilter}>
-                                        <SelectTrigger className="h-12">
+                                        <SelectTrigger className="bg-white dark:bg-gray-800 h-12">
                                             <Archive className="w-4 h-4 mr-2" />
                                             <SelectValue placeholder="All Types" />
                                         </SelectTrigger>
@@ -497,7 +497,7 @@ const Documents = ({ documents, auth }: Props) => {
                             <div className="flex items-center gap-4">
                                 <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Sort by:</span>
                                 <Select value={sortBy} onValueChange={setSortBy}>
-                                    <SelectTrigger className="w-48">
+                                    <SelectTrigger className="bg-white dark:bg-gray-800 w-48">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>

@@ -41,20 +41,21 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
             <PopoverPrimitive.Trigger asChild>
                 <Button
                     variant="outline"
-                    className="w-full justify-between"
+                    className="w-full justify-between min-h-[2.5rem] max-h-32 overflow-y-auto items-start"
+                    style={{ whiteSpace: 'normal' }}
                 >
-                    <span>
+                    <div className="flex flex-wrap gap-1 w-full text-left pr-2">
                         {selected.length === 0
-                            ? placeholder
+                            ? <span className="text-gray-400">{placeholder}</span>
                             : options
                                 .filter((opt) => selected.includes(opt.value))
                                 .map((opt, idx) => (
-                                    <span key={opt.value} className="inline-block mr-1 align-middle">
+                                    <span key={opt.value} className="inline-block align-middle bg-gray-100 dark:bg-gray-700 rounded px-2 py-0.5 text-xs font-medium text-gray-800 dark:text-gray-200">
                                         {renderSelected ? renderSelected(opt) : opt.label}
-                                        {idx < selected.length - 1 ? ', ' : ''}
+                                        {idx < selected.length - 1 ? ',' : ''}
                                     </span>
                                 ))}
-                    </span>
+                    </div>
                 </Button>
             </PopoverPrimitive.Trigger>
             <PopoverPrimitive.Content className="w-full p-2 bg-white dark:bg-gray-800 rounded shadow-md z-50 border border-gray-200 dark:border-gray-700">
