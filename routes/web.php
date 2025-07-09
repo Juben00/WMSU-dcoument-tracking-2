@@ -9,6 +9,7 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\DepartmentsController;
 use App\Http\Controllers\FirstTimePasswordController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\UserActivityLogController;
 
 Route::get('/', function () {
     if (Auth::check()) {
@@ -52,6 +53,9 @@ Route::middleware(['auth', 'verified', 'require_password_change'])->group(functi
         // Published Documents Management Routes
         Route::get('/Admin/published-documents', [AdminController::class, 'publishedDocuments'])->name('admin.published-documents');
         Route::delete('/Admin/published-documents/{document}', [AdminController::class, 'unpublishDocument'])->name('admin.unpublish-document');
+
+        // Activity Log Route
+        Route::get('/Admin/activity-logs', [UserActivityLogController::class, 'index'])->name('admin.activity-logs');
     });
 
     // User Management Routes

@@ -66,6 +66,11 @@ class User extends Authenticatable
         return $this->belongsTo(Departments::class, 'department_id');
     }
 
+    public function activityLogs(): HasMany
+    {
+        return $this->hasMany(UserActivityLog::class);
+    }
+
     /**
      * Check if the user needs to change their password (first-time login)
      */

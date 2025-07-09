@@ -15,6 +15,7 @@ use Picqer\Barcode\BarcodeGeneratorSVG;
 use Illuminate\Support\Str;
 use App\Models\Departments;
 use App\Notifications\InAppNotification;
+use App\Models\UserActivityLog;
 
 class DocumentController extends Controller
 {
@@ -565,6 +566,15 @@ class DocumentController extends Controller
 
         // Delete the document (this will cascade delete files and recipients)
         $document->delete();
+
+        // Log document deletion
+        UserActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'document_deleted',
+            'description' => 'Deleted document: ' . $document->subject . ' (ID: ' . $document->id . ')',
+            'ip_address' => request()->ip(),
+            'created_at' => now(),
+        ]);
 
         return redirect()->route('users.documents')->with('success', 'Document deleted successfully.');
     }

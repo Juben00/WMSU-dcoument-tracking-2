@@ -17,8 +17,7 @@ use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Log;
 use Picqer\Barcode\BarcodeGeneratorSVG;
 use App\Notifications\InAppNotification;
-
-
+use App\Models\UserActivityLog;
 
 class UserController extends Controller
 {
@@ -87,6 +86,15 @@ class UserController extends Controller
         // Notify the user about their account creation
         $user->notify(new InAppNotification('Your account has been created.', ['user_id' => $user->id]));
 
+        // Log user creation
+        UserActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'user_created',
+            'description' => 'Created user: ' . $user->email,
+            'ip_address' => $request->ip(),
+            'created_at' => now(),
+        ]);
+
         return redirect()->route('users.departments');
     }
 
@@ -107,6 +115,14 @@ class UserController extends Controller
         foreach ($admins as $admin) {
             $admin->notify(new InAppNotification('A user has been deleted.', ['user_id' => $user->id]));
         }
+        // Log user deletion
+        UserActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'user_deleted',
+            'description' => 'Deleted user: ' . $user->email,
+            'ip_address' => request()->ip(),
+            'created_at' => now(),
+        ]);
         return redirect()->route('users.departments');
     }
 
@@ -169,6 +185,15 @@ class UserController extends Controller
         $user = User::find(Auth::id());
         $user->fill($validated);
         $user->save();
+
+        // Log user update
+        UserActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'user_updated',
+            'description' => 'Updated user: ' . $user->email,
+            'ip_address' => $request->ip(),
+            'created_at' => now(),
+        ]);
 
         return redirect()->route('users.profile')->with('success', 'Profile updated successfully.');
     }
@@ -263,6 +288,15 @@ class UserController extends Controller
             'description' => $validated['description'],
             'through_user_ids' => $request->input('through_user_ids', []),
             'status' => 'pending'
+        ]);
+
+        // Log document creation
+        UserActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'document_created',
+            'description' => 'Created document: ' . $document->subject . ' (ID: ' . $document->id . ')',
+            'ip_address' => $request->ip(),
+            'created_at' => now(),
         ]);
 
         // Handle multiple file uploads
@@ -377,6 +411,13 @@ class UserController extends Controller
             }
         }
 
+        // Log the document sent
+        UserActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'document_sent',
+            'description' => 'Document sent to ' . $document->recipients->pluck('user_id')->implode(', '),
+        ]);
+
         return redirect()->route('users.documents')->with('success', 'Document sent successfully.');
 
         } catch (\Throwable $th) {
@@ -451,6 +492,15 @@ class UserController extends Controller
         $doc->description = $validated['description'] ?? '';
         $doc->status = 'pending'; // Reset status so it can be resent
         $doc->save();
+
+        // Log document update
+        UserActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'document_updated',
+            'description' => 'Updated document: ' . $doc->subject . ' (ID: ' . $doc->id . ')',
+            'ip_address' => $request->ip(),
+            'created_at' => now(),
+        ]);
 
         // Handle file uploads (optional: delete old files if needed)
         if ($request->hasFile('files')) {
@@ -548,6 +598,15 @@ class UserController extends Controller
             $admin->notify(new InAppNotification('A user has been updated.', ['user_id' => $user->id]));
         }
         $user->notify(new InAppNotification('Your account has been updated.', ['user_id' => $user->id]));
+
+        // Log user update
+        UserActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'user_updated',
+            'description' => 'Updated user: ' . $user->email,
+            'ip_address' => $request->ip(),
+            'created_at' => now(),
+        ]);
 
         return redirect()->route('users.departments');
     }
