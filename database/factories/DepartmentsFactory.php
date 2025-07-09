@@ -18,6 +18,7 @@ class DepartmentsFactory extends Factory
     {
         return [
             'name' => $this->faker->company(),
+            'code' => $this->faker->unique()->regexify('[A-Z]{3,5}'),
             'description' => $this->faker->sentence(),
             'type' => $this->faker->randomElement(['office', 'college']),
         ];
