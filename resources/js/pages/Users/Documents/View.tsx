@@ -155,6 +155,19 @@ interface Props {
     }>;
 }
 
+interface ActivityLog {
+    id: number;
+    user_id: number;
+    action: string;
+    description: string;
+    created_at: string;
+    user?: {
+        first_name: string;
+        last_name: string;
+        email: string;
+    };
+}
+
 const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -212,7 +225,32 @@ const FileCard = ({ file, documentId, color = 'red' }: { file: any, documentId: 
     </div>
 );
 
-const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers, throughUsers }: Props) => {
+const formatActivityLogAction = (action: string) => {
+    switch (action) {
+        case 'document_sent':
+            return 'Document Sent';
+        case 'forwarded':
+            return 'Document Forwarded';
+        case 'approved':
+            return 'Document Approved';
+        case 'rejected':
+            return 'Document Rejected';
+        case 'returned':
+            return 'Document Returned';
+        case 'published':
+            return 'Document Published';
+        case 'unpublished':
+            return 'Document Unpublished';
+        case 'deleted':
+            return 'Document Deleted';
+        case 'document_deleted':
+            return 'Document Deleted';
+        case 'document_sent':
+            return 'Document Sent';
+    }
+};
+
+const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers, throughUsers, activityLogs = [] }: Props & { activityLogs?: ActivityLog[] }) => {
     const [isForwardModalOpen, setIsForwardModalOpen] = useState(false);
     const [isForwardOtherOfficeModalOpen, setIsForwardOtherOfficeModalOpen] = useState(false);
     const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
@@ -1223,6 +1261,46 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                             </div>
                         </div>
                     )}
+
+                    {/* Document History Section */}
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200 dark:border-gray-600 mt-10">
+                        <div className="p-8">
+                            <div className="flex items-center gap-3 mb-8">
+                                <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
+                                    <BarChart3 className="w-5 h-5 text-white" />
+                                </div>
+                                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Document History</h2>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+                                    <thead>
+                                        <tr>
+                                            <th className="px-4 py-2 border-b">User</th>
+                                            <th className="px-4 py-2 border-b">Action</th>
+                                            <th className="px-4 py-2 border-b">Description</th>
+                                            <th className="px-4 py-2 border-b">Date/Time</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {activityLogs.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={4} className="text-center py-4">No history found.</td>
+                                            </tr>
+                                        ) : (
+                                            activityLogs.map((log) => (
+                                                <tr key={log.id}>
+                                                    <td className="px-4 py-2 border-b">{log.user ? `${log.user.first_name} ${log.user.last_name}` : 'System'}</td>
+                                                    <td className="px-4 py-2 border-b">{formatActivityLogAction(log.action)}</td>
+                                                    <td className="px-4 py-2 border-b">{log.description}</td>
+                                                    <td className="px-4 py-2 border-b">{new Date(log.created_at).toLocaleString()}</td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             {/* Modals */}

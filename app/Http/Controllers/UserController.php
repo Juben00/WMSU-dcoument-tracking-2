@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Log;
 use Picqer\Barcode\BarcodeGeneratorSVG;
 use App\Notifications\InAppNotification;
 use App\Models\UserActivityLog;
+use App\Models\DocumentActivityLog;
 
 class UserController extends Controller
 {
@@ -296,6 +297,14 @@ class UserController extends Controller
             'action' => 'document_created',
             'description' => 'Created document: ' . $document->subject . ' (ID: ' . $document->id . ')',
             'ip_address' => $request->ip(),
+            'created_at' => now(),
+        ]);
+
+        DocumentActivityLog::create([
+            'document_id' => $document->id,
+            'user_id' => Auth::id(),
+            'action' => 'document_sent',
+            'description' => 'Sent document: ' . $document->subject . ' (ID: ' . $document->id . ')',
             'created_at' => now(),
         ]);
 

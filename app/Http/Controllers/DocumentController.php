@@ -16,6 +16,8 @@ use Illuminate\Support\Str;
 use App\Models\Departments;
 use App\Notifications\InAppNotification;
 use App\Models\UserActivityLog;
+use App\Models\DocumentActivityLog;
+use Illuminate\Notifications\DatabaseNotification;
 
 class DocumentController extends Controller
 {
@@ -105,6 +107,15 @@ class DocumentController extends Controller
             $forwardedTo->notify(new InAppNotification('A document has been forwarded to you.', ['document_id' => $document->id, 'document_name' => $document->subject]));
         }
         $document->owner->notify(new InAppNotification('Your document has been forwarded.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+
+        // After forwarding document
+        DocumentActivityLog::create([
+            'document_id' => $document->id,
+            'user_id' => Auth::id(),
+            'action' => 'forwarded',
+            'description' => 'Document forwarded to user ID: ' . $request->forward_to_id,
+            'created_at' => now(),
+        ]);
 
         return redirect()->route('documents.view', $document->id)->with('success', 'Document forwarded successfully');
     }
@@ -211,12 +222,33 @@ class DocumentController extends Controller
         if ($isFinalApprover && $request->status === 'approved') {
             $document->update(['status' => 'approved']);
             $document->owner->notify(new InAppNotification('Your document was approved by the final approver.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+            DocumentActivityLog::create([
+                'document_id' => $document->id,
+                'user_id' => Auth::id(),
+                'action' => 'approved',
+                'description' => 'Document approved by user.',
+                'created_at' => now(),
+            ]);
         } elseif ($isFinalApprover && $request->status === 'rejected') {
             $document->update(['status' => 'rejected']);
             $document->owner->notify(new InAppNotification('Your document was rejected by the final approver.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+            DocumentActivityLog::create([
+                'document_id' => $document->id,
+                'user_id' => Auth::id(),
+                'action' => 'rejected',
+                'description' => 'Document rejected by user.',
+                'created_at' => now(),
+            ]);
         } elseif ($isFinalApprover && $request->status === 'returned') {
             $document->update(['status' => 'returned']);
             $document->owner->notify(new InAppNotification('Your document was returned by the final approver.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+            DocumentActivityLog::create([
+                'document_id' => $document->id,
+                'user_id' => Auth::id(),
+                'action' => 'returned',
+                'description' => 'Document returned by user.',
+                'created_at' => now(),
+            ]);
         }
 
         return redirect()->back()->with('success', 'Response recorded successfully');
@@ -312,6 +344,11 @@ class DocumentController extends Controller
         $documentData['is_final_approver'] = $currentRecipient ? $currentRecipient->is_final_approver : false;
         $documentData['recipient_status'] = $currentRecipient ? $currentRecipient->status : null;
 
+        // Fetch document activity logs
+        $activityLogs = DocumentActivityLog::with('user')
+            ->where('document_id', $document->id)
+            ->get();
+
         return Inertia::render('Users/Documents/View', [
             'document' => $documentData,
             'auth' => [
@@ -319,7 +356,8 @@ class DocumentController extends Controller
             ],
             'users' => $users,
             'otherDepartmentUsers' => $otherOfficeUsers,
-            'throughUsers' => $throughUsers
+            'throughUsers' => $throughUsers,
+            'activityLogs' => $activityLogs,
         ]);
     }
 
@@ -435,6 +473,14 @@ class DocumentController extends Controller
         // Notify the document owner
         $document->owner->notify(new InAppNotification('Your document has been published publicly.', ['document_id' => $document->id, 'document_name' => $document->subject]));
 
+        DocumentActivityLog::create([
+            'document_id' => $document->id,
+            'user_id' => Auth::id(),
+            'action' => 'published',
+            'description' => 'Document published publicly.',
+            'created_at' => now(),
+        ]);
+
         return redirect()->back()->with('success', 'Document published publicly.');
     }
 
@@ -543,19 +589,12 @@ class DocumentController extends Controller
                 $deletedCount = $user->notifications()
                     ->whereRaw("JSON_EXTRACT(data, '$.data.document_id') = ?", [$document->id])
                     ->delete();
-
-                // Log the deletion for debugging
-                Log::info('Deleted notifications for user', [
-                    'user_id' => $userId,
-                    'document_id' => $document->id,
-                    'deleted_count' => $deletedCount
-                ]);
             }
         }
 
         // Also delete any notifications for all users that might reference this document
         // This is a fallback to catch any notifications that might have been missed
-        $totalDeleted = \Illuminate\Notifications\DatabaseNotification::whereRaw("JSON_EXTRACT(data, '$.data.document_id') = ?", [$document->id])->delete();
+        $totalDeleted = DatabaseNotification::whereRaw("JSON_EXTRACT(data, '$.data.document_id') = ?", [$document->id])->delete();
 
         if ($totalDeleted > 0) {
             Log::info('Deleted additional notifications for document', [
@@ -566,6 +605,15 @@ class DocumentController extends Controller
 
         // Delete the document (this will cascade delete files and recipients)
         $document->delete();
+
+        // Log document deletion (history)
+        DocumentActivityLog::create([
+            'document_id' => $document->id,
+            'user_id' => Auth::id(),
+            'action' => 'deleted',
+            'description' => 'Document deleted by user.',
+            'created_at' => now(),
+        ]);
 
         // Log document deletion
         UserActivityLog::create([
@@ -594,6 +642,14 @@ class DocumentController extends Controller
         $document->update([
             'is_public' => false,
             'public_token' => null,
+        ]);
+
+        DocumentActivityLog::create([
+            'document_id' => $document->id,
+            'user_id' => Auth::id(),
+            'action' => 'unpublished',
+            'description' => 'Document unpublished.',
+            'created_at' => now(),
         ]);
 
         return redirect()->back()->with('success', 'Document unpublished successfully.');
