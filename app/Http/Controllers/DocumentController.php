@@ -482,11 +482,15 @@ class DocumentController extends Controller
         // Notify the document owner
         $document->owner->notify(new InAppNotification('Your document has been published publicly.', ['document_id' => $document->id, 'document_name' => $document->subject]));
 
+        // Get user and department information for logging
+        $user = Auth::user();
+        $dept = $user->department ? $user->department->name : 'No Department';
+
         DocumentActivityLog::create([
             'document_id' => $document->id,
             'user_id' => Auth::id(),
             'action' => 'published',
-            'description' => 'Document published publicly.',
+            'description' => "Document published publicly by {$user->first_name} {$user->last_name} ({$dept})",
             'created_at' => now(),
         ]);
 

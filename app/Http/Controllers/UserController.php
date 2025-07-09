@@ -291,40 +291,6 @@ class UserController extends Controller
             'status' => 'pending'
         ]);
 
-        // Log document creation
-        UserActivityLog::create([
-            'user_id' => Auth::id(),
-            'action' => 'document_created',
-            'description' => 'Created document: ' . $document->subject . ' (ID: ' . $document->id . ')',
-            'ip_address' => $request->ip(),
-            'created_at' => now(),
-        ]);
-
-        DocumentActivityLog::create([
-            'document_id' => $document->id,
-            'user_id' => Auth::id(),
-            'action' => 'document_sent',
-            'description' => 'Sent document: ' . $document->subject . ' to ' . $document->recipients->map(function($recipient) {
-                $user = $recipient->user;
-                $dept = $user && $user->department ? $user->department->name : 'No Department';
-                return $user->first_name . ' ' . $user->last_name . ' (' . $dept . ')';
-            })->implode(', '),
-            'created_at' => now(),
-        ]);
-
-        // Handle multiple file uploads
-        foreach ($request->file('files') as $file) {
-            $filePath = $file->store('documents', 'public');
-            $document->files()->create([
-                'file_path' => 'public/'. $filePath,
-                'original_filename' => $file->getClientOriginalName(),
-                'mime_type' => $file->getMimeType(),
-                'file_size' => $file->getSize(),
-                'uploaded_by' => Auth::id(),
-                'upload_type' => 'original',
-            ]);
-        }
-
         // Recipient logic
         if ($validated['document_type'] === 'for_info') {
             // Multi-recipient logic (unchanged)
@@ -370,30 +336,42 @@ class UserController extends Controller
             ]);
         }
 
-         // Generate barcode at the moment the document is sent
-        $currentUser = Auth::user();
-        $department = $currentUser->department;
-        $departmentCode = $department ? $department->code : 'NOCODE';
-        $timestamp = now()->format('YmdHis'); // Format: YYYYMMDDHHMMSS
-        $userId = $currentUser->id;
+        // Reload recipients and their users so the activity log can access user info
+        $document->load('recipients.user');
 
-        // Generate unique barcode value: Department Code + Timestamp + User ID
-        $barcodeValue = $departmentCode . $timestamp . $userId;
-
-        // Generate barcode SVG
-        $generator = new BarcodeGeneratorSVG();
-        $barcodeSvg = $generator->getBarcode($barcodeValue, $generator::TYPE_CODE_128);
-
-        // Save SVG to storage
-        $barcodePath = 'barcodes/document_' . $document->id . '_' . $barcodeValue . '.svg';
-        Storage::disk('public')->put($barcodePath, $barcodeSvg);
-        $barcodePath = 'public/'. $barcodePath;
-
-        // Save to document
-        $document->update([
-            'barcode_path' => $barcodePath,
-            'barcode_value' => $barcodeValue,
+        // Log document creation
+        UserActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'document_created',
+            'description' => 'Created document: ' . $document->subject . ' (ID: ' . $document->id . ')',
+            'ip_address' => $request->ip(),
+            'created_at' => now(),
         ]);
+
+        DocumentActivityLog::create([
+            'document_id' => $document->id,
+            'user_id' => Auth::id(),
+            'action' => 'document_sent',
+            'description' => 'Sent document: ' . $document->subject . ' to ' . $document->recipients->map(function($recipient) {
+                $user = $recipient->user;
+                $dept = $user && $user->department ? $user->department->name : 'No Department';
+                return $user->first_name . ' ' . $user->last_name . ' (' . $dept . ')';
+            })->implode(', '),
+            'created_at' => now(),
+        ]);
+
+        // Handle multiple file uploads
+        foreach ($request->file('files') as $file) {
+            $filePath = $file->store('documents', 'public');
+            $document->files()->create([
+                'file_path' => 'public/'. $filePath,
+                'original_filename' => $file->getClientOriginalName(),
+                'mime_type' => $file->getMimeType(),
+                'file_size' => $file->getSize(),
+                'uploaded_by' => Auth::id(),
+                'upload_type' => 'original',
+            ]);
+        }
 
         // Notify the document owner
         $document->owner->notify(new InAppNotification('Your document has been created and sent.', ['document_id' => $document->id, 'document_name' => $document->subject]));
