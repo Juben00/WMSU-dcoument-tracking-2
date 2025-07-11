@@ -21,7 +21,7 @@ return new class extends Migration
 
         // Add the new unique constraint for all departments: department_id + document_type + order_number
         Schema::table('documents', function (Blueprint $table) {
-            $table->unique(['department_id', 'document_type', 'order_number'], 'documents_dept_type_order_unique');
+            $table->unique(['department_id', 'document_type', 'order_number', 'created_at'], 'documents_dept_type_order_unique');
         });
     }
 
@@ -37,7 +37,7 @@ return new class extends Migration
 
         // Restore the old unique constraint
         Schema::table('documents', function (Blueprint $table) {
-            $table->unique(['department_id', 'order_number'], 'documents_department_order_unique');
+            $table->unique(['department_id', 'order_number', 'created_at'], 'documents_department_order_unique');
         });
     }
 };

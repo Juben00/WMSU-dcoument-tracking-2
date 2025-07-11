@@ -256,13 +256,39 @@ class UserController extends Controller
         $isPresidentOffice = $department && $department->code === 'OP';
 
         // Define validation rules based on department type
-        $orderNumberRule = 'required|string|max:255';
+        // $orderNumberRule = 'required|string|max:255';
+        $orderNumberRule = ['required', 'string', 'max:255'];
+        // Determine current fiscal year (calendar year)
+        $currentYear = now()->year;
         if ($isPresidentOffice) {
-            // For President's office: unique per department, document_type, and order_number
-            $orderNumberRule .= '|unique:documents,order_number,NULL,id,department_id,' . $departmentId . ',document_type,' . $request->input('document_type');
+            // For President's office: unique per department, document_type, and order_number, but only for non-archived and current fiscal year
+            $orderNumberRule[] = function ($attribute, $value, $fail) use ($departmentId, $request, $currentYear) {
+                $exists = Document::where('department_id', $departmentId)
+                    ->where('document_type', $request->input('document_type'))
+                    ->where('order_number', $value)
+                    ->where(function($query) use ($currentYear) {
+                        $query->where('status', '!=', 'archived')
+                              ->whereYear('created_at', $currentYear);
+                    })
+                    ->exists();
+                if ($exists) {
+                    $fail('The order number has already been taken for this department and document type in the current fiscal year.');
+                }
+            };
         } else {
-            // For other departments: unique per department and order_number
-            $orderNumberRule .= '|unique:documents,order_number,NULL,id,department_id,' . $departmentId;
+            // For other departments: unique per department and order_number, but only for non-archived and current fiscal year
+            $orderNumberRule[] = function ($attribute, $value, $fail) use ($departmentId, $currentYear) {
+                $exists = Document::where('department_id', $departmentId)
+                    ->where('order_number', $value)
+                    ->where(function($query) use ($currentYear) {
+                        $query->where('status', '!=', 'archived')
+                              ->whereYear('created_at', $currentYear);
+                    })
+                    ->exists();
+                if ($exists) {
+                    $fail('The order number has already been taken for this department in the current fiscal year.');
+                }
+            };
         }
 
         $validated = $request->validate([
@@ -288,7 +314,7 @@ class UserController extends Controller
             'document_type' => $validated['document_type'],
             'description' => $validated['description'],
             'through_user_ids' => $request->input('through_user_ids', []),
-            'status' => 'pending'
+            'status' => 'pending',
         ]);
 
         // Recipient logic
@@ -488,13 +514,33 @@ class UserController extends Controller
         $isPresidentOffice = $department && $department->code === 'OP';
 
         // Define validation rules based on department type
-        $orderNumberRule = 'required|string|max:255';
+        // $orderNumberRule = 'required|string|max:255';
+        $orderNumberRule = ['required', 'string', 'max:255'];
+        // In updateDocument, skip the current document's id
+        $currentYear = now()->year;
         if ($isPresidentOffice) {
-            // For President's office: unique per department, document_type, and order_number
-            $orderNumberRule .= '|unique:documents,order_number,' . $doc->id . ',id,department_id,' . $doc->department_id . ',document_type,' . $doc->document_type;
+            $orderNumberRule[] = function ($attribute, $value, $fail) use ($doc, $currentYear) {
+                $exists = Document::where('department_id', $doc->department_id)
+                    ->where('document_type', $doc->document_type)
+                    ->where('order_number', $value)
+                    ->whereYear('created_at', $currentYear)
+                    ->where('id', '!=', $doc->id)
+                    ->exists();
+                if ($exists) {
+                    $fail('The order number has already been taken for this department and document type in the current fiscal year.');
+                }
+            };
         } else {
-            // For other departments: unique per department and order_number
-            $orderNumberRule .= '|unique:documents,order_number,' . $doc->id . ',id,department_id,' . $doc->department_id;
+            $orderNumberRule[] = function ($attribute, $value, $fail) use ($doc, $currentYear) {
+                $exists = Document::where('department_id', $doc->department_id)
+                    ->where('order_number', $value)
+                    ->whereYear('created_at', $currentYear)
+                    ->where('id', '!=', $doc->id)
+                    ->exists();
+                if ($exists) {
+                    $fail('The order number has already been taken for this department in the current fiscal year.');
+                }
+            };
         }
 
         $validated = $request->validate([
