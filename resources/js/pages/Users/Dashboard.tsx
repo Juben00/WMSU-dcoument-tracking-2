@@ -11,44 +11,41 @@ import {
     BarChart3,
     TrendingUp,
     Activity,
+    Users,
 } from 'lucide-react';
 
 const statCards = [
     {
         key: 'totalDocuments',
         label: 'Total Documents',
-        icon: <FileText className="text-4xl text-red-600" />,
-        color: 'text-red-600',
-        bg: 'bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700',
-        border: 'border-red-200 dark:border-red-800',
-        hover: 'hover:border-red-300 dark:hover:border-red-700',
+        icon: <FileText className="w-6 h-6 text-white" />,
+        color: 'text-gray-900 dark:text-white',
+        bg: 'bg-gray-100 dark:bg-gray-700',
+        iconBg: 'bg-red-500',
     },
     {
         key: 'pendingDocuments',
         label: 'Pending Documents',
-        icon: <Hourglass className="text-4xl text-red-600" />,
-        color: 'text-red-600',
-        bg: 'bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700',
-        border: 'border-red-200 dark:border-red-800',
-        hover: 'hover:border-red-300 dark:hover:border-red-700',
+        icon: <Hourglass className="w-6 h-6 text-white" />,
+        color: 'text-gray-900 dark:text-white',
+        bg: 'bg-gray-100 dark:bg-gray-700',
+        iconBg: 'bg-red-500',
     },
     {
         key: 'completedDocuments',
         label: 'Completed Documents',
-        icon: <CheckCircle className="text-4xl text-red-600" />,
-        color: 'text-red-600',
-        bg: 'bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700',
-        border: 'border-red-200 dark:border-red-800',
-        hover: 'hover:border-red-300 dark:hover:border-red-700',
+        icon: <CheckCircle className="w-6 h-6 text-white" />,
+        color: 'text-gray-900 dark:text-white',
+        bg: 'bg-gray-100 dark:bg-gray-700',
+        iconBg: 'bg-red-500',
     },
     {
         key: 'publishedDocuments',
         label: 'Published Documents',
-        icon: <Globe className="text-4xl text-red-600" />,
-        color: 'text-red-600',
-        bg: 'bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700',
-        border: 'border-red-200 dark:border-red-800',
-        hover: 'hover:border-red-300 dark:hover:border-red-700',
+        icon: <Globe className="w-6 h-6 text-white" />,
+        color: 'text-gray-900 dark:text-white',
+        bg: 'bg-gray-100 dark:bg-gray-700',
+        iconBg: 'bg-red-500',
     },
 ]
 
@@ -97,144 +94,147 @@ const Dashboard = () => {
             <Navbar />
             <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    {/* Header Section */}
-                    <div className="mb-8">
-                        <div className="flex items-center gap-4">
-                            <div className="p-3 bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-lg">
-                                <BarChart3 className="w-8 h-8 text-white" />
+                    {/* Main Dashboard Card */}
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 mb-8">
+                        <div className="p-6">
+                            {/* Header */}
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-12 h-12 bg-red-500 rounded-lg flex items-center justify-center">
+                                    <BarChart3 className="w-6 h-6 text-white" />
+                                </div>
+                                <div>
+                                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+                                    <p className="text-gray-600 dark:text-gray-400 text-sm">Monitor your document activities and statistics</p>
+                                </div>
                             </div>
-                            <div>
-                                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-                                <p className="text-gray-600 dark:text-gray-300 mt-1">Monitor your document activities and statistics</p>
+
+                            {/* Stats Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                {statCards.map(card => (
+                                    <div key={card.key} className={`${card.bg} rounded-lg p-4 flex items-center gap-3`}>
+                                        <div className={`w-12 h-12 ${card.iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                                            {card.icon}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-red-700 font-medium text-sm">{card.label}</p>
+                                            {loading ? (
+                                                <div className="h-6 w-8 bg-gray-200 dark:bg-gray-600 animate-pulse rounded mt-1" />
+                                            ) : (
+                                                <p className={`text-2xl font-bold ${card.color}`}>{stats?.[card.key] || 0}</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>
 
-                    {/* Stats Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
-                        {statCards.map(card => (
-                            <div key={card.key} className={`rounded-2xl shadow-lg p-8 flex flex-col items-center ${card.bg} border ${card.border} ${card.hover} transition-all duration-200 hover:scale-105 hover:shadow-xl`}>
-                                <div className="p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm mb-4">
-                                    {card.icon}
+                    {/* Recent Activities Card */}
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 mb-8">
+                        <div className="p-6">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-12 h-12 bg-red-500 rounded-lg flex items-center justify-center">
+                                    <Activity className="w-6 h-6 text-white" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2 text-center">{card.label}</h3>
-                                {loading ? (
-                                    <div className="h-12 w-24 bg-gray-200 dark:bg-gray-600 animate-pulse rounded-lg" />
-                                ) : (
-                                    <p className={`text-4xl font-bold ${card.color}`}>{stats?.[card.key] || 0}</p>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Recent Activities */}
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
-                        <div className="p-8">
-                            <div className="flex items-center gap-3 mb-8">
-                                <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
-                                    <Activity className="w-5 h-5 text-white" />
-                                </div>
-                                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Recent Activities</h2>
+                                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Recent Activities</h2>
                             </div>
 
-                            <div className="space-y-4">
+                            <div className="space-y-3">
                                 {loading ? (
                                     Array.from({ length: 3 }).map((_, i) => (
-                                        <div key={i} className="flex items-center p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-xl border border-gray-200 dark:border-gray-600 animate-pulse">
-                                            <div className="h-10 w-10 bg-gray-200 dark:bg-gray-600 rounded-full mr-4" />
+                                        <div key={i} className="flex items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg animate-pulse">
+                                            <div className="h-10 w-10 bg-gray-200 dark:bg-gray-600 rounded-lg mr-4" />
                                             <div className="flex-1">
-                                                <div className="h-5 w-3/4 bg-gray-200 dark:bg-gray-600 rounded mb-3" />
-                                                <div className="h-4 w-1/2 bg-gray-100 dark:bg-gray-500 rounded" />
+                                                <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-600 rounded mb-2" />
+                                                <div className="h-3 w-1/2 bg-gray-100 dark:bg-gray-500 rounded" />
                                             </div>
                                         </div>
                                     ))
                                 ) : stats?.recentActivities?.length ? (
                                     stats.recentActivities.map((activity: any, idx: number) => (
-                                        <div key={idx} className="flex items-center p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-xl border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 transition-all duration-200 hover:shadow-md">
-                                            <div className="mr-4 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-                                                <div className="text-2xl">
+                                        <div key={idx} className="flex items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                                            <div className="w-10 h-10 bg-white dark:bg-gray-800 rounded-lg flex items-center justify-center mr-4">
+                                                <div className="text-lg">
                                                     {statusIcon[activity.status as keyof typeof statusIcon] || <FileText className="text-gray-400" />}
                                                 </div>
                                             </div>
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-3 mb-2">
-                                                    <p className="font-semibold text-gray-900 dark:text-white text-lg">
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <p className="font-medium text-gray-900 dark:text-white text-sm truncate">
                                                         Order No. {activity.order_number} : {activity.subject}
                                                     </p>
-                                                    <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getStatusColor(activity.status)}`}>
+                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(activity.status)} flex-shrink-0`}>
                                                         {activity.status.charAt(0).toUpperCase() + activity.status.slice(1)}
                                                     </span>
                                                 </div>
-                                                <div className="flex items-center justify-between">
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                                                        <Clock className="w-4 h-4" />
-                                                        {activity.created_at ? new Date(activity.created_at).toLocaleString() : ''}
-                                                    </p>
+                                                <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                                                    <Clock className="w-3 h-3 mr-1" />
+                                                    {activity.created_at ? new Date(activity.created_at).toLocaleString() : ''}
                                                 </div>
                                             </div>
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="text-center py-12">
-                                        <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                                            <Activity className="w-8 h-8 text-gray-400" />
+                                    <div className="text-center py-8">
+                                        <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center mx-auto mb-3">
+                                            <Activity className="w-6 h-6 text-gray-400" />
                                         </div>
-                                        <p className="text-gray-500 dark:text-gray-400 font-medium text-lg">No recent activities found.</p>
-                                        <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">Your document activities will appear here.</p>
+                                        <p className="text-gray-500 dark:text-gray-400 font-medium">No recent activities found.</p>
+                                        <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">Your document activities will appear here.</p>
                                     </div>
                                 )}
                             </div>
                         </div>
                     </div>
 
-                    {/* Quick Stats Summary */}
+                    {/* Performance Overview Card */}
                     {!loading && stats && (
-                        <div className="mt-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
-                            <div className="p-8">
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700">
+                            <div className="p-6">
                                 <div className="flex items-center gap-3 mb-6">
-                                    <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
-                                        <TrendingUp className="w-5 h-5 text-white" />
+                                    <div className="w-12 h-12 bg-red-500 rounded-lg flex items-center justify-center">
+                                        <TrendingUp className="w-6 h-6 text-white" />
                                     </div>
                                     <h2 className="text-xl font-bold text-gray-900 dark:text-white">Performance Overview</h2>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-xl p-6 border border-gray-200 dark:border-gray-600">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                                         <div className="flex items-center justify-between mb-2">
-                                            <span className="text-sm font-semibold text-red-700 dark:text-red-400">Completion Rate</span>
-                                            <CheckCircle className="w-5 h-5 text-red-600" />
+                                            <span className="text-sm font-medium text-red-700">Completion Rate</span>
+                                            <CheckCircle className="w-5 h-5 text-red-500" />
                                         </div>
-                                        <p className="text-2xl font-bold text-red-800 dark:text-red-300">
+                                        <p className="text-2xl font-bold text-gray-900 dark:text-white">
                                             {stats.totalDocuments > 0
                                                 ? Math.round((stats.completedDocuments / stats.totalDocuments) * 100)
                                                 : 0}%
                                         </p>
-                                        <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                                             {stats.completedDocuments} of {stats.totalDocuments} documents completed
                                         </p>
                                     </div>
-                                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-xl p-6 border border-gray-200 dark:border-gray-600">
+                                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                                         <div className="flex items-center justify-between mb-2">
-                                            <span className="text-sm font-semibold text-red-700 dark:text-red-400">Publication Rate</span>
-                                            <Globe className="w-5 h-5 text-red-600" />
+                                            <span className="text-sm font-medium text-red-700">Publication Rate</span>
+                                            <Globe className="w-5 h-5 text-red-500" />
                                         </div>
-                                        <p className="text-2xl font-bold text-red-800 dark:text-red-300">
+                                        <p className="text-2xl font-bold text-gray-900 dark:text-white">
                                             {stats.totalDocuments > 0
                                                 ? Math.round((stats.publishedDocuments / stats.totalDocuments) * 100)
                                                 : 0}%
                                         </p>
-                                        <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                                             {stats.publishedDocuments} documents published publicly
                                         </p>
                                     </div>
-                                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-xl p-6 border border-gray-200 dark:border-gray-600">
+                                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                                         <div className="flex items-center justify-between mb-2">
-                                            <span className="text-sm font-semibold text-red-700 dark:text-red-400">Pending Items</span>
-                                            <Hourglass className="w-5 h-5 text-red-600" />
+                                            <span className="text-sm font-medium text-red-700">Pending Items</span>
+                                            <Hourglass className="w-5 h-5 text-red-500" />
                                         </div>
-                                        <p className="text-2xl font-bold text-red-800 dark:text-red-300">
+                                        <p className="text-2xl font-bold text-gray-900 dark:text-white">
                                             {stats.pendingDocuments}
                                         </p>
-                                        <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                                             Documents awaiting action
                                         </p>
                                     </div>

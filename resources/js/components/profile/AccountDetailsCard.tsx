@@ -10,7 +10,6 @@ interface Props {
 }
 
 const AccountDetailsCard: React.FC<Props> = ({ user }) => {
-    // Show a minimal placeholder (or skeleton component) while the user data loads
     if (!user) {
         return (
             <div className="flex h-40 items-center justify-center rounded-lg border border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900">
