@@ -22,9 +22,9 @@ type FormData = {
     description: string;
     files: File[];
     status: 'pending' | 'in_review' | 'approved' | 'rejected' | 'returned';
-    recipient_ids: number[];
-    initial_recipient_id: number | null;
-    through_user_ids: number[];
+    recipient_ids: number[]; // department IDs
+    initial_recipient_id: number | null; // department ID
+    through_department_ids: number[]; // department IDs for through
 }
 
 interface Props {
@@ -66,7 +66,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
         status: 'pending',
         recipient_ids: [],
         initial_recipient_id: null,
-        through_user_ids: []
+        through_department_ids: []
     });
 
     const fileInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -107,8 +107,8 @@ const CreateDocument = ({ auth, departments }: Props) => {
             if (data.recipient_ids.length === 0) {
                 Swal.fire({
                     icon: 'warning',
-                    title: 'No Recipients Selected',
-                    text: 'Please select at least one recipient.',
+                    title: 'No Departments Selected',
+                    text: 'Please select at least one department.',
                     confirmButtonColor: '#b91c1c',
                 });
                 setIsSubmitting(false);
@@ -119,20 +119,20 @@ const CreateDocument = ({ auth, departments }: Props) => {
             if (!sendToId) {
                 Swal.fire({
                     icon: 'warning',
-                    title: 'No Main Recipient Selected',
-                    text: 'Please select the main recipient (Send To).',
+                    title: 'No Main Department Selected',
+                    text: 'Please select the main department (Send To).',
                     confirmButtonColor: '#b91c1c',
                 });
                 setIsSubmitting(false);
                 return;
             }
 
-            // Check if through users include the main recipient
-            if (data.through_user_ids.includes(sendToId)) {
+            // Check if through departments include the main recipient
+            if (data.through_department_ids.includes(sendToId)) {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Invalid Selection',
-                    text: 'The main recipient cannot be selected as a through user.',
+                    text: 'The main department cannot be selected as a through department.',
                     confirmButtonColor: '#b91c1c',
                 });
                 setIsSubmitting(false);
@@ -160,11 +160,11 @@ const CreateDocument = ({ auth, departments }: Props) => {
         } else {
             // Only one recipient for these types
             formData.append('recipient_ids[0]', sendToId!.toString());
-            if (data.through_user_ids.length > 0) {
-                formData.append('initial_recipient_id', data.through_user_ids[0].toString());
-                // Add all through user IDs to the form data
-                data.through_user_ids.forEach((id, idx) => {
-                    formData.append(`through_user_ids[${idx}]`, id.toString());
+            if (data.through_department_ids.length > 0) {
+                formData.append('initial_recipient_id', data.through_department_ids[0].toString());
+                // Add all through department IDs to the form data
+                data.through_department_ids.forEach((id, idx) => {
+                    formData.append(`through_department_ids[${idx}]`, id.toString());
                 });
             }
         }
@@ -255,19 +255,12 @@ const CreateDocument = ({ auth, departments }: Props) => {
         };
     }, []);
 
-    const recipientOptions = departments
-        .filter((department) => department.contact_person)
-        .map((department) => {
-            const role = department.contact_person!.role;
-            const capitalizedRole = role.charAt(0).toUpperCase() + role.slice(1);
-            return {
-                value: department.contact_person!.id,
-                label: `${department.contact_person!.name} | ${department.name} | ${capitalizedRole}`,
-                name: department.contact_person!.name,
-                department: department.name,
-                role: capitalizedRole,
-            };
-        });
+    // Build recipient options from departments (not users)
+    const recipientOptions = departments.map((department) => ({
+        value: department.id,
+        label: department.name,
+    }));
+
 
     const documentTypeOptions = [
         { value: 'special_order', label: 'Special Order' },
@@ -407,7 +400,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                 <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
                                     <label className="text-sm font-semibold text-red-700 dark:text-red-400 mb-2 flex items-center gap-2">
                                         <Users className="w-4 h-4" />
-                                        Send To <span className="text-red-500">*</span>
+                                        Send To Department <span className="text-red-500">*</span>
                                     </label>
                                     <MultiSelect
                                         options={recipientOptions}
@@ -416,7 +409,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                             setData('recipient_ids', selected);
                                             setData('initial_recipient_id', selected[0] ?? null);
                                         }}
-                                        placeholder="Select one or more recipients"
+                                        placeholder="Select one or more departments"
                                     />
                                     {errors.recipient_ids && (
                                         <div className="text-red-500 text-xs mt-1">{errors.recipient_ids}</div>
@@ -426,8 +419,8 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                 <div className="space-y-6">
                                     <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
                                         <label className="text-sm font-semibold text-red-700 dark:text-red-400 mb-2 flex items-center gap-2">
-                                            <UserIcon className="w-4 h-4" />
-                                            Send To <span className="text-red-500">*</span>
+                                            <Building className="w-4 h-4" />
+                                            Send To Department <span className="text-red-500">*</span>
                                         </label>
                                         <Select
                                             value={sendToId ? sendToId.toString() : ''}
@@ -447,25 +440,25 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                             </SelectContent>
                                         </Select>
                                         {!sendToId && (
-                                            <div className="text-red-500 text-xs mt-1">Main recipient is required.</div>
+                                            <div className="text-red-500 text-xs mt-1">Main department is required.</div>
                                         )}
                                     </div>
 
                                     <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
                                         <label className="text-sm font-semibold text-red-700 dark:text-red-400 mb-2 flex items-center gap-2">
-                                            <Users className="w-4 h-4" />
-                                            Send Through <span className="text-gray-400 dark:text-gray-500">(optional)</span>
+                                            <Building className="w-4 h-4" />
+                                            Send Through Department <span className="text-gray-400 dark:text-gray-500">(optional)</span>
                                         </label>
                                         <MultiSelect
                                             options={recipientOptions}
-                                            selected={data.through_user_ids}
+                                            selected={data.through_department_ids}
                                             onChange={(selected) => {
-                                                setData('through_user_ids', selected);
+                                                setData('through_department_ids', selected);
                                             }}
-                                            placeholder="Select optional through users (optional)"
+                                            placeholder="Select optional through departments (optional)"
                                         />
                                         <p className="text-xs text-red-600 dark:text-red-400 mt-2">
-                                            Document will be sent to the first selected through user, then to the main recipient.
+                                            Document will be sent to the first selected through department, then to the main department.
                                         </p>
                                     </div>
                                 </div>

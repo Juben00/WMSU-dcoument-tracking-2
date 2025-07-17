@@ -9,8 +9,8 @@ class DocumentRecipient extends Model
 {
     protected $fillable = [
         'document_id',
-        'user_id',
-        'final_recipient_id',
+        'department_id',
+        'final_recipient_department_id',
         'status',
         'comments',
         'responded_at',
@@ -18,13 +18,11 @@ class DocumentRecipient extends Model
         'forwarded_by',
         'forwarded_to',
         'is_active',
-        'is_final_approver'
     ];
 
     protected $casts = [
         'responded_at' => 'datetime',
         'is_active' => 'boolean',
-        'is_final_approver' => 'boolean'
     ];
 
     public function document(): BelongsTo
@@ -32,9 +30,9 @@ class DocumentRecipient extends Model
         return $this->belongsTo(Document::class);
     }
 
-    public function user(): BelongsTo
+    public function department(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Departments::class, 'department_id');
     }
 
     public function forwardedBy(): BelongsTo
@@ -49,6 +47,6 @@ class DocumentRecipient extends Model
 
     public function finalRecipient(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'final_recipient_id');
+        return $this->belongsTo(Departments::class, 'final_recipient_department_id');
     }
 }

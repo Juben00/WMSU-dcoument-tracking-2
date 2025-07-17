@@ -283,7 +283,7 @@ class DocumentController extends Controller
             abort(403, 'Unauthorized access to document');
         }
 
-        $document->load(['files', 'owner.department', 'recipients.user', 'recipients.forwardedBy', 'recipients.finalRecipient']);
+        $document->load(['files', 'owner.department', 'recipients.department', 'recipients.forwardedBy', 'recipients.finalRecipient']);
 
         // Get users from the same department as the current user, excluding the current user
         $users = User::where('department_id', Auth::user()->department_id)
@@ -291,16 +291,11 @@ class DocumentController extends Controller
             ->with('department')
             ->get();
 
-        // Initialize throughUsers as empty collection
-        $throughUsers = collect();
-
-        // Ensure all users in through_user_ids are included
-        $throughUserIds = $document->through_user_ids ?? [];
-
-        if (!empty($throughUserIds)) {
-            $throughUsers = User::whereIn('id', $throughUserIds)->with('department')->get();
-            // Merge and remove duplicates by id
-            // $users = $users->merge($throughUsers)->unique('id')->values();
+        // throughDepartments: array of department objects (id, name) for through_department_ids
+        $throughDepartmentIds = $document->through_department_ids ?? [];
+        $throughDepartments = collect();
+        if (!empty($throughDepartmentIds)) {
+            $throughDepartments = Departments::whereIn('id', $throughDepartmentIds)->get(['id', 'name']);
         }
 
         // Get users from other departments (excluding current user's department and current user and the document owner), prioritizing 'receiver' or 'admin' roles
@@ -322,29 +317,47 @@ class DocumentController extends Controller
         $documentData = $document->toArray();
         $documentData['owner_id'] = $document->owner_id;
 
-        // Approval chain: recipients ordered by sequence, with user and forwardedBy
-        $approvalChain = $document->recipients()->with(['user.department', 'forwardedBy.department', 'finalRecipient.department'])->orderBy('sequence')->get()->map(function($recipient) {
+        // Approval chain: recipients ordered by sequence, with department and forwardedBy
+        $approvalChain = $document->recipients()->with(['department', 'forwardedBy.department', 'finalRecipient'])->orderBy('sequence')->get()->map(function($recipient) {
             return [
                 'id' => $recipient->id,
-                'user' => $recipient->user,
+                'department' => $recipient->department ? [
+                    'id' => $recipient->department->id,
+                    'name' => $recipient->department->name
+                ] : null,
                 'status' => $recipient->status,
                 'comments' => $recipient->comments,
                 'responded_at' => $recipient->responded_at,
                 'sequence' => $recipient->sequence,
-                'forwarded_by' => $recipient->forwardedBy,
-                'is_final_approver' => $recipient->is_final_approver,
-                'final_recipient' => $recipient->finalRecipient,
+                'forwarded_by' => $recipient->forwardedBy ? [
+                    'id' => $recipient->forwardedBy->id,
+                    'first_name' => $recipient->forwardedBy->first_name,
+                    'last_name' => $recipient->forwardedBy->last_name,
+                    'role' => $recipient->forwardedBy->role,
+                    'department' => $recipient->forwardedBy->department ? [
+                        'id' => $recipient->forwardedBy->department->id,
+                        'name' => $recipient->forwardedBy->department->name
+                    ] : null,
+                ] : null,
+                'is_final_approver' => $recipient->is_final_approver ?? false,
+                'final_recipient' => $recipient->finalRecipient ? [
+                    'id' => $recipient->finalRecipient->id,
+                    'name' => $recipient->finalRecipient->name
+                ] : null,
             ];
         });
         $documentData['approval_chain'] = $approvalChain;
 
         // Get the final recipient information from the first recipient record
-        $firstRecipient = $document->recipients()->with('finalRecipient.department')->first();
-        $documentData['final_recipient'] = $firstRecipient ? $firstRecipient->finalRecipient : null;
+        $firstRecipient = $document->recipients()->with('finalRecipient')->first();
+        $documentData['final_recipient'] = $firstRecipient && $firstRecipient->finalRecipient ? [
+            'id' => $firstRecipient->finalRecipient->id,
+            'name' => $firstRecipient->finalRecipient->name
+        ] : null;
 
         // Check if current user is a recipient and can respond, get the latest data
         $currentRecipient = $document->recipients()
-            ->where('user_id', Auth::id())
+            ->where('department_id', Auth::user()->department_id)
             ->orderByDesc('sequence')
             ->first();
 
@@ -365,7 +378,7 @@ class DocumentController extends Controller
             ],
             'users' => $users,
             'otherDepartmentUsers' => $otherOfficeUsers,
-            'throughUsers' => $throughUsers,
+            'throughUsers' => $throughDepartments,
             'activityLogs' => $activityLogs,
         ]);
     }

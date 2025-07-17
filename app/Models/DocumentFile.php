@@ -33,6 +33,6 @@ class DocumentFile extends Model
 
     public function documentRecipient(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\DocumentRecipient::class, 'document_recipient_id');
+        return $this->belongsTo(DocumentRecipient::class, 'document_recipient_id');
     }
 }

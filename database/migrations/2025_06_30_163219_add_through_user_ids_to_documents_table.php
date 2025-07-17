@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('documents', function (Blueprint $table) {
-            $table->json('through_user_ids')->nullable()->after('description');
+            $table->json('through_department_ids')->nullable()->after('description');
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('documents', function (Blueprint $table) {
-            $table->dropColumn('through_user_ids');
+            $table->dropColumn('through_department_ids');
         });
     }
 };

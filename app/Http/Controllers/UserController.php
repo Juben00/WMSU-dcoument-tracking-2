@@ -137,7 +137,7 @@ class UserController extends Controller
 
         // Get documents where user is a recipient
         $receivedDocuments = Document::whereHas('recipients', function($query) {
-            $query->where('user_id', Auth::id());
+            $query->where('department_id', Auth::user()->department_id);
         })->select('id', 'subject', 'document_type', 'status', 'created_at', 'owner_id', 'is_public', 'barcode_value')->get();
 
         // Get returned documents where user is the owner
@@ -222,24 +222,26 @@ class UserController extends Controller
         }])->get();
 
         // Transform the data to include the contact person for each department
-        $departmentsWithContact = $departments->map(function($department) {
-            $contactPerson = $department->users->first();
-            return [
-                'id' => $department->id,
-                'name' => $department->name,
-                'contact_person' => $contactPerson ? [
-                    'id' => $contactPerson->id,
-                    'name' => $contactPerson->first_name . ' ' . $contactPerson->last_name,
-                    'role' => $contactPerson->role
-                ] : null
-            ];
-        });
+        // $departmentsWithContact = $departments->map(function($department) {
+        //     $contactPerson = $department->users->first();
+        //     return [
+        //         'id' => $department->id,
+        //         'name' => $department->name,
+        //         'contact_person' => $contactPerson ? [
+        //             'id' => $contactPerson->id,
+        //             'name' => $contactPerson->first_name . ' ' . $contactPerson->last_name,
+        //             'role' => $contactPerson->role
+        //         ] : null
+        //     ];
+        // });
+        // get all the departments except the current user's department
+        $departments = Departments::where('id', '!=', Auth::user()->department_id)->get();
 
         return Inertia::render('Users/CreateDocument', [
             'auth' => [
                 'user' => Auth::user()
             ],
-            'departments' => $departmentsWithContact
+            'departments' => $departments
         ]);
     }
 
@@ -299,10 +301,10 @@ class UserController extends Controller
             'files' => 'required|array',
             'files.*' => 'required|file|max:10240', // 10MB max per file
             'recipient_ids' => 'required|array|min:1',
-            'recipient_ids.*' => 'exists:users,id',
-            'initial_recipient_id' => 'nullable|exists:users,id',
-            'through_user_ids' => 'nullable|array',
-            'through_user_ids.*' => 'exists:users,id'
+            'recipient_ids.*' => 'exists:departments,id',
+            'initial_recipient_id' => 'nullable|exists:departments,id',
+            'through_department_ids' => 'nullable|array',
+            'through_department_ids.*' => 'exists:departments,id'
         ]);
 
         // Create the document
@@ -313,7 +315,7 @@ class UserController extends Controller
             'order_number' => $validated['order_number'],
             'document_type' => $validated['document_type'],
             'description' => $validated['description'],
-            'through_user_ids' => $request->input('through_user_ids', []),
+            'through_department_ids' => $request->input('through_department_ids', []),
             'status' => 'pending',
         ]);
 
@@ -321,43 +323,35 @@ class UserController extends Controller
         if ($validated['document_type'] === 'for_info') {
             // Multi-recipient logic (unchanged)
             $sequence = 1;
-            foreach ($validated['recipient_ids'] as $recipientId) {
-                if (!$recipientId) continue;
-
-                // get the admin of the recipient's department
-                $admin = User::where('department_id', User::find($recipientId)->department_id)->where('role', 'admin')->first();
+            foreach ($validated['recipient_ids'] as $recipientDeptId) {
+                if (!$recipientDeptId) continue;
 
                 DocumentRecipient::create([
                     'document_id' => $document->id,
-                    'user_id' => $recipientId,
-                    'final_recipient_id' => $admin->id,
+                    'department_id' => $recipientDeptId,
                     'status' => 'pending',
                     'sequence' => $sequence,
                     'is_active' => true,
-                    'is_final_approver' => User::find($recipientId)->role === 'admin' ? true : false,
                 ]);
                 $sequence++;
             }
         } else {
             // For memorandum, order, special_order documents
-            $sendToId = $request->input('recipient_ids')[0];
-            $throughUserIds = $request->input('through_user_ids', []);
+            $sendToDeptId = $request->input('recipient_ids')[0];
+            $throughDeptIds = $request->input('through_department_ids', []);
 
-            // Get the sendtoId's office admin
-            $officeAdmin = User::where('department_id', User::find($sendToId)->department_id)->where('role', 'admin')->first();
+            // Get the sendToDeptId's office admin
+            // $officeAdmin = User::where('department_id', $sendToDeptId)->where('role', 'admin')->first();
+            // Determine the initial recipient (first through department if any, otherwise the main recipient)
+            $initialRecipientDeptId = !empty($throughDeptIds) ? $throughDeptIds[0] : $sendToDeptId;
 
-            // Determine the initial recipient (first through user if any, otherwise the main recipient)
-            $initialRecipientId = !empty($throughUserIds) ? $throughUserIds[0] : $sendToId;
-
-            // Always create a recipient record with the final recipient as the "send to" user
             DocumentRecipient::create([
                 'document_id' => $document->id,
-                'user_id' => $initialRecipientId, // Initially send to first through user or directly to main recipient
-                'final_recipient_id' => $officeAdmin->id, // Final destination is always the "send to" user
+                'department_id' => $initialRecipientDeptId, // Initially send to first through department or directly to main recipient
+                'final_recipient_department_id' => $sendToDeptId,
                 'status' => 'pending',
                 'sequence' => 1,
                 'is_active' => true,
-                'is_final_approver' => User::find($sendToId)->role === 'admin' ? true : false,
                 'forwarded_by' => null,
             ]);
         }
@@ -389,7 +383,7 @@ class UserController extends Controller
 
 
         // Reload recipients and their users so the activity log can access user info
-        $document->load('recipients.user');
+        $document->load('recipients.department');
 
         // Log document creation
         UserActivityLog::create([
@@ -405,9 +399,8 @@ class UserController extends Controller
             'user_id' => Auth::id(),
             'action' => 'document_sent',
             'description' => 'Sent document: ' . $document->subject . ' to ' . $document->recipients->map(function($recipient) {
-                $user = $recipient->user;
-                $dept = $user && $user->department ? $user->department->name : 'No Department';
-                return $user->first_name . ' ' . $user->last_name . ' (' . $dept . ')';
+                $dept = $recipient->department ? $recipient->department->name : 'No Department';
+                return $dept;
             })->implode(', '),
             'created_at' => now(),
         ]);
@@ -429,28 +422,28 @@ class UserController extends Controller
         $document->owner->notify(new InAppNotification('Your document has been created and sent.', ['document_id' => $document->id, 'document_name' => $document->subject]));
         // Notify all initial recipients
         if ($validated['document_type'] === 'for_info') {
-            foreach ($validated['recipient_ids'] as $recipientId) {
-                $recipient = User::find($recipientId);
+            foreach ($validated['recipient_ids'] as $recipientDeptId) {
+                $recipient = \App\Models\User::where('department_id', $recipientDeptId)->where('role', 'admin')->first();
                 if ($recipient) {
-                    $recipient->notify(new InAppNotification('A new document has been sent to you.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+                    $recipient->notify(new InAppNotification('A new document has been sent to your department.', ['document_id' => $document->id, 'document_name' => $document->subject]));
                 }
             }
         } else {
             // For memorandum, order, special_order documents
-            $sendToId = $request->input('recipient_ids')[0];
-            $throughUserIds = $request->input('through_user_ids', []);
+            $sendToDeptId = $request->input('recipient_ids')[0];
+            $throughDeptIds = $request->input('through_department_ids', []);
 
-            if (!empty($throughUserIds)) {
-                // If there are through users, notify only the first through user
-                $firstThroughUser = User::find($throughUserIds[0]);
-                if ($firstThroughUser) {
-                    $firstThroughUser->notify(new InAppNotification('A new document has been sent to you.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+            if (!empty($throughDeptIds)) {
+                // If there are through departments, notify only the first through department's admin
+                $firstThroughDeptAdmin = \App\Models\User::where('department_id', $throughDeptIds[0])->where('role', 'admin')->first();
+                if ($firstThroughDeptAdmin) {
+                    $firstThroughDeptAdmin->notify(new InAppNotification('A new document has been sent to your department.', ['document_id' => $document->id, 'document_name' => $document->subject]));
                 }
             } else {
-                // If no through users, notify the main recipient
-                $recipient = User::find($sendToId);
+                // If no through departments, notify the main recipient department's admin
+                $recipient = \App\Models\User::where('department_id', $sendToDeptId)->where('role', 'admin')->first();
                 if ($recipient) {
-                    $recipient->notify(new InAppNotification('A new document has been sent to you.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+                    $recipient->notify(new InAppNotification('A new document has been sent to your department.', ['document_id' => $document->id, 'document_name' => $document->subject]));
                 }
             }
         }
@@ -592,12 +585,10 @@ class UserController extends Controller
             $nextSequence = $lastRecipient->sequence + 1;
             DocumentRecipient::create([
                 'document_id' => $doc->id,
-                'user_id' => $lastRecipient->user_id,
-                'final_recipient_id' => $lastRecipient->final_recipient_id,
+                'department_id' => $lastRecipient->department_id,
                 'status' => 'pending',
                 'sequence' => $nextSequence,
                 'is_active' => true,
-                'is_final_approver' => $lastRecipient->is_final_approver,
                 'forwarded_by' => null,
                 'comments' => 'Document resent by owner.',
             ]);
@@ -682,7 +673,7 @@ class UserController extends Controller
         // Fetch as collections
         $ownedDocuments = Document::where('owner_id', $userId)->get();
         $receivedDocuments = Document::whereHas('recipients', function($query) use ($userId) {
-            $query->where('user_id', $userId);
+            $query->where('department_id', $userId);
         })->get();
 
         // Merge collections and remove duplicates (if any)
@@ -696,7 +687,7 @@ class UserController extends Controller
         $publishedDocuments = $allDocuments->where('is_public', true)->count();
 
         // Recent Activities: last 5 actions involving the user (owned or received)
-        $recentActivities = DocumentRecipient::where('user_id', $userId)
+        $recentActivities = DocumentRecipient::where('department_id', $userId)
             ->orderByDesc('responded_at')
             ->with('document')
             ->take(5)
@@ -751,7 +742,7 @@ class UserController extends Controller
 
         // Get documents where user is a recipient
         $receivedDocuments = Document::whereHas('recipients', function($query) use ($userId) {
-            $query->where('user_id', $userId);
+            $query->where('department_id', $userId);
         })
         ->where('is_public', true)
         ->where('owner_id', '!=', $userId) // Exclude documents where user is also the owner

@@ -153,7 +153,7 @@ const Navbar = () => {
         },
         {
             label: 'Documents',
-            href: '/documents',
+            href: '/document',
             icon: <FileText className="w-5 h-5" />,
         },
     ];
@@ -162,7 +162,7 @@ const Navbar = () => {
 
     const getInitials = (name: string) => {
         if (!name || name.trim() === '') return 'U';
-        
+
         return name
             .trim()
             .split(' ')

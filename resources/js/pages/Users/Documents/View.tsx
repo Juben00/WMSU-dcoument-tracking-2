@@ -21,16 +21,9 @@ interface DocumentFile {
 
 interface DocumentRecipient {
     id: number;
-    user: {
+    department: {
         id: number;
-        first_name: string;
-        last_name: string;
-        department_id: number;
-        role: string;
-        department?: {
-            id: number;
-            name: string;
-        };
+        name: string;
     };
     status: string;
     comments?: string;
@@ -80,17 +73,11 @@ interface Document {
     department_id: number;
     final_recipient?: {
         id: number;
-        first_name: string;
-        last_name: string;
-        department_id: number;
-        department?: {
-            id: number;
-            name: string;
-        };
+        name: string;
     } | null;
     approval_chain: DocumentRecipient[];
     order_number: string;
-    through_user_ids?: (string | number)[];
+    through_department_ids?: (string | number)[];
 }
 
 interface Department {
@@ -144,14 +131,7 @@ interface Props {
     }>;
     throughUsers?: Array<{
         id: number;
-        first_name: string;
-        last_name: string;
-        department_id: number;
-        role: string;
-        department?: {
-            id: number;
-            name: string;
-        };
+        name: string;
     }>;
 }
 
@@ -269,12 +249,13 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
         forward_to_id: null as number | null,
     });
 
-    console.log('users', users);
+    console.log('document', document);
+    console.log('throughUsers', throughUsers);
 
     // Check if current user is an active recipient
-    const currentRecipient = document.recipients.find(
-        (r: DocumentRecipient) => r.user.id === auth.user.id
-    );
+    // const currentRecipient = document.recipients.find(
+    //     (r: DocumentRecipient) => r.user.id === auth.user.id
+    // );
 
     // Helper functions to determine user permissions and document states
     const isOwner = () => document.owner_id === auth.user.id;
@@ -383,33 +364,33 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
     // Find all through recipients for non-for_info documents
     const throughRecipients = document.document_type !== 'for_info'
         ? approvalChain.filter((recipient: DocumentRecipient) =>
-            !document.final_recipient || recipient.user.id !== document.final_recipient.id
+            !document.final_recipient || recipient.department.id !== document.final_recipient.id
         )
         : [];
 
     console.log('responseFiles', responseFiles);
 
     // Debug: Check if through users are found correctly
-    if (document.through_user_ids && document.through_user_ids.length > 0) {
+    if (document.through_department_ids && document.through_department_ids.length > 0) {
         console.log('Debugging through users:');
-        document.through_user_ids.forEach((userId, index) => {
+        document.through_department_ids.forEach((userId, index) => {
             const userIdNum = typeof userId === 'string' ? parseInt(userId, 10) : userId;
-            const throughUser = approvalChain.find((recipient: DocumentRecipient) =>
-                recipient.user.id === userIdNum
+            const throughRecipient = approvalChain.find((recipient: DocumentRecipient) =>
+                recipient.department && recipient.department.id === userIdNum
             );
-            console.log(`User ID ${userId} (${userIdNum}):`, throughUser ? `${throughUser.user.first_name} ${throughUser.user.last_name}` : 'Not found');
+            console.log(`User ID ${userId} (${userIdNum}):`, throughRecipient ? `${throughRecipient.department.name}` : 'Not found');
         });
     }
 
     // Find the next through user to forward to
     const getNextThroughUser = () => {
-        if (!document.through_user_ids || document.through_user_ids.length === 0) {
+        if (!document.through_department_ids || document.through_department_ids.length === 0) {
             return null;
         }
 
         // Find the current user's position in the through users list
-        // Convert through_user_ids to numbers for comparison
-        const throughUserIdsAsNumbers = document.through_user_ids.map(id =>
+        // Convert through_department_ids to numbers for comparison
+        const throughUserIdsAsNumbers = document.through_department_ids.map(id =>
             typeof id === 'string' ? parseInt(id, 10) : id
         );
         const currentUserIndex = throughUserIdsAsNumbers.indexOf(auth.user.id);
@@ -427,14 +408,14 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
             const nextUserId = throughUserIdsAsNumbers[nextUserIndex];
             // Find the user details from the approval chain
             return approvalChain.find((recipient: DocumentRecipient) =>
-                recipient.user.id === nextUserId
+                recipient.department && recipient.department.id === nextUserId
             );
         }
 
         // If we're at the last through user, return the final recipient
         if (document.final_recipient) {
             return {
-                user: document.final_recipient,
+                department: document.final_recipient,
                 id: document.final_recipient.id
             };
         }
@@ -526,6 +507,7 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                     {/* Document Through Information */}
                                     {document.document_type !== 'for_info' && (
                                         <>
+                                            {/* Sent To Department */}
                                             <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-100 dark:border-blue-700">
                                                 <dt className="text-sm font-semibold text-blue-700 dark:text-blue-300 mb-2 flex items-center gap-2">
                                                     <User className="w-4 h-4" />
@@ -534,22 +516,19 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                                 <dd className="mt-1">
                                                     <div className="flex items-center gap-3 bg-white dark:bg-gray-700 rounded-lg p-3 border border-blue-200 dark:border-blue-600">
                                                         <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                                                            {document.final_recipient?.first_name.charAt(0)}{document.final_recipient?.last_name.charAt(0)}
+                                                            {document.final_recipient?.name ? document.final_recipient.name.charAt(0) : ''}
                                                         </div>
                                                         <div>
                                                             <span className="text-gray-900 dark:text-gray-100 font-semibold">
-                                                                {document.final_recipient?.first_name} {document.final_recipient?.last_name}
+                                                                {document.final_recipient?.name || 'N/A'}
                                                             </span>
-                                                            <div className="text-sm text-gray-600 dark:text-gray-400">
-                                                                {document.final_recipient?.department?.name || 'No Department'}
-                                                            </div>
                                                         </div>
                                                     </div>
                                                 </dd>
                                             </div>
 
-                                            {/* Show all through users from the document's through_user_ids */}
-                                            {document.through_user_ids && document.through_user_ids.length > 0 && (
+                                            {/* Sent Through Departments */}
+                                            {throughUsers && throughUsers.length > 0 && (
                                                 <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 border border-amber-100 dark:border-amber-700">
                                                     <dt className="text-sm font-semibold text-amber-700 dark:text-amber-300 mb-3 flex items-center gap-2">
                                                         <Users className="w-4 h-4" />
@@ -557,84 +536,15 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                                     </dt>
                                                     <dd className="mt-1">
                                                         <div className="space-y-3">
-                                                            {document.through_user_ids.map((userId: string | number, index: number) => {
-                                                                // Convert userId to number for comparison
-                                                                const userIdNum = typeof userId === 'string' ? parseInt(userId, 10) : userId;
-
-                                                                // Find the user details from the throughUsers prop
-                                                                let throughUser = throughUsers?.find(user => user.id === userIdNum);
-
-                                                                // Fallback: find in approval chain if not found in throughUsers
-                                                                if (!throughUser) {
-                                                                    const approvalChainUser = approvalChain.find((recipient: DocumentRecipient) =>
-                                                                        recipient.user.id === userIdNum
-                                                                    );
-                                                                    if (approvalChainUser) {
-                                                                        throughUser = approvalChainUser.user;
-                                                                    }
-                                                                }
-
-                                                                // Fallback: find in users prop if not found in throughUsers or approvalChain
-                                                                if (!throughUser && users) {
-                                                                    throughUser = users.find(u => u.id === userIdNum);
-                                                                }
-
-                                                                if (throughUser) {
-                                                                    return (
-                                                                        <div key={userId} className="flex items-center gap-3 bg-white dark:bg-gray-700 rounded-lg p-3 border border-amber-200 dark:border-amber-600">
-                                                                            <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-amber-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                                                                                {throughUser.first_name.charAt(0)}{throughUser.last_name.charAt(0)}
-                                                                            </div>
-                                                                            <div>
-                                                                                <span className="text-gray-900 dark:text-gray-100 font-semibold">
-                                                                                    {throughUser.first_name} {throughUser.last_name}
-                                                                                </span>
-                                                                                <div className="text-sm text-gray-600 dark:text-gray-400">
-                                                                                    {throughUser.department?.name || 'No Department'}
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    );
-                                                                }
-                                                                return (
-                                                                    <div key={userId} className="flex items-center gap-3 bg-white dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
-                                                                        <div className="w-8 h-8 bg-gray-300 dark:bg-gray-500 rounded-full flex items-center justify-center text-gray-600 dark:text-gray-300 font-semibold text-sm">
-                                                                            ?
-                                                                        </div>
-                                                                        <div>
-                                                                            <span className="text-gray-400 dark:text-gray-500 font-semibold">
-                                                                                User ID: {userIdNum} (Not Found)
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                );
-                                                            })}
-                                                        </div>
-                                                    </dd>
-                                                </div>
-                                            )}
-
-                                            {/* Fallback: Show through users directly from throughUsers prop if through_user_ids is empty */}
-                                            {(!document.through_user_ids || document.through_user_ids.length === 0) && throughUsers && throughUsers.length > 0 && (
-                                                <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 border border-amber-100 dark:border-amber-700">
-                                                    <dt className="text-sm font-semibold text-amber-700 dark:text-amber-300 mb-3 flex items-center gap-2">
-                                                        <Users className="w-4 h-4" />
-                                                        Sent Through
-                                                    </dt>
-                                                    <dd className="mt-1">
-                                                        <div className="space-y-3">
-                                                            {throughUsers.map((user, index) => (
-                                                                <div key={user.id} className="flex items-center gap-3 bg-white dark:bg-gray-700 rounded-lg p-3 border border-amber-200 dark:border-amber-600">
+                                                            {throughUsers.map((dept) => (
+                                                                <div key={dept.id} className="flex items-center gap-3 bg-white dark:bg-gray-700 rounded-lg p-3 border border-amber-200 dark:border-amber-600">
                                                                     <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-amber-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                                                                        {user.first_name.charAt(0)}{user.last_name.charAt(0)}
+                                                                        {dept.name.charAt(0)}
                                                                     </div>
                                                                     <div>
                                                                         <span className="text-gray-900 dark:text-gray-100 font-semibold">
-                                                                            {user.first_name} {user.last_name}
+                                                                            {dept.name}
                                                                         </span>
-                                                                        <div className="text-sm text-gray-600 dark:text-gray-400">
-                                                                            {user.department?.name || 'No Department'}
-                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             ))}
@@ -1156,34 +1066,26 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                                                         </div>
                                                                         <div className="flex items-center gap-3">
                                                                             <div className="w-8 h-8 bg-gradient-to-br from-red-400 to-red-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                                                                                {recipient.user.first_name.charAt(0)}{recipient.user.last_name.charAt(0)}
+                                                                                {recipient.department.name.charAt(0)}
                                                                             </div>
                                                                             <div>
                                                                                 <div className="font-semibold text-gray-900 dark:text-gray-100">
-                                                                                    {recipient.user.first_name} {recipient.user.last_name}
+                                                                                    {recipient.department.name}
                                                                                 </div>
-                                                                                <div className="text-sm text-gray-600 dark:text-gray-400">
-                                                                                    {recipient.user.department?.name || 'No Department'} • {recipient.user.role
-                                                                                        ? recipient.user.role.charAt(0).toUpperCase() + recipient.user.role.slice(1)
-                                                                                        : 'Unknown'}
-                                                                                </div>
+                                                                                {/* Removed recipient.user?.role display as recipient.user does not exist */}
                                                                             </div>
                                                                         </div>
                                                                     </div>
                                                                 ) : (
                                                                     <div className="flex items-center gap-3">
                                                                         <div className="w-10 h-10 bg-gradient-to-br from-red-400 to-red-500 rounded-full flex items-center justify-center text-white font-semibold">
-                                                                            {recipient.user.first_name.charAt(0)}{recipient.user.last_name.charAt(0)}
+                                                                            {recipient.department.name.charAt(0)}
                                                                         </div>
                                                                         <div>
                                                                             <div className="font-semibold text-gray-900 dark:text-gray-100">
-                                                                                {recipient.user.first_name} {recipient.user.last_name}
+                                                                                {recipient.department.name}
                                                                             </div>
-                                                                            <div className="text-sm text-gray-600 dark:text-gray-400">
-                                                                                {recipient.user.department?.name || 'No Department'} • {recipient.user.role
-                                                                                    ? recipient.user.role.charAt(0).toUpperCase() + recipient.user.role.slice(1)
-                                                                                    : 'Unknown'}
-                                                                            </div>
+                                                                            {/* Removed recipient.user?.role display as recipient.user does not exist */}
                                                                         </div>
                                                                     </div>
                                                                 )}
