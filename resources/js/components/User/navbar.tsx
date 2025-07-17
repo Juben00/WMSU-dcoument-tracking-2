@@ -161,12 +161,44 @@ const Navbar = () => {
     const currentNavItems = role === 'admin' ? AdminNavItems : NavItems;
 
     const getInitials = (name: string) => {
+        if (!name || name.trim() === '') return 'U';
+        
         return name
+            .trim()
             .split(' ')
+            .filter(word => word.length > 0) // Filter out empty strings
             .map(word => word.charAt(0))
             .join('')
             .toUpperCase()
             .slice(0, 2);
+    };
+
+    // Get user display name and initials
+    const getUserDisplayName = () => {
+        if (auth?.user?.name && auth.user.name.trim() !== '') {
+            return auth.user.name;
+        }
+        // If no name, try to use email username as display name
+        if (auth?.user?.email) {
+            const emailUsername = auth.user.email.split('@')[0];
+            return emailUsername.charAt(0).toUpperCase() + emailUsername.slice(1);
+        }
+        return 'User';
+    };
+
+    const getUserInitials = () => {
+        const userName = auth?.user?.name;
+        if (userName && userName.trim() !== '') {
+            // If name is available, use initials from the name
+            return getInitials(userName);
+        }
+        // If no name, try to get initials from the email's username part
+        const userEmail = auth?.user?.email;
+        if (userEmail) {
+            const emailUsername = userEmail.split('@')[0];
+            return getInitials(emailUsername);
+        }
+        return 'U';
     };
 
     return (
@@ -297,7 +329,7 @@ const Navbar = () => {
                                 onClick={() => setProfileOpen(!profileOpen)}
                             >
                                 <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                                    {auth?.user?.name ? getInitials(auth.user.name) : 'U'}
+                                    {getUserInitials()}
                                 </div>
                                 <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
                             </button>
@@ -307,13 +339,13 @@ const Navbar = () => {
                                     <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold">
-                                                {auth?.user?.name ? getInitials(auth.user.name) : 'U'}
+                                                {getUserInitials()}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{auth?.user?.name || 'User'}</p>
+                                                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{getUserDisplayName()}</p>
                                                 <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{auth?.user?.email || 'user@example.com'}</p>
                                                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400 mt-1">
-                                                    {role === 'admin' ? 'Administrator' : 'User'}
+                                                    {role === 'admin' ? 'Administrator' : role === 'receiver' ? 'Receiver' : 'User'}
                                                 </span>
                                             </div>
                                         </div>
