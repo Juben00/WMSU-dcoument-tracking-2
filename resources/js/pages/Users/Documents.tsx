@@ -29,6 +29,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { toast } from "sonner"
 
 interface Document {
     id: number
@@ -40,6 +41,7 @@ interface Document {
     barcode_value?: string
     order_number?: string
     files?: { id: number }[]
+    recipient_status?: string // Added for barcode confirmation
 }
 
 interface Props {
@@ -66,6 +68,9 @@ const Documents = ({ documents, auth }: Props) => {
     const [sortBy, setSortBy] = useState("latest")
     const [fiscalYearFilter, setFiscalYearFilter] = useState("all")
     const [archivedFilter, setArchivedFilter] = useState("all")
+    const [showBarcodeModal, setShowBarcodeModal] = useState(false)
+    const [barcodeInput, setBarcodeInput] = useState("")
+    const [barcodeLoading, setBarcodeLoading] = useState(false)
 
     // Get current fiscal year (January to December)
     const getCurrentFiscalYear = () => {
@@ -99,12 +104,18 @@ const Documents = ({ documents, auth }: Props) => {
         return doc.owner_id === auth.user.id && doc.status !== "draft" && doc.status !== "returned"
     }
 
-    // Helper function to determine if a document was originally received by the current user
+    // Helper function to determine if a document was received by the current user (status 'received')
     const isDocumentReceivedByUser = (doc: Document) => {
-        return doc.owner_id !== auth.user.id || (doc.owner_id === auth.user.id && doc.status === "returned")
+        // Only show if the recipient record for this department is marked as 'received'
+        // We'll assume backend only returns documents where the user is a recipient, so we filter by status
+        // For this, you may need to adjust the backend to include recipient status per user/department
+        // For now, let's assume doc has a 'recipient_status' field (add this in backend if needed)
+        // If not present, fallback to old logic
+        // @ts-ignore
+        return doc.recipient_status === 'received' || (doc.owner_id !== auth.user.id && doc.status === 'received')
     }
 
-    // Filter documents by current fiscal year and exclude archived ones from active tabs
+    // Filter documents by current fiscal year and only show received ones with status 'received'
     const received = documents.filter((doc) => isInCurrentFiscalYear(doc.created_at) && isDocumentReceivedByUser(doc))
 
     const sent = documents.filter((doc) => isInCurrentFiscalYear(doc.created_at) && isDocumentSentByUser(doc))
@@ -336,6 +347,85 @@ const Documents = ({ documents, auth }: Props) => {
             <Navbar />
             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    {/* Barcode Confirmation Section */}
+                    <div className="mb-8 flex justify-end">
+                        <Button
+                            variant="outline"
+                            className="border-red-600 text-red-700 hover:bg-red-50"
+                            onClick={() => setShowBarcodeModal(true)}
+                        >
+                            <BarChart3 className="w-4 h-4 mr-2" />
+                            Receive Document (Barcode)
+                        </Button>
+                    </div>
+
+                    {/* Barcode Modal */}
+                    {showBarcodeModal && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+                            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl p-8 w-full max-w-md relative">
+                                <button
+                                    className="absolute top-3 right-3 text-gray-400 hover:text-red-600"
+                                    onClick={() => setShowBarcodeModal(false)}
+                                >
+                                    <XCircle className="w-6 h-6" />
+                                </button>
+                                <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white flex items-center gap-2">
+                                    <BarChart3 className="w-6 h-6 text-red-600" />
+                                    Search Document
+                                </h2>
+                                <p className="mb-4 text-slate-600 dark:text-slate-300">Enter the barcode value provided with your document to confirm receipt.</p>
+                                <form
+                                    onSubmit={async (e) => {
+                                        e.preventDefault()
+                                        setBarcodeLoading(true)
+                                        try {
+                                            const res = await fetch("/users/documents/confirm-receipt", {
+                                                method: "POST",
+                                                headers: {
+                                                    "Content-Type": "application/json",
+                                                    "X-Requested-With": "XMLHttpRequest",
+                                                    "X-CSRF-TOKEN": (document.querySelector('meta[name=csrf-token]') as HTMLMetaElement)?.content || ""
+                                                },
+                                                body: JSON.stringify({ barcode_value: barcodeInput })
+                                            })
+                                            const data = await res.json()
+                                            if (data.success) {
+                                                toast.success(data.message)
+                                                setShowBarcodeModal(false)
+                                                setBarcodeInput("")
+                                                // Optionally, reload the page or refetch data
+                                                window.location.reload()
+                                            } else {
+                                                toast.error(data.message || "Failed to confirm receipt.")
+                                            }
+                                        } catch (err) {
+                                            toast.error("An error occurred. Please try again.")
+                                        } finally {
+                                            setBarcodeLoading(false)
+                                        }
+                                    }}
+                                >
+                                    <Input
+                                        type="text"
+                                        placeholder="Enter barcode value..."
+                                        value={barcodeInput}
+                                        onChange={e => setBarcodeInput(e.target.value)}
+                                        className="mb-4 h-12 text-lg"
+                                        required
+                                        autoFocus
+                                    />
+                                    <Button
+                                        type="submit"
+                                        className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white text-lg"
+                                        disabled={barcodeLoading || !barcodeInput.trim()}
+                                    >
+                                        {barcodeLoading ? "Searching..." : "Search Document"}
+                                    </Button>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Enhanced Header Section */}
                     <div className="mb-8">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">

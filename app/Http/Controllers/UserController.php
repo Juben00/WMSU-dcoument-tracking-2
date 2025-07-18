@@ -132,22 +132,43 @@ class UserController extends Controller
     {
         // Get documents where user is the owner
         $ownedDocuments = Document::where('owner_id', Auth::id())
-            ->select('id', 'subject', 'document_type', 'status', 'created_at', 'owner_id', 'is_public', 'barcode_value')
+            ->select('id', 'subject', 'document_type', 'status', 'created_at', 'owner_id', 'is_public', 'barcode_value', 'order_number')
+            ->with(['files:id,document_id'])
             ->get();
 
         // Get documents where user is a recipient
         $receivedDocuments = Document::whereHas('recipients', function($query) {
             $query->where('department_id', Auth::user()->department_id);
-        })->select('id', 'subject', 'document_type', 'status', 'created_at', 'owner_id', 'is_public', 'barcode_value')->get();
+        })
+        ->select('id', 'subject', 'document_type', 'status', 'created_at', 'owner_id', 'is_public', 'barcode_value', 'order_number')
+        ->with(['recipients' => function($q) {
+            $q->where('department_id', Auth::user()->department_id)->select('id', 'document_id', 'department_id', 'status');
+        }, 'files:id,document_id'])
+        ->get();
 
         // Get returned documents where user is the owner
         $returnedDocuments = Document::where('owner_id', Auth::id())
             ->where('status', 'returned')
-            ->select('id', 'subject', 'document_type', 'status', 'created_at', 'owner_id', 'is_public', 'barcode_value')
+            ->select('id', 'subject', 'document_type', 'status', 'created_at', 'owner_id', 'is_public', 'barcode_value', 'order_number')
+            ->with(['files:id,document_id'])
             ->get();
 
         // Merge the collections and remove duplicates
         $documents = $ownedDocuments->concat($receivedDocuments)->concat($returnedDocuments)->unique('id');
+
+        // Attach recipient_status for the current user's department if applicable
+        $departmentId = Auth::user()->department_id;
+        $documents = $documents->map(function($doc) use ($departmentId) {
+            // If the user is a recipient, get the recipient status for their department
+            if (isset($doc->recipients) && $doc->recipients->count() > 0) {
+                $recipient = $doc->recipients->first();
+                $doc->recipient_status = $recipient ? $recipient->status : null;
+            } else {
+                $doc->recipient_status = null;
+            }
+            // For owner, recipient_status is null
+            return $doc;
+        });
 
         return Inertia::render('Users/Documents', [
             'documents' => $documents,
@@ -243,8 +264,13 @@ class UserController extends Controller
         $documentType = $request->input('document_type');
         $currentYear = now()->year;
 
+        // Check if user has a department assigned
+        if (!$department) {
+            return response()->json(['error' => 'User does not have a department assigned.'], 400);
+        }
+
         // Check if this is the President's office (OP)
-        $isPresidentOffice = $department && $department->code === 'OP';
+        $isPresidentOffice = $department->code === 'OP';
 
         // Get the latest order number for this department and document type
         $query = Document::where('department_id', $departmentId)
@@ -265,7 +291,7 @@ class UserController extends Controller
         }
 
         // Format the order number based on department and document type
-        $departmentCode = $department ? $department->code : 'DEPT';
+        $departmentCode = $department->code;
 
         // Format: DEPT-YEAR-NUMBER (e.g., OP-2024-001)
         $orderNumber = sprintf('%s-%d-%03d', $departmentCode, $currentYear, $nextNumber);
@@ -462,7 +488,7 @@ class UserController extends Controller
         // Notify all initial recipients
         if ($validated['document_type'] === 'for_info') {
             foreach ($validated['recipient_ids'] as $recipientDeptId) {
-                $recipient = \App\Models\User::where('department_id', $recipientDeptId)->where('role', 'admin')->first();
+                $recipient = User::where('department_id', $recipientDeptId)->where('role', 'admin')->first();
                 if ($recipient) {
                     $recipient->notify(new InAppNotification('A new document has been sent to your department.', ['document_id' => $document->id, 'document_name' => $document->subject]));
                 }
@@ -474,13 +500,13 @@ class UserController extends Controller
 
             if (!empty($throughDeptIds)) {
                 // If there are through departments, notify only the first through department's admin
-                $firstThroughDeptAdmin = \App\Models\User::where('department_id', $throughDeptIds[0])->where('role', 'admin')->first();
+                $firstThroughDeptAdmin = User::where('department_id', $throughDeptIds[0])->where('role', 'admin')->first();
                 if ($firstThroughDeptAdmin) {
                     $firstThroughDeptAdmin->notify(new InAppNotification('A new document has been sent to your department.', ['document_id' => $document->id, 'document_name' => $document->subject]));
                 }
             } else {
                 // If no through departments, notify the main recipient department's admin
-                $recipient = \App\Models\User::where('department_id', $sendToDeptId)->where('role', 'admin')->first();
+                $recipient = User::where('department_id', $sendToDeptId)->where('role', 'admin')->first();
                 if ($recipient) {
                     $recipient->notify(new InAppNotification('A new document has been sent to your department.', ['document_id' => $document->id, 'document_name' => $document->subject]));
                 }
@@ -849,5 +875,60 @@ class UserController extends Controller
         }
         $fileModel->delete();
         return redirect()->route('users.documents.edit', $doc->id)->with('success', 'File deleted successfully.');
+    }
+
+    // Confirm document receipt via barcode
+    public function confirmReceipt(Request $request)
+    {
+        $request->validate([
+            'barcode_value' => 'required|string',
+        ]);
+
+        $barcode = $request->input('barcode_value');
+        $user = Auth::user();
+        $departmentId = $user->department_id;
+
+        // Find the document by barcode
+        $document = Document::where('barcode_value', $barcode)->first();
+        if (!$document) {
+            return response()->json(['success' => false, 'message' => 'Invalid barcode. Document not found.'], 404);
+        }
+
+        // Find the recipient record for this department
+        $recipient = DocumentRecipient::where('document_id', $document->id)
+            ->where('department_id', $departmentId)
+            ->where('status', 'pending')
+            ->first();
+        if (!$recipient) {
+            return response()->json(['success' => false, 'message' => 'Your department is not a pending recipient for this document.'], 403);
+        }
+
+        // update the document status to received
+        $document->status = 'received';
+        $document->save();
+
+        // Mark as received
+        $recipient->status = 'received';
+        $recipient->responded_at = now();
+        $recipient->save();
+
+        // Log the action
+        UserActivityLog::create([
+            'user_id' => $user->id,
+            'action' => 'document_received',
+            'description' => 'Confirmed receipt of document: ' . $document->subject . ' (ID: ' . $document->id . ') via barcode.',
+            'ip_address' => $request->ip(),
+            'created_at' => now(),
+        ]);
+
+        DocumentActivityLog::create([
+            'document_id' => $document->id,
+            'user_id' => $user->id,
+            'action' => 'document_received',
+            'description' => 'Document received by department: ' . ($user->department->name ?? 'Unknown') . ' via barcode.',
+            'created_at' => now(),
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Document successfully marked as received.']);
     }
 }

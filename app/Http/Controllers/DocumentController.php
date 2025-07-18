@@ -279,7 +279,7 @@ class DocumentController extends Controller
     public function viewDocument(Document $document)
     {
         // Check if user has access to the document
-        if ($document->owner_id !== Auth::id() && !$document->recipients()->where('user_id', Auth::id())->exists()) {
+        if ($document->owner_id !== Auth::id() && !$document->recipients()->where('department_id', Auth::user()->department_id)->exists()) {
             abort(403, 'Unauthorized access to document');
         }
 
@@ -386,11 +386,13 @@ class DocumentController extends Controller
     public function markAsReceived(Document $document)
     {
         $documentRecipient = DocumentRecipient::where('document_id', $document->id)
-            ->where('user_id', Auth::id())
+            ->where('department_id', Auth::user()->department_id)
             ->orderByDesc('sequence')
             ->first();
-        $documentRecipient->update(['status' => 'received']);
-        $documentRecipient->update(['responded_at' => now()]);
+        if ($documentRecipient) {
+            $documentRecipient->update(['status' => 'received']);
+            $documentRecipient->update(['responded_at' => now()]);
+        }
 
         // Check if all recipients have received the document and if the document is for_info, then update the document status to received
         $allRecipients = DocumentRecipient::where('document_id', $document->id)->get();
@@ -423,11 +425,11 @@ class DocumentController extends Controller
         }
 
         // Check if user has access to the document
-        if ($document->owner_id !== Auth::id() && !$document->recipients()->where('user_id', Auth::id())->exists()) {
+        if ($document->owner_id !== Auth::id() && !$document->recipients()->where('department_id', Auth::user()->department_id)->exists()) {
             Log::warning('User not authorized for document', [
                 'user_id' => Auth::id(),
                 'document_owner_id' => $document->owner_id,
-                'is_recipient' => $document->recipients()->where('user_id', Auth::id())->exists()
+                'is_recipient' => $document->recipients()->where('department_id', Auth::user()->department_id)->exists()
             ]);
             abort(403, 'Unauthorized access to document');
         }

@@ -80,6 +80,9 @@ Route::middleware(['auth', 'verified', 'require_password_change'])->group(functi
     // send document to recipients
     Route::post('/users/documents/send', [UserController::class, 'sendDocument'])->name('users.documents.send');
 
+    // Confirm document receipt via barcode
+    Route::post('/users/documents/confirm-receipt', [UserController::class, 'confirmReceipt'])->name('users.documents.confirm-receipt');
+
     // Generate auto order number
     Route::post('/users/documents/generate-order-number', [UserController::class, 'generateOrderNumber'])->name('users.documents.generate-order-number');
 
