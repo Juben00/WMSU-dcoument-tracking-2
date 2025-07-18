@@ -80,6 +80,9 @@ Route::middleware(['auth', 'verified', 'require_password_change'])->group(functi
     // send document to recipients
     Route::post('/users/documents/send', [UserController::class, 'sendDocument'])->name('users.documents.send');
 
+    // Generate auto order number
+    Route::post('/users/documents/generate-order-number', [UserController::class, 'generateOrderNumber'])->name('users.documents.generate-order-number');
+
     Route::get('/users/documents/{document}/edit', [UserController::class, 'editDocument'])->name('users.documents.edit');
     Route::put('/users/documents/{document}', [UserController::class, 'updateDocument'])->name('users.documents.update');
 

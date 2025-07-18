@@ -221,20 +221,6 @@ class UserController extends Controller
                   ->orderBy('role', 'desc'); // This will put receivers first
         }])->get();
 
-        // Transform the data to include the contact person for each department
-        // $departmentsWithContact = $departments->map(function($department) {
-        //     $contactPerson = $department->users->first();
-        //     return [
-        //         'id' => $department->id,
-        //         'name' => $department->name,
-        //         'contact_person' => $contactPerson ? [
-        //             'id' => $contactPerson->id,
-        //             'name' => $contactPerson->first_name . ' ' . $contactPerson->last_name,
-        //             'role' => $contactPerson->role
-        //         ] : null
-        //     ];
-        // });
-        // get all the departments except the current user's department
         $departments = Departments::where('id', '!=', Auth::user()->department_id)->get();
 
         return Inertia::render('Users/CreateDocument', [
@@ -243,6 +229,48 @@ class UserController extends Controller
             ],
             'departments' => $departments
         ]);
+    }
+
+    public function generateOrderNumber(Request $request)
+    {
+        $request->validate([
+            'document_type' => 'required|in:special_order,order,memorandum,for_info',
+        ]);
+
+        $currentUser = Auth::user();
+        $departmentId = $currentUser->department_id;
+        $department = $currentUser->department;
+        $documentType = $request->input('document_type');
+        $currentYear = now()->year;
+
+        // Check if this is the President's office (OP)
+        $isPresidentOffice = $department && $department->code === 'OP';
+
+        // Get the latest order number for this department and document type
+        $query = Document::where('department_id', $departmentId)
+            ->whereYear('created_at', $currentYear);
+
+        if ($isPresidentOffice) {
+            $query->where('document_type', $documentType);
+        }
+
+        $latestDocument = $query->orderBy('order_number', 'desc')->first();
+
+        if ($latestDocument) {
+            // Extract the numeric part from the latest order number
+            $numericPart = preg_replace('/[^0-9]/', '', $latestDocument->order_number);
+            $nextNumber = intval($numericPart) + 1;
+        } else {
+            $nextNumber = 1;
+        }
+
+        // Format the order number based on department and document type
+        $departmentCode = $department ? $department->code : 'DEPT';
+
+        // Format: DEPT-YEAR-NUMBER (e.g., OP-2024-001)
+        $orderNumber = sprintf('%s-%d-%03d', $departmentCode, $currentYear, $nextNumber);
+
+        return response()->json(['order_number' => $orderNumber]);
     }
 
     public function sendDocument(Request $request)
@@ -258,7 +286,6 @@ class UserController extends Controller
         $isPresidentOffice = $department && $department->code === 'OP';
 
         // Define validation rules based on department type
-        // $orderNumberRule = 'required|string|max:255';
         $orderNumberRule = ['required', 'string', 'max:255'];
         // Determine current fiscal year (calendar year)
         $currentYear = now()->year;
@@ -293,9 +320,12 @@ class UserController extends Controller
             };
         }
 
+        // Convert string to boolean
+        $autoGenerate = $request->input('auto_generate_order_number') === '1';
+
         $validated = $request->validate([
             'subject' => 'required|string|max:255',
-            'order_number' => $orderNumberRule,
+            'order_number' => $autoGenerate ? 'nullable' : $orderNumberRule,
             'document_type' => 'required|in:special_order,order,memorandum,for_info',
             'description' => 'nullable|string',
             'files' => 'required|array',
@@ -304,8 +334,17 @@ class UserController extends Controller
             'recipient_ids.*' => 'exists:departments,id',
             'initial_recipient_id' => 'nullable|exists:departments,id',
             'through_department_ids' => 'nullable|array',
-            'through_department_ids.*' => 'exists:departments,id'
+            'through_department_ids.*' => 'exists:departments,id',
+            'auto_generate_order_number' => 'required|in:0,1'
         ]);
+
+        // If auto-generate is enabled, generate the order number
+        if ($autoGenerate) {
+            $orderNumberRequest = new Request(['document_type' => $validated['document_type']]);
+            $orderNumberResponse = $this->generateOrderNumber($orderNumberRequest);
+            $orderNumberData = json_decode($orderNumberResponse->getContent(), true);
+            $validated['order_number'] = $orderNumberData['order_number'];
+        }
 
         // Create the document
         $document = Document::create([

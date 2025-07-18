@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { MultiSelect } from '@/components/ui/multi-select';
 import Swal from 'sweetalert2';
-import { FileText, FileCheck, Users, Hash, User as UserIcon, Building, Calendar, Upload, ArrowLeft } from 'lucide-react';
+import { FileText, FileCheck, Users, Hash, User as UserIcon, Building, Calendar, Upload, ArrowLeft, RefreshCw } from 'lucide-react';
 
 type FormData = {
     subject: string;
@@ -25,6 +25,7 @@ type FormData = {
     recipient_ids: number[]; // department IDs
     initial_recipient_id: number | null; // department ID
     through_department_ids: number[]; // department IDs for through
+    auto_generate_order_number: boolean;
 }
 
 interface Props {
@@ -57,6 +58,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
     const [sendToId, setSendToId] = useState<number | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isDragActive, setIsDragActive] = useState(false);
+    const [isGeneratingOrderNumber, setIsGeneratingOrderNumber] = useState(false);
     const { data, setData, post, processing, errors } = useForm<FormData>({
         subject: '',
         order_number: '',
@@ -66,10 +68,67 @@ const CreateDocument = ({ auth, departments }: Props) => {
         status: 'pending',
         recipient_ids: [],
         initial_recipient_id: null,
-        through_department_ids: []
+        through_department_ids: [],
+        auto_generate_order_number: false,
     });
 
     const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+
+    // Function to generate auto order number
+    const generateOrderNumber = async () => {
+        if (!data.document_type) return;
+
+        setIsGeneratingOrderNumber(true);
+        try {
+            const response = await fetch(route('users.documents.generate-order-number'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify({
+                    document_type: data.document_type,
+                }),
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                setData('order_number', result.order_number);
+            } else {
+                console.error('Failed to generate order number');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Generation Failed',
+                    text: 'Failed to generate order number. Please try again.',
+                    confirmButtonColor: '#b91c1c',
+                });
+            }
+        } catch (error) {
+            console.error('Error generating order number:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Generation Failed',
+                text: 'Failed to generate order number. Please try again.',
+                confirmButtonColor: '#b91c1c',
+            });
+        } finally {
+            setIsGeneratingOrderNumber(false);
+        }
+    };
+
+    // Auto-generate order number when document type changes and auto-generate is enabled
+    useEffect(() => {
+        if (data.auto_generate_order_number && data.document_type) {
+            generateOrderNumber();
+        }
+    }, [data.document_type]);
+
+    // Handle auto-generation toggle changes
+    useEffect(() => {
+        if (data.auto_generate_order_number && data.document_type) {
+            generateOrderNumber();
+        }
+    }, [data.auto_generate_order_number]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -80,11 +139,22 @@ const CreateDocument = ({ auth, departments }: Props) => {
         }
 
         // Validate required fields
-        if (!data.subject || !data.order_number || !data.document_type || !data.description) {
+        if (!data.subject || !data.document_type || !data.description) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Missing Required Fields',
                 text: 'Please fill out all required fields.',
+                confirmButtonColor: '#b91c1c',
+            });
+            return;
+        }
+
+        // Validate order number if not auto-generating
+        if (!data.auto_generate_order_number && !data.order_number) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Order Number Required',
+                text: 'Please enter an order number or enable auto-generation.',
                 confirmButtonColor: '#b91c1c',
             });
             return;
@@ -143,10 +213,15 @@ const CreateDocument = ({ auth, departments }: Props) => {
         // Always use FormData for submission
         const formData = new FormData();
         formData.append('subject', data.subject);
-        formData.append('order_number', data.order_number);
         formData.append('document_type', data.document_type);
         formData.append('description', data.description);
         formData.append('status', 'pending');
+        formData.append('auto_generate_order_number', data.auto_generate_order_number ? '1' : '0');
+
+        // Add order number if manually entered
+        if (!data.auto_generate_order_number && data.order_number) {
+            formData.append('order_number', data.order_number);
+        }
 
         // Recipients
         if (data.document_type === 'for_info') {
@@ -338,17 +413,113 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                         <label htmlFor="order_number" className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2 flex items-center gap-2">
                                             Order Number <span className="text-red-500">*</span>
                                         </label>
-                                        <Input
-                                            type="text"
-                                            name="order_number"
-                                            id="order_number"
-                                            required
-                                            placeholder="e.g. 2024-00123"
-                                            className="mt-2 block w-full rounded-lg border-gray-300 dark:border-gray-600 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                                            value={data.order_number}
-                                            onChange={e => setData('order_number', e.target.value)}
-                                        />
+
+                                        {/* Order Number Generation Toggle */}
+                                        <div className="mb-4">
+                                            <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="radio"
+                                                            id="manual_order"
+                                                            name="order_generation"
+                                                            checked={!data.auto_generate_order_number}
+                                                            onChange={() => {
+                                                                setData('auto_generate_order_number', false);
+                                                                setData('order_number', '');
+                                                            }}
+                                                            className="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 focus:ring-red-500 dark:focus:ring-red-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                                                        />
+                                                        <label htmlFor="manual_order" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                            Manual Input
+                                                        </label>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="radio"
+                                                            id="auto_order"
+                                                            name="order_generation"
+                                                            checked={data.auto_generate_order_number}
+                                                            onChange={() => {
+                                                                setData('auto_generate_order_number', true);
+                                                                generateOrderNumber();
+                                                            }}
+                                                            className="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 focus:ring-red-500 dark:focus:ring-red-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                                                        />
+                                                        <label htmlFor="auto_order" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                            Auto-Generate
+                                                        </label>
+                                                    </div>
+                                                </div>
+
+                                                {data.auto_generate_order_number && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={generateOrderNumber}
+                                                        disabled={isGeneratingOrderNumber}
+                                                        className="flex items-center gap-2 px-3 py-1.5 text-xs bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-md hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors border border-red-200 dark:border-red-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        <RefreshCw className={`h-3 w-3 ${isGeneratingOrderNumber ? 'animate-spin' : ''}`} />
+                                                        {isGeneratingOrderNumber ? 'Generating...' : 'Refresh'}
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Order number input */}
+                                        <div className="relative">
+                                            <Input
+                                                type="text"
+                                                name="order_number"
+                                                id="order_number"
+                                                required
+                                                placeholder={data.auto_generate_order_number ? (isGeneratingOrderNumber ? "Generating..." : "Auto-generated") : "e.g. 2024-00123"}
+                                                className="mt-2 block w-full rounded-lg border-gray-300 dark:border-gray-600 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 transition bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                                value={data.order_number}
+                                                onChange={e => setData('order_number', e.target.value)}
+                                                disabled={data.auto_generate_order_number}
+                                            />
+                                            {data.auto_generate_order_number && (
+                                                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                                    <RefreshCw className={`h-4 w-4 text-gray-400 ${isGeneratingOrderNumber ? 'animate-spin' : ''}`} />
+                                                </div>
+                                            )}
+                                        </div>
+
                                         {errors.order_number && <div className="text-red-500 text-xs mt-1">{errors.order_number}</div>}
+
+                                        {data.auto_generate_order_number && (
+                                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-800">
+                                                <div className="flex items-start gap-2">
+                                                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                                                    <div>
+                                                        <span className="font-medium text-blue-700 dark:text-blue-300">
+                                                            {isGeneratingOrderNumber ? 'Generating order number...' : 'Auto-generation enabled'}
+                                                        </span>
+                                                        <p className="text-blue-600 dark:text-blue-400 mt-0.5">
+                                                            {isGeneratingOrderNumber
+                                                                ? 'Please wait while we generate your order number.'
+                                                                : `Order number will be automatically generated based on your department (${auth.user.department?.code || 'DEPT'}) and document type (${data.document_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}).`
+                                                            }
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {!data.auto_generate_order_number && (
+                                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
+                                                <div className="flex items-start gap-2">
+                                                    <div className="w-1.5 h-1.5 bg-gray-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                                                    <div>
+                                                        <span className="font-medium text-gray-700 dark:text-gray-300">Manual input enabled</span>
+                                                        <p className="text-gray-600 dark:text-gray-400 mt-0.5">
+                                                            Please enter your order number manually. Make sure it follows your department's numbering convention.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
@@ -369,7 +540,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                 </div>
 
                                 {/* Description */}
-                                <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
+                                <div className="bg-gray-50   dark:bg-gray-700 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
                                     <label htmlFor="description" className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2">Description <span className="text-red-500">*</span></label>
                                     <Textarea
                                         name="description"
