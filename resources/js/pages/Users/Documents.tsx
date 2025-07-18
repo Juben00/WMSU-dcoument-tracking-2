@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import Navbar from "@/components/User/navbar"
-import { Link } from "@inertiajs/react"
+import { Link, router } from "@inertiajs/react"
 import {
     Eye,
     Download,
@@ -30,6 +30,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
+import Swal from "sweetalert2"
 
 interface Document {
     id: number
@@ -104,15 +105,16 @@ const Documents = ({ documents, auth }: Props) => {
         return doc.owner_id === auth.user.id && doc.status !== "draft" && doc.status !== "returned"
     }
 
-    // Helper function to determine if a document was received by the current user (status 'received')
+    // Helper function to determine if a document was received by the current user
     const isDocumentReceivedByUser = (doc: Document) => {
-        // Only show if the recipient record for this department is marked as 'received'
-        // We'll assume backend only returns documents where the user is a recipient, so we filter by status
-        // For this, you may need to adjust the backend to include recipient status per user/department
-        // For now, let's assume doc has a 'recipient_status' field (add this in backend if needed)
-        // If not present, fallback to old logic
+        // If the document was sent by the current user, only show it in "Received" if status is "returned"
+        if (doc.owner_id === auth.user.id) {
+            return doc.status === 'returned'
+        }
+
+        // If the document was sent by someone else, show it in "Received" if status is "received"
         // @ts-ignore
-        return doc.recipient_status === 'received' || (doc.owner_id !== auth.user.id && doc.status === 'received')
+        return doc.recipient_status === 'received' || doc.status === 'received'
     }
 
     // Filter documents by current fiscal year and only show received ones with status 'received'
@@ -352,7 +354,11 @@ const Documents = ({ documents, auth }: Props) => {
                         <Button
                             variant="outline"
                             className="border-red-600 text-red-700 hover:bg-red-50"
-                            onClick={() => setShowBarcodeModal(true)}
+                            onClick={() => {
+                                setShowBarcodeModal(true)
+                                // Test toast
+                                toast.info("Barcode modal opened")
+                            }}
                         >
                             <BarChart3 className="w-4 h-4 mr-2" />
                             Receive Document (Barcode)
@@ -361,7 +367,7 @@ const Documents = ({ documents, auth }: Props) => {
 
                     {/* Barcode Modal */}
                     {showBarcodeModal && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
                             <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl p-8 w-full max-w-md relative">
                                 <button
                                     className="absolute top-3 right-3 text-gray-400 hover:text-red-600"
@@ -379,28 +385,46 @@ const Documents = ({ documents, auth }: Props) => {
                                         e.preventDefault()
                                         setBarcodeLoading(true)
                                         try {
-                                            const res = await fetch("/users/documents/confirm-receipt", {
-                                                method: "POST",
-                                                headers: {
-                                                    "Content-Type": "application/json",
-                                                    "X-Requested-With": "XMLHttpRequest",
-                                                    "X-CSRF-TOKEN": (document.querySelector('meta[name=csrf-token]') as HTMLMetaElement)?.content || ""
+                                            console.log("Submitting barcode:", barcodeInput)
+
+                                            router.post('/users/documents/confirm-receipt', {
+                                                barcode_value: barcodeInput
+                                            }, {
+                                                onSuccess: (page) => {
+                                                    console.log("Success:", page)
+                                                    Swal.fire({
+                                                        icon: 'success',
+                                                        title: 'Document Received',
+                                                        text: 'Document successfully marked as received.',
+                                                        confirmButtonColor: '#b91c1c',
+                                                    }).then(() => {
+                                                        setShowBarcodeModal(false)
+                                                        setBarcodeInput("")
+                                                        setActiveTab("received")
+                                                        window.location.reload()
+                                                    })
                                                 },
-                                                body: JSON.stringify({ barcode_value: barcodeInput })
+                                                onError: (errors) => {
+                                                    console.log("Errors:", errors)
+                                                    Swal.fire({
+                                                        icon: 'error',
+                                                        title: 'Document Not Found',
+                                                        text: errors.barcode_value || 'Invalid barcode. Document not found.',
+                                                        confirmButtonColor: '#b91c1c',
+                                                    })
+                                                },
+                                                onFinish: () => {
+                                                    setBarcodeLoading(false)
+                                                }
                                             })
-                                            const data = await res.json()
-                                            if (data.success) {
-                                                toast.success(data.message)
-                                                setShowBarcodeModal(false)
-                                                setBarcodeInput("")
-                                                // Optionally, reload the page or refetch data
-                                                window.location.reload()
-                                            } else {
-                                                toast.error(data.message || "Failed to confirm receipt.")
-                                            }
                                         } catch (err) {
-                                            toast.error("An error occurred. Please try again.")
-                                        } finally {
+                                            console.error("Error confirming receipt:", err)
+                                            Swal.fire({
+                                                icon: 'error',
+                                                title: 'Error',
+                                                text: "An error occurred. Please try again.",
+                                                confirmButtonColor: '#b91c1c',
+                                            })
                                             setBarcodeLoading(false)
                                         }
                                     }}

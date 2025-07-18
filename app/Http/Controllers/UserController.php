@@ -19,6 +19,7 @@ use Picqer\Barcode\BarcodeGeneratorSVG;
 use App\Notifications\InAppNotification;
 use App\Models\UserActivityLog;
 use App\Models\DocumentActivityLog;
+use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
 {
@@ -283,9 +284,10 @@ class UserController extends Controller
         $latestDocument = $query->orderBy('order_number', 'desc')->first();
 
         if ($latestDocument) {
-            // Extract the numeric part from the latest order number
-            $numericPart = preg_replace('/[^0-9]/', '', $latestDocument->order_number);
-            $nextNumber = intval($numericPart) + 1;
+            // Extract only the sequence number part (last 3 digits after the last dash)
+            $parts = explode('-', $latestDocument->order_number);
+            $lastPart = end($parts);
+            $nextNumber = intval($lastPart) + 1;
         } else {
             $nextNumber = 1;
         }
@@ -891,7 +893,9 @@ class UserController extends Controller
         // Find the document by barcode
         $document = Document::where('barcode_value', $barcode)->first();
         if (!$document) {
-            return response()->json(['success' => false, 'message' => 'Invalid barcode. Document not found.'], 404);
+            throw ValidationException::withMessages([
+                'barcode_value' => ['Invalid barcode. Document not found.']
+            ]);
         }
 
         // Find the recipient record for this department
@@ -900,7 +904,9 @@ class UserController extends Controller
             ->where('status', 'pending')
             ->first();
         if (!$recipient) {
-            return response()->json(['success' => false, 'message' => 'Your department is not a pending recipient for this document.'], 403);
+            throw ValidationException::withMessages([
+                'barcode_value' => ['Your department is not a recipient for this document.']
+            ]);
         }
 
         // update the document status to received
@@ -929,6 +935,6 @@ class UserController extends Controller
             'created_at' => now(),
         ]);
 
-        return response()->json(['success' => true, 'message' => 'Document successfully marked as received.']);
+        return redirect()->back()->with('success', 'Document successfully marked as received.');
     }
 }
