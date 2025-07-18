@@ -54,23 +54,9 @@ class UserController extends Controller
             'suffix' => ['nullable', 'string', 'max:255'],
             'gender' => ['required', 'string', 'in:Male,Female'],
             'position' => ['required', 'string', 'max:255'],
-            'role' => ['required', 'string', 'in:receiver,user'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
-
-        // Check if trying to create a receiver and if one already exists for this department
-        if ($request->role === 'receiver') {
-            $existingReceiver = User::where('department_id', Auth::user()->department_id)
-                ->where('role', 'receiver')
-                ->first();
-
-            if ($existingReceiver) {
-                return back()->withErrors([
-                    'role' => 'A receiver already exists for this department.'
-                ]);
-            }
-        }
 
         $user = User::create([
             'first_name' => $request->first_name,
@@ -80,7 +66,7 @@ class UserController extends Controller
             'gender' => $request->gender,
             'position' => $request->position,
             'department_id' => Auth::user()->department_id,
-            'role' => $request->role,
+            'role' => "user",   // default role is user
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);

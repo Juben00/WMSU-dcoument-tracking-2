@@ -250,7 +250,7 @@ const Offices = ({ auth, users }: Props) => {
                                                 <InputError message={errors.position} />
                                             </div>
                                         </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div className="space-y-1.5">
                                                 <Label htmlFor="role" className="text-gray-700 dark:text-gray-200">Role</Label>
                                                 <Select
@@ -269,7 +269,7 @@ const Offices = ({ auth, users }: Props) => {
                                                 </Select>
                                                 <InputError message={errors.role} />
                                             </div>
-                                        </div>
+                                        </div> */}
                                         <div className="space-y-1.5">
                                             <Label htmlFor="email" className="text-gray-700 dark:text-gray-200">Email</Label>
                                             <Input
