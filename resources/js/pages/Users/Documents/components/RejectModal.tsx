@@ -21,7 +21,6 @@ interface FormData {
     comments: string;
     attachment_files: File[];
     forward_to_id: number | null;
-    is_final_approver: boolean;
     [key: string]: any;
 }
 
@@ -50,7 +49,6 @@ const RejectModal: React.FC<RejectModalProps> = ({ isOpen, onClose, documentId }
         comments: '',
         attachment_files: [],
         forward_to_id: null,
-        is_final_approver: auth.user.role === 'admin' ? true : false
     });
 
     // Update form data whenever state changes
@@ -60,7 +58,6 @@ const RejectModal: React.FC<RejectModalProps> = ({ isOpen, onClose, documentId }
             comments: comments,
             attachment_files: files.map(f => f.file),
             forward_to_id: null,
-            is_final_approver: auth.user.role === 'admin'
         });
     }, [comments, files, setData, auth.user.role]);
 
