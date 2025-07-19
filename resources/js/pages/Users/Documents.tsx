@@ -349,21 +349,7 @@ const Documents = ({ documents, auth }: Props) => {
             <Navbar />
             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    {/* Barcode Confirmation Section */}
-                    <div className="mb-8 flex justify-end">
-                        <Button
-                            variant="outline"
-                            className="border-red-600 text-red-700 hover:bg-red-50"
-                            onClick={() => {
-                                setShowBarcodeModal(true)
-                                // Test toast
-                                toast.info("Barcode modal opened")
-                            }}
-                        >
-                            <BarChart3 className="w-4 h-4 mr-2" />
-                            Receive Document (Barcode)
-                        </Button>
-                    </div>
+
 
                     {/* Barcode Modal */}
                     {showBarcodeModal && (
@@ -463,15 +449,33 @@ const Documents = ({ documents, auth }: Props) => {
                                     </p>
                                 </div>
                             </div>
-                            <Link href="/documents/create">
-                                <Button
-                                    size="lg"
-                                    className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 shadow-lg hover:shadow-xl transition-all duration-200 dark:text-white"
-                                >
-                                    <Plus className="w-5 h-5 mr-2" />
-                                    New Document
-                                </Button>
-                            </Link>
+                            <div className="flex items-center gap-4">
+                                {/* Barcode Confirmation Section */}
+                                <div className="flex justify-end">
+                                    <Button
+                                        size="lg"
+                                        variant="outline"
+                                        className="border-red-600 text-red-700 hover:bg-red-50 dark:border-red-400 dark:text-red-400 dark:hover:bg-red-900 dark:hover:text-white dark:bg-gray-800"
+                                        onClick={() => {
+                                            setShowBarcodeModal(true)
+                                            // Test toast
+                                            toast.info("Barcode modal opened")
+                                        }}
+                                    >
+                                        <BarChart3 className="w-5 h-5 mr-1" />
+                                        Receive Document
+                                    </Button>
+                                </div>
+                                <Link href="/documents/create">
+                                    <Button
+                                        size="lg"
+                                        className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 shadow-lg hover:shadow-xl transition-all duration-200 dark:text-white"
+                                    >
+                                        <Plus className="w-5 h-5 mr-1" />
+                                        New Document
+                                    </Button>
+                                </Link>
+                            </div>
                         </div>
                     </div>
 
@@ -542,35 +546,39 @@ const Documents = ({ documents, auth }: Props) => {
                                 </div>
 
                                 {/* Status Filter */}
-                                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                    <SelectTrigger className="bg-white dark:bg-gray-800 h-12">
-                                        <Filter className="w-4 h-4 mr-2" />
-                                        <SelectValue placeholder="All Status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All Status</SelectItem>
-                                        <SelectItem value="pending">Pending</SelectItem>
-                                        <SelectItem value="approved">Approved</SelectItem>
-                                        <SelectItem value="rejected">Rejected</SelectItem>
-                                        <SelectItem value="returned">Returned</SelectItem>
-                                        <SelectItem value="in_review">In Review</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <div className="bg-white dark:bg-gray-800 h-12 flex items-center justify-center border-2 border-gray-200 dark:border-gray-700 rounded-lg">
+                                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                        <SelectTrigger className="bg-white dark:bg-gray-800 h-12 border-none">
+                                            <Filter className="w-4 h-4 mr-2" />
+                                            <SelectValue placeholder="All Status" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">All Status</SelectItem>
+                                            <SelectItem value="pending">Pending</SelectItem>
+                                            <SelectItem value="approved">Approved</SelectItem>
+                                            <SelectItem value="rejected">Rejected</SelectItem>
+                                            <SelectItem value="returned">Returned</SelectItem>
+                                            <SelectItem value="in_review">In Review</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
 
                                 {/* Document Type Filter */}
-                                <Select value={documentTypeFilter} onValueChange={setDocumentTypeFilter}>
-                                    <SelectTrigger className="bg-white dark:bg-gray-800 h-12">
-                                        <FileSearch className="w-4 h-4 mr-2" />
-                                        <SelectValue placeholder="All Types" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All Types</SelectItem>
-                                        <SelectItem value="special_order">Special Order</SelectItem>
-                                        <SelectItem value="order">Order</SelectItem>
-                                        <SelectItem value="memorandum">Memorandum</SelectItem>
-                                        <SelectItem value="for_info">For Info</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <div className="bg-white dark:bg-gray-800 h-12 flex items-center justify-center border-2 border-gray-200 dark:border-gray-700 rounded-lg">
+                                    <Select value={documentTypeFilter} onValueChange={setDocumentTypeFilter}>
+                                        <SelectTrigger className="bg-white dark:bg-gray-800 h-12 border-none" >
+                                            <FileSearch className="w-4 h-4 mr-2" />
+                                            <SelectValue placeholder="All Types" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">All Types</SelectItem>
+                                            <SelectItem value="special_order">Special Order</SelectItem>
+                                            <SelectItem value="order">Order</SelectItem>
+                                            <SelectItem value="memorandum">Memorandum</SelectItem>
+                                            <SelectItem value="for_info">For Info</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
 
                                 {/* Fiscal Year Filter - Only show for archived tab */}
                                 {activeTab === "archived" && (
@@ -607,10 +615,10 @@ const Documents = ({ documents, auth }: Props) => {
                             </div>
 
                             {/* Sort Options */}
-                            <div className="flex items-center gap-4">
-                                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Sort by:</span>
+                            <div className="gap-4 bg-white dark:bg-gray-800 h-12 flex items-center justify-center border-2 ps-4 border-gray-200 dark:border-gray-700 rounded-lg w-fit">
+                                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Sort</span>
                                 <Select value={sortBy} onValueChange={setSortBy}>
-                                    <SelectTrigger className="bg-white dark:bg-gray-800 w-48">
+                                    <SelectTrigger className="bg-white dark:bg-gray-800 w-48 border-none">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>

@@ -275,7 +275,7 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartments, th
         if (isForInfoDocument()) {
             return canRespond();
         }
-        return canRespond() && isNonForInfoDocument() && isNotFinalRecipient() && !isReturned();
+        return canRespond() && isNonForInfoDocument() && isNotFinalRecipient() && !isReturned() && isPending();
     };
 
     const canApproveOrReject = () => {
@@ -288,11 +288,11 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartments, th
     // };
 
     const canForwardToOtherOffice = () => {
-        return cannotRespond() && isNotFinalRecipient() && isAdmin() && isNotOwner() && !isReturned() && !isPending() && notApprovedAndRejected();
+        return canRespond() && isNotFinalRecipient() && isAdmin() && isNotOwner() && !isReturned() && !isPending() && notApprovedAndRejected();
     };
 
     const canReturnDocument = () => {
-        return cannotRespond() && isAdmin() && isNotOwner() && isNonForInfoDocument() && !isReturned() && !isPending() && notApprovedAndRejected();
+        return canRespond() && isAdmin() && isNotOwner() && isNonForInfoDocument() && !isReturned() && !isPending() && notApprovedAndRejected();
     };
 
     const canPublishPublicly = () => {
@@ -773,12 +773,12 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartments, th
                                             Disapprove
                                         </button>
                                         {/* return document button */}
-                                        <button
+                                        {/* <button
                                             onClick={() => setIsReturnModalOpen(true)}
                                             className="px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg hover:from-gray-700 hover:to-gray-800 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                                         >
                                             Return Document
-                                        </button>
+                                        </button> */}
                                     </>
                                 )}
 

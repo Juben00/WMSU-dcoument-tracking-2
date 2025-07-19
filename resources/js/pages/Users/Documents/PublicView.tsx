@@ -12,31 +12,35 @@ interface DocumentFile {
 
 interface DocumentRecipient {
     id: number;
-    user: {
+    department: {
         id: number;
-        first_name: string;
-        last_name: string;
-        department_id: number;
-        role: string;
-        department?: {
-            id: number;
-            name: string;
-        };
+        name: string;
     };
     status: string;
     comments?: string;
     responded_at?: string;
+    sequence: number;
 }
 
 interface Document {
     id: number;
     subject: string;
+    document_type: 'special_order' | 'order' | 'memorandum' | 'for_info';
+    order_number: string;
     description?: string;
     status: string;
     created_at: string;
     owner: {
         first_name: string;
         last_name: string;
+        department?: {
+            id: number;
+            name: string;
+        };
+    };
+    department?: {
+        id: number;
+        name: string;
     };
     files: DocumentFile[];
     recipients: DocumentRecipient[];
@@ -63,8 +67,25 @@ const PublicView: React.FC<Props> = ({ document }) => {
                 return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
             case 'in_review':
                 return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+            case 'received':
+                return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300';
             default:
                 return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+        }
+    };
+
+    const getDocumentTypeDisplayName = (documentType: string) => {
+        switch (documentType) {
+            case 'special_order':
+                return 'Special Order';
+            case 'order':
+                return 'Order';
+            case 'memorandum':
+                return 'Memorandum';
+            case 'for_info':
+                return 'For Info';
+            default:
+                return 'Unknown';
         }
     };
 
@@ -97,6 +118,16 @@ const PublicView: React.FC<Props> = ({ document }) => {
                         </div>
                         <dl className="space-y-5">
                             <div>
+                                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Document Type</dt>
+                                <dd className="mt-1 text-base text-gray-900 dark:text-gray-100 font-semibold">
+                                    {getDocumentTypeDisplayName(document.document_type)}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Order Number</dt>
+                                <dd className="mt-1 text-base text-gray-900 dark:text-gray-100 font-semibold">{document.order_number}</dd>
+                            </div>
+                            <div>
                                 <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Subject</dt>
                                 <dd className="mt-1 text-base text-gray-900 dark:text-gray-100 font-semibold">{document.subject}</dd>
                             </div>
@@ -112,6 +143,12 @@ const PublicView: React.FC<Props> = ({ document }) => {
                                 <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Created By</dt>
                                 <dd className="mt-1 text-base text-gray-900 dark:text-gray-100">{document.owner.first_name} {document.owner.last_name}</dd>
                             </div>
+                            {document.owner.department && (
+                                <div>
+                                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Department</dt>
+                                    <dd className="mt-1 text-base text-gray-900 dark:text-gray-100">{document.owner.department.name}</dd>
+                                </div>
+                            )}
                             <div>
                                 <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Date Created</dt>
                                 <dd className="mt-1 text-base text-gray-900 dark:text-gray-100">{new Date(document.created_at).toLocaleDateString()}</dd>
@@ -266,7 +303,7 @@ const PublicView: React.FC<Props> = ({ document }) => {
                                         <div className="flex-1 bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
                                             <div className="flex items-center justify-between">
                                                 <p className="text-base font-medium text-gray-900 dark:text-gray-100">
-                                                    {recipient.user.first_name} {recipient.user.last_name} | {recipient.user.department?.name || 'No Department'} | {recipient.user.role.charAt(0).toUpperCase() + recipient.user.role.slice(1)}
+                                                    {recipient.department.name}
                                                 </p>
                                                 <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(recipient.status)}`}>
                                                     {recipient.status.charAt(0).toUpperCase() + recipient.status.slice(1)}

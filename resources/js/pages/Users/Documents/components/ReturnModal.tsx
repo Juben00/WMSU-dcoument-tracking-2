@@ -100,6 +100,12 @@ const ReturnModal: React.FC<ReturnModalProps> = ({ isOpen, onClose, documentId }
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Prevent multiple submissions
+        if (processing) {
+            return;
+        }
+
         post(route('documents.respond', documentId), {
             preserveScroll: true,
             forceFormData: true,

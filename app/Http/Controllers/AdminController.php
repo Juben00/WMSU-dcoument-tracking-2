@@ -155,7 +155,7 @@ class AdminController extends Controller
         $departmentsWithUsers = Departments::has('users')->count();
 
         // Recent Activities (last 10 document activities)
-        $recentActivities = DocumentRecipient::with(['document.owner', 'user'])
+        $recentActivities = DocumentRecipient::with(['document.owner', 'department'])
             ->whereNotNull('responded_at')
             ->orderByDesc('responded_at')
             ->take(10)
@@ -165,7 +165,7 @@ class AdminController extends Controller
                     'id' => $activity->id,
                     'document_title' => $activity->document->subject ?? 'Untitled',
                     'document_owner' => $activity->document->owner->first_name . ' ' . $activity->document->owner->last_name,
-                    'recipient' => $activity->user->first_name . ' ' . $activity->user->last_name,
+                    'recipient' => $activity->department->name ?? 'Unknown Department',
                     'status' => $activity->status,
                     'comments' => $activity->comments,
                     'responded_at' => $activity->responded_at,

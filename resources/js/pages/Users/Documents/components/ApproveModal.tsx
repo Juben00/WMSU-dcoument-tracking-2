@@ -107,6 +107,11 @@ const ApproveModal: React.FC<ApproveModalProps> = ({ isOpen, onClose, documentId
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
+        // Prevent multiple submissions
+        if (processing) {
+            return;
+        }
+
         post(route('documents.respond', documentId), {
             preserveScroll: true,
             forceFormData: true,
@@ -277,7 +282,7 @@ const ApproveModal: React.FC<ApproveModalProps> = ({ isOpen, onClose, documentId
                             </Button>
                             <Button
                                 type="submit"
-                                disabled={processing}
+                                disabled={processing || !comments.trim()}
                                 className="bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
                             >
                                 {processing ? 'Processing...' : 'Approve'}

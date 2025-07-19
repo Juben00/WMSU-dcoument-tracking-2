@@ -45,8 +45,8 @@ class DocumentController extends Controller
             ]);
         }
 
-        // set the document status to pending
-        $document->update(['status' => 'pending']);
+        // set the document status to in_review
+        $document->update(['status' => 'in_review']);
 
         // find the id of the user who forwarded the document
         $forwardedById = Auth::id();
@@ -263,37 +263,18 @@ class DocumentController extends Controller
             $document->owner->notify(new InAppNotification('Your document was approved by the final approver.', ['document_id' => $document->id, 'document_name' => $document->subject]));
             $user = Auth::user();
             $dept = $user->department ? $user->department->name : 'No Department';
-            DocumentActivityLog::create([
-                'document_id' => $document->id,
-                'user_id' => Auth::id(),
-                'action' => 'approved',
-                'description' => "Document approved by {$user->first_name} {$user->last_name} ({$dept})",
-                'created_at' => now(),
-            ]);
+
         } elseif ($isFinalApprover && $request->status === 'rejected' && $isAdmin) {
             $document->update(['status' => 'rejected']);
             $document->owner->notify(new InAppNotification('Your document was rejected by the final approver.', ['document_id' => $document->id, 'document_name' => $document->subject]));
             $user = Auth::user();
             $dept = $user->department ? $user->department->name : 'No Department';
-            DocumentActivityLog::create([
-                'document_id' => $document->id,
-                'user_id' => Auth::id(),
-                'action' => 'rejected',
-                'description' => "Document rejected by {$user->first_name} {$user->last_name} ({$dept})",
-                'created_at' => now(),
-            ]);
+
         } elseif ($isFinalApprover && $request->status === 'returned') {
             $document->update(['status' => 'returned']);
             $document->owner->notify(new InAppNotification('Your document was returned by the final approver.', ['document_id' => $document->id, 'document_name' => $document->subject]));
             $user = Auth::user();
             $dept = $user->department ? $user->department->name : 'No Department';
-            DocumentActivityLog::create([
-                'document_id' => $document->id,
-                'user_id' => Auth::id(),
-                'action' => 'returned',
-                'description' => "Document returned by {$user->first_name} {$user->last_name} ({$dept})",
-                'created_at' => now(),
-            ]);
         }
 
         return redirect()->back()->with('success', 'Response recorded successfully');
@@ -553,7 +534,7 @@ class DocumentController extends Controller
                   ->orWhere('barcode_value', $public_token);
         })
         ->where('is_public', true)
-        ->with(['files', 'owner', 'recipients.department'])
+        ->with(['files', 'owner.department', 'recipients.department', 'department'])
         ->first();
 
         if (!$document) {
@@ -585,6 +566,8 @@ class DocumentController extends Controller
                   ->orWhere('description', 'like', '%' . $search . '%')
                   ->orWhere('barcode_value', 'like', '%' . $search . '%')
                   ->orWhere('public_token', 'like', '%' . $search . '%')
+                  ->orWhere('order_number', 'like', '%' . $search . '%')
+                  ->orWhere('document_type', 'like', '%' . $search . '%')
                   ->orWhereHas('owner', function($ownerQuery) use ($search) {
                       $ownerQuery->where('first_name', 'like', '%' . $search . '%')
                                 ->orWhere('last_name', 'like', '%' . $search . '%');
@@ -601,6 +584,7 @@ class DocumentController extends Controller
                     'subject' => $document->subject,
                     'description' => $document->description,
                     'status' => $document->status,
+                    'document_type' => $document->document_type,
                     'is_public' => $document->is_public,
                     'public_token' => $document->public_token,
                     'barcode_path' => $document->barcode_path,

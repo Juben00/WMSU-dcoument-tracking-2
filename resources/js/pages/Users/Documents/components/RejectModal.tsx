@@ -107,6 +107,11 @@ const RejectModal: React.FC<RejectModalProps> = ({ isOpen, onClose, documentId }
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
+        // Prevent multiple submissions
+        if (processing) {
+            return;
+        }
+
         post(route('documents.respond', documentId), {
             preserveScroll: true,
             forceFormData: true,
@@ -277,7 +282,7 @@ const RejectModal: React.FC<RejectModalProps> = ({ isOpen, onClose, documentId }
                             </Button>
                             <Button
                                 type="submit"
-                                disabled={processing}
+                                disabled={processing || !comments.trim()}
                                 className="bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600"
                             >
                                 {processing ? 'Processing...' : 'Reject'}
