@@ -39,7 +39,6 @@ interface DocumentRecipient {
             name: string;
         };
     } | null;
-    is_final_approver?: boolean;
     response_file?: DocumentFile;
 }
 
@@ -60,7 +59,6 @@ interface Document {
     };
     files: DocumentFile[];
     recipients: DocumentRecipient[];
-    is_final_approver: boolean;
     final_recipient_id: number | null;
     can_respond: boolean;
     can_respond_other_data: DocumentRecipient | null;
@@ -96,6 +94,7 @@ interface Props {
         user: {
             id: number;
             role: string;
+            department_id: number;
         };
     };
     departments?: Array<{
@@ -118,16 +117,9 @@ interface Props {
             name: string;
         };
     }>;
-    otherDepartmentUsers?: Array<{
+    otherDepartments?: Array<{
         id: number;
-        first_name: string;
-        last_name: string;
-        department_id: number;
-        role: string;
-        department?: {
-            id: number;
-            name: string;
-        };
+        name: string;
     }>;
     throughUsers?: Array<{
         id: number;
@@ -225,12 +217,18 @@ const formatActivityLogAction = (action: string) => {
             return 'Document Deleted';
         case 'document_deleted':
             return 'Document Deleted';
+        case 'document_forwarded':
+            return 'Document Forwarded';
+        case 'document_received':
+            return 'Document Received';
+        case 'document_resent':
+            return 'Document Resent';
         default:
             return action;
     }
 };
 
-const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers, throughUsers, activityLogs = [] }: Props & { activityLogs?: ActivityLog[] }) => {
+const ViewDocument = ({ document, auth, departments, users, otherDepartments, throughUsers, activityLogs = [] }: Props & { activityLogs?: ActivityLog[] }) => {
     const [isForwardModalOpen, setIsForwardModalOpen] = useState(false);
     const [isForwardOtherOfficeModalOpen, setIsForwardOtherOfficeModalOpen] = useState(false);
     const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
@@ -251,6 +249,7 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
 
     console.log('document', document);
     console.log('throughUsers', throughUsers);
+    console.log('otherDepartments', otherDepartments);
 
     // Check if current user is an active recipient
     // const currentRecipient = document.recipients.find(
@@ -259,7 +258,7 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
 
     // Helper functions to determine user permissions and document states
     const isOwner = () => document.owner_id === auth.user.id;
-    const isFinalRecipient = () => document.final_recipient?.id === auth.user.id;
+    const isFinalRecipient = () => document.final_recipient?.id === auth.user.department_id;
     const isAdmin = () => auth.user.role === 'admin';
     const isForInfoDocument = () => document.document_type === 'for_info';
     const isNonForInfoDocument = () => document.document_type !== 'for_info';
@@ -283,9 +282,10 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
         return canRespond() && isNonForInfoDocument() && isFinalRecipient() && !isReturned();
     };
 
-    const canForwardToOffice = () => {
-        return cannotRespond() && isNotFinalRecipient() && isNotOwner() && !isReturned() && !isPending() && notApprovedAndRejected();
-    };
+    // Removed canForwardToOffice and its usages
+    // const canForwardToOffice = () => {
+    //     return cannotRespond() && isNotFinalRecipient() && isNotOwner() && !isReturned() && !isPending() && notApprovedAndRejected();
+    // };
 
     const canForwardToOtherOffice = () => {
         return cannotRespond() && isNotFinalRecipient() && isAdmin() && isNotOwner() && !isReturned() && !isPending() && notApprovedAndRejected();
@@ -369,61 +369,6 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
         : [];
 
     console.log('responseFiles', responseFiles);
-
-    // Debug: Check if through users are found correctly
-    if (document.through_department_ids && document.through_department_ids.length > 0) {
-        console.log('Debugging through users:');
-        document.through_department_ids.forEach((userId, index) => {
-            const userIdNum = typeof userId === 'string' ? parseInt(userId, 10) : userId;
-            const throughRecipient = approvalChain.find((recipient: DocumentRecipient) =>
-                recipient.department && recipient.department.id === userIdNum
-            );
-            console.log(`User ID ${userId} (${userIdNum}):`, throughRecipient ? `${throughRecipient.department.name}` : 'Not found');
-        });
-    }
-
-    // Find the next through user to forward to
-    const getNextThroughUser = () => {
-        if (!document.through_department_ids || document.through_department_ids.length === 0) {
-            return null;
-        }
-
-        // Find the current user's position in the through users list
-        // Convert through_department_ids to numbers for comparison
-        const throughUserIdsAsNumbers = document.through_department_ids.map(id =>
-            typeof id === 'string' ? parseInt(id, 10) : id
-        );
-        const currentUserIndex = throughUserIdsAsNumbers.indexOf(auth.user.id);
-
-        // If current user is not in the through users list, return null
-        if (currentUserIndex === -1) {
-            return null;
-        }
-
-        // Get the next user in the sequence
-        const nextUserIndex = currentUserIndex + 1;
-
-        // If there's a next user in the through users list
-        if (nextUserIndex < throughUserIdsAsNumbers.length) {
-            const nextUserId = throughUserIdsAsNumbers[nextUserIndex];
-            // Find the user details from the approval chain
-            return approvalChain.find((recipient: DocumentRecipient) =>
-                recipient.department && recipient.department.id === nextUserId
-            );
-        }
-
-        // If we're at the last through user, return the final recipient
-        if (document.final_recipient) {
-            return {
-                department: document.final_recipient,
-                id: document.final_recipient.id
-            };
-        }
-
-        return null;
-    };
-
-    const nextThroughUser = getNextThroughUser();
 
     const copyToClipboard = async (text: string) => {
         try {
@@ -837,15 +782,15 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                     </>
                                 )}
 
-                                {/* Forward to Office Button */}
-                                {canForwardToOffice() && (
+                                {/* Forward to Office Button - REMOVED */}
+                                {/* {canForwardToOffice() && (
                                     <button
                                         onClick={() => setIsForwardModalOpen(true)}
                                         className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                                     >
                                         Forward to Office
                                     </button>
-                                )}
+                                )} */}
 
                                 {/* Forward to Other Office Button */}
                                 {canForwardToOtherOffice() && (
@@ -854,7 +799,7 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                                             onClick={() => setIsForwardOtherOfficeModalOpen(true)}
                                             className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                                         >
-                                            Forward to other office
+                                            Forward to Office
                                         </button>
                                     </>
                                 )}
@@ -1216,18 +1161,19 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartmentUsers
                 onClose={() => setIsRejectModalOpen(false)}
                 documentId={document.id}
             />
-            <ForwardModal
+            {/* ForwardModal removed */}
+            {/* <ForwardModal
                 isOpen={isForwardModalOpen}
                 onClose={() => setIsForwardModalOpen(false)}
                 processing={processing}
                 users={users || []}
                 documentId={document.id}
-            />
+            /> */}
             <ForwardOtherOfficeModal
                 isOpen={isForwardOtherOfficeModalOpen}
                 onClose={() => setIsForwardOtherOfficeModalOpen(false)}
                 processing={processing}
-                users={otherDepartmentUsers || []}
+                departments={otherDepartments || []}
                 documentId={document.id}
             />
             <ReturnModal

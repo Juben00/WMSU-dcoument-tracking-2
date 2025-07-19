@@ -3,6 +3,13 @@ import Navbar from '@/components/User/navbar';
 import { useForm, router } from '@inertiajs/react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import Swal from 'sweetalert2';
 import { Download } from 'lucide-react';
 
@@ -22,8 +29,15 @@ interface Document {
     order_number: string;
 }
 
+interface InvolvedDepartment {
+    id: number;
+    name: string;
+    type: 'sent_to' | 'sent_through';
+}
+
 interface Props {
     document: Document;
+    involvedDepartments: InvolvedDepartment[];
 }
 
 // FileCard for file preview and download (adapted from View.tsx)
@@ -81,22 +95,25 @@ const FileCard = ({ file, documentId, color = 'red', onDelete }: { file: any, do
     </div>
 );
 
-const EditDocument = ({ document }: Props) => {
+const EditDocument = ({ document, involvedDepartments }: Props) => {
     const [filePreviews, setFilePreviews] = useState<string[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [existingFiles, setExistingFiles] = useState<DocumentFile[]>(document.files || []);
+    const [newFiles, setNewFiles] = useState<File[]>([]);
+    const [newFilePreviews, setNewFilePreviews] = useState<string[]>([]);
     const { data, setData, post, processing, errors } = useForm({
         order_number: document.order_number || '',
         subject: document.subject || '',
         description: document.description || '',
         files: [] as File[],
+        selected_department_id: null as number | null,
     });
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const files = Array.from(e.target.files);
-            setData('files', files);
-            setFilePreviews(files.map(file => URL.createObjectURL(file)));
+            setNewFiles(files);
+            setNewFilePreviews(files.map(file => URL.createObjectURL(file)));
         }
     };
 
@@ -107,22 +124,29 @@ const EditDocument = ({ document }: Props) => {
             Swal.fire({ icon: 'warning', title: 'Missing Subject', text: 'Please enter a subject.' });
             return;
         }
+        if (!data.selected_department_id) {
+            Swal.fire({ icon: 'warning', title: 'Missing Department', text: 'Please select a department to send the document to.' });
+            return;
+        }
         setIsSubmitting(true);
         const formData = new FormData();
         formData.append('subject', data.subject);
         formData.append('description', data.description);
         formData.append('order_number', data.order_number);
+        formData.append('selected_department_id', data.selected_department_id.toString());
         formData.append('_method', 'PUT');
-        data.files.forEach((file, idx) => {
+        newFiles.forEach((file, idx) => {
             formData.append(`files[${idx}]`, file);
         });
         router.post(route('users.documents.update', { document: document.id }), formData, {
             forceFormData: true,
             onSuccess: () => {
+                setNewFiles([]);
+                setNewFilePreviews([]);
                 Swal.fire({
                     icon: 'success',
-                    title: 'Document Submitted!',
-                    text: 'Your document has been sent successfully.',
+                    title: 'Document Updated!',
+                    text: 'Your document has been updated successfully.',
                     confirmButtonColor: '#b91c1c',
                 });
             },
@@ -153,6 +177,30 @@ const EditDocument = ({ document }: Props) => {
                         Swal.fire('Error', 'Failed to delete file.', 'error');
                     }
                 });
+            }
+        });
+    };
+
+    const handleDeleteNewFile = (index: number) => {
+        Swal.fire({
+            title: 'Remove File?',
+            text: 'Are you sure you want to remove this file from the upload?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, remove it!',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Remove the file from newFiles array
+                const updatedFiles = newFiles.filter((_, i) => i !== index);
+                setNewFiles(updatedFiles);
+
+                // Remove the corresponding preview URL
+                const updatedPreviews = newFilePreviews.filter((_, i) => i !== index);
+                setNewFilePreviews(updatedPreviews);
+
+                Swal.fire('Removed!', 'File has been removed from upload.', 'success');
             }
         });
     };
@@ -194,34 +242,70 @@ const EditDocument = ({ document }: Props) => {
                                 />
                             </div>
                             <div className="mb-4">
-                                <label className="block text-gray-700 dark:text-gray-200 font-semibold mb-2">Replace Files (optional)</label>
+                                <label className="block text-gray-700 dark:text-gray-200 font-semibold mb-2">Send To Department <span className="text-red-500">*</span></label>
+                                <Select
+                                    value={data.selected_department_id?.toString() || ''}
+                                    onValueChange={(value) => setData('selected_department_id', value ? parseInt(value) : null)}
+                                >
+                                    <SelectTrigger className="w-full bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
+                                        <SelectValue placeholder="Select a department to send the document to" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {involvedDepartments.map((dept) => (
+                                            <SelectItem key={dept.id} value={dept.id.toString()}>
+                                                <div className="flex items-center justify-between w-full">
+                                                    <span>{dept.name}</span>
+                                                    <span className="text-xs text-gray-500 ml-2">
+                                                        ({dept.type === 'sent_to' ? 'Sent To' : 'Sent Through'})
+                                                    </span>
+                                                </div>
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {errors.selected_department_id && (
+                                    <div className="text-red-500 text-xs mt-1">{errors.selected_department_id}</div>
+                                )}
+                            </div>
+                            <div className="mb-4">
+                                <label className="block text-gray-700 dark:text-gray-200 font-semibold mb-2">Add New Files (optional)</label>
                                 <Input
                                     type="file"
                                     multiple
                                     onChange={handleFileChange}
                                     className="w-full bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                                 />
-                                {/* Preview replaced files */}
-                                {filePreviews.length > 0 && (
-                                    <div className="mt-4">
-                                        <h3 className="text-sm font-semibold text-red-700 dark:text-red-400 mb-2">Replaced Files Preview</h3>
-                                        <div className="flex flex-wrap gap-4">
-                                            {data.files.map((file, idx) => (
-                                                <div key={idx} className="flex flex-col items-center">
-                                                    <img src={filePreviews[idx]} alt="Preview" className="w-20 h-20 object-cover rounded border border-gray-200 dark:border-gray-600 mb-1" />
-                                                    <span className="text-xs text-gray-700 dark:text-gray-300">{file.name}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                                {/* Show original files if no replaced files selected */}
-                                {existingFiles.length > 0 && filePreviews.length === 0 && (
+                                {/* Show original files */}
+                                {existingFiles.length > 0 && (
                                     <div className="mt-4">
                                         <h3 className="text-sm font-semibold text-red-700 dark:text-red-400 mb-2">Original Files</h3>
                                         <div className="flex flex-wrap gap-4">
                                             {existingFiles.map(file => (
                                                 <FileCard key={file.id} file={file} documentId={document.id} color="red" onDelete={handleDeleteFile} />
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                {/* Preview new files */}
+                                {newFilePreviews.length > 0 && (
+                                    <div className="mt-4">
+                                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-400 mb-2">New Files to Add</h3>
+                                        <div className="flex flex-wrap gap-4">
+                                            {newFiles.map((file, idx) => (
+                                                <div key={idx} className="flex flex-col items-center">
+                                                    <div className="relative">
+                                                        <img src={newFilePreviews[idx]} alt="Preview" className="w-20 h-20 object-cover rounded border border-gray-200 dark:border-gray-600 mb-1" />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleDeleteNewFile(idx)}
+                                                            className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold transition-colors"
+                                                            title="Remove file"
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </div>
+                                                    <span className="text-xs text-gray-700 dark:text-gray-300">{file.name}</span>
+                                                </div>
                                             ))}
                                         </div>
                                     </div>

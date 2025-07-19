@@ -499,7 +499,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
                                                         <p className="text-blue-600 dark:text-blue-400 mt-0.5">
                                                             {isGeneratingOrderNumber
                                                                 ? 'Please wait while we generate your order number.'
-                                                                : `Order number will be automatically generated based on your department (${auth.user.department?.code || 'DEPT'}) and document type (${data.document_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}).`
+                                                                : `Order number will be automatically generated based on your department and the current fiscal year.`
                                                             }
                                                         </p>
                                                     </div>

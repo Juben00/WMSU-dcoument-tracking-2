@@ -9,22 +9,16 @@ import { X, FileText, Image as ImageIcon } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { useForm } from '@inertiajs/react';
 
-interface User {
+interface Department {
     id: number;
-    first_name: string;
-    last_name: string;
-    role: string;
-    department?: {
-        id: number;
-        name: string;
-    };
+    name: string;
 }
 
 interface ForwardModalProps {
     isOpen: boolean;
     onClose: () => void;
     processing: boolean;
-    users: User[];
+    departments: Department[];
     documentId: number;
 }
 
@@ -45,7 +39,7 @@ const ForwardOtherOfficeModal: React.FC<ForwardModalProps> = ({
     isOpen,
     onClose,
     processing,
-    users,
+    departments,
     documentId
 }) => {
     const [selectedUser, setSelectedUser] = useState<string>('');
@@ -220,12 +214,13 @@ const ForwardOtherOfficeModal: React.FC<ForwardModalProps> = ({
                             <SelectTrigger className="dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100">
                                 <SelectValue placeholder="Select a recipient" className="dark:text-gray-400" />
                             </SelectTrigger>
+
                             <SelectContent className="dark:bg-gray-800 dark:border-gray-600">
-                                {users.length > 0 ? users.map((user) => (
-                                    <SelectItem key={user.id} value={user.id.toString()} className="dark:text-gray-100 dark:hover:bg-gray-700">
-                                        <span className="truncate max-w-[320px] block">{user.first_name} {user.last_name} | {user.department?.name || 'No Department'} | {user.role.charAt(0).toUpperCase() + user.role.slice(1)}</span>
+                                {departments.length > 0 ? departments.map((department) => (
+                                    <SelectItem key={department.id} value={department.id.toString()} className="dark:text-gray-100 dark:hover:bg-gray-700">
+                                        <span className="truncate max-w-[400px] block">{department.name}</span>
                                     </SelectItem>
-                                )) : <SelectItem value="no-users" className="dark:text-gray-100 dark:hover:bg-gray-700">No users found</SelectItem>}
+                                )) : <SelectItem value="no-departments" className="dark:text-gray-100 dark:hover:bg-gray-700">No departments found</SelectItem>}
                             </SelectContent>
                         </Select>
                     </div>

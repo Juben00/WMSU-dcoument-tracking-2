@@ -401,7 +401,6 @@ const Documents = ({ documents, auth }: Props) => {
                                                         setShowBarcodeModal(false)
                                                         setBarcodeInput("")
                                                         setActiveTab("received")
-                                                        window.location.reload()
                                                     })
                                                 },
                                                 onError: (errors) => {

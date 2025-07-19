@@ -505,7 +505,7 @@ class UserController extends Controller
         UserActivityLog::create([
             'user_id' => Auth::id(),
             'action' => 'document_sent',
-            'description' => 'Document sent to ' . $document->recipients->pluck('user_id')->implode(', '),
+            'description' => 'Document sent to departments: ' . $document->recipients->pluck('department_id')->implode(', '),
         ]);
 
         return redirect()->route('users.documents')->with('success', 'Document sent successfully.');
@@ -530,10 +530,53 @@ class UserController extends Controller
         $doc = Document::where('id', $document)
             ->where('owner_id', Auth::id())
             ->where('status', 'returned')
-            ->with(['files', 'recipients'])
+            ->with(['files', 'recipients.department'])
             ->firstOrFail();
+
+        // Get all departments that were originally involved in the document
+        $involvedDepartments = collect();
+
+        // include final recipient department from DocumentRecipient records
+        $finalRecipientRecord = $doc->recipients()->whereNotNull('final_recipient_department_id')->first();
+        if ($finalRecipientRecord && $finalRecipientRecord->final_recipient_department_id) {
+            $finalRecipientDepartment = Departments::find($finalRecipientRecord->final_recipient_department_id);
+            if ($finalRecipientDepartment) {
+                $involvedDepartments->push([
+                    'id' => $finalRecipientDepartment->id,
+                    'name' => $finalRecipientDepartment->name,
+                    'type' => 'sent_to'
+                ]);
+            }
+        }
+
+        foreach ($doc->recipients as $recipient) {
+            if ($recipient->department) {
+                $involvedDepartments->push([
+                    'id' => $recipient->department->id,
+                    'name' => $recipient->department->name,
+                    'type' => 'sent_through'
+                ]);
+            }
+        }
+
+        // Add departments from through_department_ids (sent through)
+        if ($doc->through_department_ids) {
+            $throughDepartments = Departments::whereIn('id', $doc->through_department_ids)->get();
+            foreach ($throughDepartments as $dept) {
+                $involvedDepartments->push([
+                    'id' => $dept->id,
+                    'name' => $dept->name,
+                    'type' => 'sent_through'
+                ]);
+            }
+        }
+
+        // Remove duplicates and sort by name
+        $involvedDepartments = $involvedDepartments->unique('id')->sortBy('name')->values();
+
         return Inertia::render('Users/EditDocument', [
-            'document' => $doc
+            'document' => $doc,
+            'involvedDepartments' => $involvedDepartments
         ]);
     }
 
@@ -544,16 +587,10 @@ class UserController extends Controller
             ->where('status', 'returned')
             ->firstOrFail();
 
+        //
         $doc->update([
             'status' => 'pending',
         ]);
-
-        // set the last document recipient status to pending
-        $lastRecipient = $doc->recipients()->orderByDesc('sequence')->first();
-        if ($lastRecipient) {
-            $lastRecipient->status = 'pending';
-            $lastRecipient->save();
-        }
 
         // Check if this is the President's office (OP)
         $department = $doc->department;
@@ -593,6 +630,7 @@ class UserController extends Controller
             'order_number' => $orderNumberRule,
             'subject' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'selected_department_id' => 'required|exists:departments,id',
             'files' => 'nullable|array',
             'files.*' => 'nullable|file|max:10240', // 10MB max per file
         ]);
@@ -631,21 +669,32 @@ class UserController extends Controller
         $lastRecipient = $doc->recipients()->orderByDesc('sequence')->first();
         if ($lastRecipient) {
             // Set the previous recipient's status to 'received' (not pending)
-            $lastRecipient->status = 'received';
+            $lastRecipient->status = 'returned';
             $lastRecipient->save();
-
-            // Create a new recipient record for the original recipient
-            $nextSequence = $lastRecipient->sequence + 1;
-            DocumentRecipient::create([
-                'document_id' => $doc->id,
-                'department_id' => $lastRecipient->department_id,
-                'status' => 'pending',
-                'sequence' => $nextSequence,
-                'is_active' => true,
-                'forwarded_by' => null,
-                'comments' => 'Document resent by owner.',
-            ]);
         }
+
+        // get the final recipient department id where document id is the same as the current document
+        $finalRecipientDepartmentId = DocumentRecipient::where('document_id', $doc->id)->whereNotNull('final_recipient_department_id')->first()->final_recipient_department_id;
+
+        // Create new recipient record for the selected department
+        DocumentRecipient::create([
+            'document_id' => $doc->id,
+            'department_id' => $validated['selected_department_id'],
+            'final_recipient_department_id' => $finalRecipientDepartmentId,
+            'status' => 'pending',
+            'sequence' => $doc->recipients()->max('sequence') + 1,
+            'is_active' => true,
+            'forwarded_by' => null,
+            'comments' => 'Document resent by owner to selected department.',
+        ]);
+
+        // new document log
+        DocumentActivityLog::create([
+            'document_id' => $doc->id,
+            'user_id' => Auth::id(),
+            'action' => 'document_resent',
+            'description' => 'Document resent by owner.',
+        ]);
 
         return redirect()->route('users.documents', $doc->id)->with('success', 'Document updated and resent successfully.');
     }
