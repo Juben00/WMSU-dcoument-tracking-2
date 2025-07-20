@@ -123,8 +123,8 @@ const PublishedDocuments = ({ publishedDocuments, auth }: Props) => {
                                     <FileText className="w-8 h-8 text-white" />
                                 </div>
                                 <div>
-                                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Published Documents</h1>
-                                    <p className="text-gray-600 dark:text-gray-300 mt-1">View all published documents you're involved with</p>
+                                    <h1 className="text-xl md:text-3xl font-bold text-gray-900 dark:text-white">Published Documents</h1>
+                                    <p className="text-gray-600 dark:text-gray-300 mt-1 hidden md:text-sm">View all published documents you're involved with</p>
                                 </div>
                             </div>
                             <Link
@@ -132,7 +132,7 @@ const PublishedDocuments = ({ publishedDocuments, auth }: Props) => {
                                 className="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white font-semibold rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm hover:shadow-md transition-all duration-200"
                             >
                                 <ArrowLeft className="h-4 w-4" />
-                                Back to Documents
+                                <span className='text-xs md:text-md lg:text-lg'>Back to Documents</span>
                             </Link>
                         </div>
                     </div>
@@ -176,7 +176,7 @@ const PublishedDocuments = ({ publishedDocuments, auth }: Props) => {
                                 </div>
                                 <div>
                                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Search Documents</h2>
-                                    <p className="text-gray-600 dark:text-gray-300 mt-1">Find specific published documents by subject, description, barcode value, or owner name</p>
+                                    <p className="text-gray-600 dark:text-gray-300 mt-1 hidden md:text-sm">Find specific published documents by subject, description, barcode value, or owner name</p>
                                 </div>
                             </div>
                             <div className="relative">

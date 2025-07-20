@@ -107,8 +107,8 @@ const Profile = ({ user }: Props) => {
                                     <UserIcon className="w-8 h-8 text-white" />
                                 </div>
                                 <div>
-                                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Profile Settings</h1>
-                                    <p className="text-gray-600 dark:text-gray-300 mt-1">Manage your account information and preferences</p>
+                                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Profile Settings</h1>
+                                    <p className="text-sm md:text-md lg:text-lg text-gray-600 dark:text-gray-300 mt-1">Manage your account information and preferences</p>
                                 </div>
                             </div>
                         </div>
@@ -124,7 +124,8 @@ const Profile = ({ user }: Props) => {
                                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Account Settings</h2>
                             </div>
                             <Tabs
-                                tabs={["Account Details", "Profile Info", "Change Password"]}
+                                className="text-sm md:text-md lg:text-lg"
+                                tabs={["Account Details", "Personal Information", "Change Password"]}
                                 current={activeTab}
                                 onChange={setActiveTab}
                             />

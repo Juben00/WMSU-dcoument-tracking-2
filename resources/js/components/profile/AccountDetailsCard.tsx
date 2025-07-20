@@ -37,9 +37,9 @@ const AccountDetailsCard: React.FC<Props> = ({ user }) => {
                 <CardContent className="p-8">
                     <div className="flex items-start space-x-6">
                         <div className="relative">
-                            <Avatar className="h-24 w-24 border-4 border-red-100 dark:border-red-900/50 shadow-xl ring-4 ring-red-50 dark:ring-red-950/50">
+                            <Avatar className="h-16 w-16 md:h-32 md:w-32 border-4 border-red-100 dark:border-red-900/50 shadow-xl ring-4 ring-red-50 dark:ring-red-950/50">
                                 <AvatarImage src={user.avatar ?? "/placeholder.svg"} alt={`${user.first_name} ${user.last_name}`} />
-                                <AvatarFallback className="text-2xl font-bold bg-gradient-to-br from-red-500 to-red-600 text-white">
+                                <AvatarFallback className="text-sm md:text-2xl font-bold bg-gradient-to-br from-red-500 to-red-600 text-white">
                                     {getInitials(user.first_name, user.last_name)}
                                 </AvatarFallback>
                             </Avatar>
@@ -49,39 +49,16 @@ const AccountDetailsCard: React.FC<Props> = ({ user }) => {
                         </div>
 
                         <div className="flex-1 space-y-4">
-                            <div className="flex items-start justify-between">
+                            <div className="flex flex-col md:flex-row md:items-start md:justify-between">
                                 <div className="space-y-2">
-                                    <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+                                    <h1 className="text-xl md:text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
                                         {user.first_name} {user.last_name}
                                     </h1>
-                                    <p className="text-lg font-medium text-red-600 dark:text-red-400">{user.position}</p>
+                                    <p className="text-sm md:text-lg font-medium text-red-600 dark:text-red-400">{user.position}</p>
                                     <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
                                         <Mail className="h-4 w-4" />
-                                        <span className="text-sm">{user.email}</span>
+                                        <span className="text-xs md:text-sm">{user.email}</span>
                                     </div>
-                                </div>
-
-                                <div className="flex flex-col items-end space-y-2">
-                                    <Badge
-                                        variant="outline"
-                                        className={`px-4 py-2 text-sm font-semibold border-2 ${user.is_active
-                                            ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800"
-                                            : "bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800"
-                                            }`}
-                                    >
-                                        {user.is_active ? (
-                                            <>
-                                                <CheckCircle className="w-3 h-3 mr-1" />
-                                                Active
-                                            </>
-                                        ) : (
-                                            <>
-                                                <XCircle className="w-3 h-3 mr-1" />
-                                                Inactive
-                                            </>
-                                        )}
-                                    </Badge>
-                                    <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">ID: {user.id}</span>
                                 </div>
                             </div>
                         </div>

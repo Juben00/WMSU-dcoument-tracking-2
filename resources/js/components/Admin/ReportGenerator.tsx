@@ -16,25 +16,25 @@ const reportTypes = [
     {
         value: 'user_activity',
         label: 'User Activity Report',
-        description: 'Detailed user activity and engagement metrics',
+        description: 'User activity and engagement metrics',
         icon: Users,
     },
     {
         value: 'document_flow',
         label: 'Document Flow Report',
-        description: 'Document creation, status changes, and publication trends',
+        description: 'Document flow and status changes',
         icon: FileText,
     },
     {
         value: 'department_performance',
         label: 'Department Performance Report',
-        description: 'Department-wise document processing and user statistics',
+        description: 'Department-wise document processing',
         icon: Building2,
     },
     {
         value: 'processing_times',
         label: 'Processing Times Report',
-        description: 'Average processing times and efficiency metrics',
+        description: 'Average processing times',
         icon: Clock,
     },
 ];
@@ -117,9 +117,9 @@ export default function ReportGenerator({ dateFrom, dateTo }: ReportGeneratorPro
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline">
-                    <Download className="h-4 w-4 mr-2" />
-                    Generate Reports
+                <Button variant="outline" className="text-sm md:text-md lg:text-lg">
+                    <Download className="h-4 w-4 md:h-5 md:w-5" />
+                    <span className="text-xs md:text-sm lg:text-md">Generate Reports</span>
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-xl">
@@ -127,7 +127,7 @@ export default function ReportGenerator({ dateFrom, dateTo }: ReportGeneratorPro
                     <DialogTitle>Generate Custom Report</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-6">
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Report Type Selection */}
                         <div className="space-y-3">
                             <Label>Report Type</Label>

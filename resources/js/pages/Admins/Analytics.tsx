@@ -129,8 +129,8 @@ export default function Analytics({
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Analytics & Reporting</h1>
-                        <p className="text-muted-foreground">
+                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Analytics & Reporting</h1>
+                        <p className="hidden md:block text-muted-foreground text-sm md:text-md lg:text-lg">
                             Comprehensive insights into system performance and user activities
                         </p>
                     </div>
