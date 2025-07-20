@@ -153,21 +153,21 @@ const Offices = ({ auth, users }: Props) => {
                                 <div className="p-3 bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-lg">
                                     <Building className="w-8 h-8 text-white" />
                                 </div>
-                                <div>
-                                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{auth.user.department?.name || "Department"}</h1>
-                                    <p className="text-gray-600 dark:text-gray-300 mt-1">Manage the users within your department.</p>
+                                <div className="w-2/3 md:w-full">
+                                    <h1 className="text-lg md:text-3xl font-bold text-gray-900 dark:text-white">{auth.user.department?.name || "Department"}</h1>
+                                    <p className="text-xs text-gray-600 dark:text-gray-300 ">Manage the users within your department.</p>
                                 </div>
                             </div>
                             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                                 <DialogTrigger asChild>
                                     <Button className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 flex items-center gap-2">
                                         <UserPlus className="h-5 w-5" />
-                                        Create User
+                                        <span className="hidden md:block">Create User</span>
                                     </Button>
                                 </DialogTrigger>
                                 <DialogContent className="max-w-lg rounded-xl p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                                     <DialogHeader>
-                                        <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white">Create New User</DialogTitle>
+                                        <DialogTitle className="text-3xl font-bold text-gray-900 dark:text-white">Create New User</DialogTitle>
                                     </DialogHeader>
                                     <form onSubmit={handleCreateUser} className="space-y-5 mt-2">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -315,28 +315,6 @@ const Offices = ({ auth, users }: Props) => {
                                         <div>
                                             <p className="text-sm font-semibold text-red-700 dark:text-red-400">Total Users</p>
                                             <p className="text-2xl font-bold text-red-900 dark:text-red-300">{users.length}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-xl p-6 border border-gray-200 dark:border-gray-600">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 bg-gradient-to-br from-red-400 to-red-500 rounded-lg flex items-center justify-center">
-                                            <User className="w-6 h-6 text-white" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-semibold text-red-700 dark:text-red-400">Regular Users</p>
-                                            <p className="text-2xl font-bold text-red-900 dark:text-red-300">{users.filter(user => user.role === 'user').length}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-xl p-6 border border-gray-200 dark:border-gray-600">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 bg-gradient-to-br from-red-400 to-red-500 rounded-lg flex items-center justify-center">
-                                            <UserPlus className="w-6 h-6 text-white" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-semibold text-red-700 dark:text-red-400">Receivers</p>
-                                            <p className="text-2xl font-bold text-red-900 dark:text-red-300">{users.filter(user => user.role === 'receiver').length}</p>
                                         </div>
                                     </div>
                                 </div>

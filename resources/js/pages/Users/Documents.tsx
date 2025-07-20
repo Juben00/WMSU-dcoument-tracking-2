@@ -244,16 +244,16 @@ const Documents = ({ documents, auth }: Props) => {
                 key={doc.id}
                 className="group hover:shadow-xl transition-all duration-300 border-0 shadow-md hover:scale-[1.02] bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900"
             >
-                <CardHeader className="pb-4">
+                <CardHeader className="md:pb-4">
                     <div className="flex items-start gap-4">
                         <div className="p-3 bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-lg group-hover:shadow-xl transition-shadow">
                             <FileText className="w-6 h-6 text-white" />
                         </div>
                         <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-slate-900 dark:text-white line-clamp-2 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors leading-tight">
+                            <h3 className="font-semibold truncate text-slate-900 dark:text-white line-clamp-2 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors leading-tight">
                                 {doc.subject}
                             </h3>
-                            <div className="flex items-center gap-2 mt-2 text-sm text-slate-500 dark:text-slate-400">
+                            <div className="flex flex-col lg:flex-row lg:items-center lg:gap-2 mt-2 text-sm text-slate-500 dark:text-slate-400">
                                 {doc.order_number && (
                                     <div className="flex items-center gap-1">
                                         <Hash className="w-3 h-3" />
@@ -262,7 +262,7 @@ const Documents = ({ documents, auth }: Props) => {
                                 )}
                                 {doc.barcode_value && (
                                     <>
-                                        {doc.order_number && <span>•</span>}
+                                        {doc.order_number && <span className="hidden lg:block">•</span>}
                                         <div className="flex items-center gap-1">
                                             <BarChart3 className="w-3 h-3" />
                                             <span className="font-mono">{doc.barcode_value}</span>
@@ -443,8 +443,8 @@ const Documents = ({ documents, auth }: Props) => {
                                     <FileText className="w-8 h-8 text-white" />
                                 </div>
                                 <div>
-                                    <h1 className="text-4xl font-bold text-slate-900 dark:text-white">Documents</h1>
-                                    <p className="text-slate-600 dark:text-slate-300 mt-1 text-lg">
+                                    <h1 className="text-2xl md:text-3xl  font-bold text-slate-900 dark:text-white">Documents</h1>
+                                    <p className="text-sm md:text-md lg:text-lg text-slate-600 dark:text-slate-300 mt-1">
                                         Manage and track your documents efficiently
                                     </p>
                                 </div>
@@ -482,7 +482,7 @@ const Documents = ({ documents, auth }: Props) => {
                     {/* Enhanced Tabs */}
                     <Card className="mb-8 border-2 shadow-lg bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
                         <CardContent className="p-2">
-                            <div className="flex flex-wrap gap-2 justify-start px-5">
+                            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 ">
                                 {tabConfig.map((tab) => {
                                     const Icon = tab.icon
                                     return (

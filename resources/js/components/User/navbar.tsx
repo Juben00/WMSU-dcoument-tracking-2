@@ -204,15 +204,15 @@ const Navbar = () => {
     return (
         <nav className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-lg border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-16">
+                <div className="flex items-center justify-between h-20">
                     <div className="flex items-center flex-shrink-0">
-                        <Link href="/dashboard" className="flex items-center gap-3 hover:opacity-90 transition-all duration-200 group">
+                        <Link href="/dashboard" className="flex items-center gap-1 hover:opacity-90 transition-all duration-200 group">
                             <div className="rounded-lg p-2">
                                 <WmsuLogo className="h-8 w-8 text-red-600 dark:text-red-400" />
                             </div>
                             <div className="flex flex-col">
-                                <span className="font-bold text-lg tracking-wide text-gray-900 dark:text-white">WMSU DMTS</span>
-                                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Document Management</span>
+                                <span className="font-bold text-sm md:text-lg lg:text-xl tracking-wide text-gray-900 dark:text-white">WMSU DMTS</span>
+                                <span className="text-[9px] lg:text-sm text-gray-500 dark:text-gray-400 font-medium">Document Management</span>
                             </div>
                         </Link>
                     </div>
@@ -224,7 +224,7 @@ const Navbar = () => {
                                 <Link
                                     key={item.label}
                                     href={item.href}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
+                                    className={`flex items-center gap-2 px-2 lg:px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
                                         ? 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20'
                                         : 'text-gray-700 hover:text-red-600 hover:bg-red-50 dark:text-gray-300 dark:hover:text-red-400 dark:hover:bg-red-900/20'
                                         }`}
@@ -236,10 +236,10 @@ const Navbar = () => {
                         })}
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <div className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                                <div className="rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                                     <AppearanceToggleDropdown />
                                 </div>
                             </TooltipTrigger>
@@ -250,12 +250,12 @@ const Navbar = () => {
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <button
-                                        className={`relative p-2 rounded-lg transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 ${notifOpen ? 'bg-gray-100 dark:bg-gray-800' : ''
+                                        className={`relative rounded-lg transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 ${notifOpen ? 'bg-gray-100 dark:bg-gray-800' : ''
                                             }`}
                                         onClick={() => setNotifOpen(!notifOpen)}
                                         aria-label="Notifications"
                                     >
-                                        <Bell className={`w-5 h-5 ${unreadCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}`} />
+                                        <Bell className={`w-4 h-4 md:w-5 md:h-5 ${unreadCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}`} />
                                         {unreadCount > 0 && (
                                             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
                                                 {unreadCount > 9 ? '9+' : unreadCount}
@@ -267,7 +267,7 @@ const Navbar = () => {
                             </Tooltip>
 
                             {notifOpen && (
-                                <div className="absolute right-0 mt-2 w-96 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-50 animate-in slide-in-from-top-2 duration-200">
+                                <div className="absolute -right-32 md:right-0 mt-2 w-96 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-50 animate-in slide-in-from-top-2 duration-200">
                                     <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                                         <h3 className="font-semibold text-gray-900 dark:text-white">Notifications</h3>
                                         {localNotifications.length > 0 && (
