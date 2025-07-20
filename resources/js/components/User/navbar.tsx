@@ -208,7 +208,7 @@ const Navbar = () => {
                     <div className="flex items-center flex-shrink-0">
                         <Link href="/dashboard" className="flex items-center gap-1 hover:opacity-90 transition-all duration-200 group">
                             <div className="rounded-lg p-2">
-                                <WmsuLogo className="h-8 w-8 text-red-600 dark:text-red-400" />
+                                <WmsuLogo className="h-12 w-12 text-red-600 dark:text-red-400" />
                             </div>
                             <div className="flex flex-col">
                                 <span className="font-bold text-sm md:text-lg lg:text-xl tracking-wide text-gray-900 dark:text-white">WMSU DMTS</span>
@@ -250,14 +250,14 @@ const Navbar = () => {
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <button
-                                        className={`relative rounded-lg transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 ${notifOpen ? 'bg-gray-100 dark:bg-gray-800' : ''
+                                        className={`relative rounded-lg p-1 transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 ${notifOpen ? 'bg-gray-100 dark:bg-gray-800' : ''
                                             }`}
                                         onClick={() => setNotifOpen(!notifOpen)}
                                         aria-label="Notifications"
                                     >
-                                        <Bell className={`w-4 h-4 md:w-5 md:h-5 ${unreadCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}`} />
+                                        <Bell className={`w-4 h-4  ${unreadCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}`} />
                                         {unreadCount > 0 && (
-                                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                                            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
                                                 {unreadCount > 9 ? '9+' : unreadCount}
                                             </span>
                                         )}
@@ -324,7 +324,7 @@ const Navbar = () => {
 
                         <div className="relative" ref={profileRef}>
                             <button
-                                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 ${profileOpen ? 'bg-gray-100 dark:bg-gray-800' : ''
+                                className={`flex items-center gap-2 mx-3 p-2 rounded-lg transition-all duration-200 cursor-pointer  ${profileOpen ? 'bg-gray-100 dark:bg-gray-800' : ''
                                     }`}
                                 onClick={() => setProfileOpen(!profileOpen)}
                             >
@@ -345,7 +345,7 @@ const Navbar = () => {
                                                 <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{getUserDisplayName()}</p>
                                                 <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{auth?.user?.email || 'user@example.com'}</p>
                                                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400 mt-1">
-                                                    {role === 'admin' ? 'Administrator' : role === 'receiver' ? 'Receiver' : 'User'}
+                                                    {role === 'admin' ? 'Administrator' : 'User'}
                                                 </span>
                                             </div>
                                         </div>

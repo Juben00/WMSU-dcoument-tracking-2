@@ -13,6 +13,7 @@ import {
     Activity,
     Users,
 } from 'lucide-react';
+import TabHeader from '@/components/User/tab-header';
 
 const statCards = [
     {
@@ -92,22 +93,17 @@ const Dashboard = () => {
     return (
         <>
             <Navbar />
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div className="mb-8">
+                        <div className="flex items-center justify-between">
+                            <TabHeader title="Dashboard" description="Monitor your document activities and statistics" />
+                        </div>
+                    </div>
                     {/* Main Dashboard Card */}
                     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 mb-8">
                         <div className="p-6">
                             {/* Header */}
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-12 h-12 bg-red-500 rounded-lg flex items-center justify-center">
-                                    <BarChart3 className="w-6 h-6 text-white" />
-                                </div>
-                                <div>
-                                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-                                    <p className="text-gray-600 dark:text-gray-400 text-sm">Monitor your document activities and statistics</p>
-                                </div>
-                            </div>
-
                             {/* Stats Grid */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                                 {statCards.map(card => (

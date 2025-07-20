@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
 import Swal from "sweetalert2"
+import TabHeader from "@/components/User/tab-header"
 
 interface Document {
     id: number
@@ -349,8 +350,6 @@ const Documents = ({ documents, auth }: Props) => {
             <Navbar />
             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-
                     {/* Barcode Modal */}
                     {showBarcodeModal && (
                         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -438,17 +437,7 @@ const Documents = ({ documents, auth }: Props) => {
                     {/* Enhanced Header Section */}
                     <div className="mb-8">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
-                            <div className="flex items-center gap-4">
-                                <div className="p-4 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl shadow-xl">
-                                    <FileText className="w-8 h-8 text-white" />
-                                </div>
-                                <div>
-                                    <h1 className="text-2xl md:text-3xl  font-bold text-slate-900 dark:text-white">Documents</h1>
-                                    <p className="text-sm md:text-md lg:text-lg text-slate-600 dark:text-slate-300 mt-1">
-                                        Manage and track your documents efficiently
-                                    </p>
-                                </div>
-                            </div>
+                            <TabHeader title="Documents" description="Manage and track your documents efficiently" />
                             <div className="flex items-center gap-4">
                                 {/* Barcode Confirmation Section */}
                                 <div className="flex justify-end">
@@ -481,7 +470,7 @@ const Documents = ({ documents, auth }: Props) => {
 
                     {/* Enhanced Tabs */}
                     <Card className="mb-8 border-2 shadow-lg bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
-                        <CardContent className="p-2">
+                        <CardContent>
                             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 ">
                                 {tabConfig.map((tab) => {
                                     const Icon = tab.icon
@@ -489,7 +478,7 @@ const Documents = ({ documents, auth }: Props) => {
                                         <button
                                             key={tab.id}
                                             onClick={() => setActiveTab(tab.id)}
-                                            className={`bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${activeTab === tab.id
+                                            className={`bg-white  flex justify-center items-center dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${activeTab === tab.id
                                                 ? "bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg"
                                                 : "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
                                                 }`}
@@ -504,7 +493,7 @@ const Documents = ({ documents, auth }: Props) => {
                                 })}
                                 <Link
                                     href="/published-documents"
-                                    className={`bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${typeof window !== "undefined" && window.location.pathname === "/published-documents"
+                                    className={`bg-white flex justify-center items-center dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${typeof window !== "undefined" && window.location.pathname === "/published-documents"
                                         ? "bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg"
                                         : "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
                                         }`}
