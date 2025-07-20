@@ -328,7 +328,7 @@ const Documents = ({ documents, auth }: Props) => {
                     </div>
 
                     <Link href={`/documents/${doc.id}`} className="w-full">
-                        <Button className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 shadow-lg hover:shadow-xl transition-all duration-200">
+                        <Button className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 shadow-lg dark:text-white hover:shadow-xl transition-all duration-200">
                             <Eye className="w-4 h-4 mr-2" />
                             View Details
                         </Button>

@@ -945,7 +945,7 @@ class UserController extends Controller
         }
 
         // update the document status to received
-        $document->status = 'received';
+        $document->status = 'in_review';
         $document->save();
 
         // Mark as received
