@@ -153,7 +153,7 @@ const Navbar = () => {
         },
         {
             label: 'Documents',
-            href: '/document',
+            href: '/documents',
             icon: <FileText className="w-5 h-5" />,
         },
     ];
