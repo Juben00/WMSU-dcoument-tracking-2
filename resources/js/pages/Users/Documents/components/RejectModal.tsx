@@ -282,7 +282,7 @@ const RejectModal: React.FC<RejectModalProps> = ({ isOpen, onClose, documentId }
                             </Button>
                             <Button
                                 type="submit"
-                                disabled={processing || !comments.trim()}
+                                disabled={processing}
                                 className="bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600"
                             >
                                 {processing ? 'Processing...' : 'Reject'}
