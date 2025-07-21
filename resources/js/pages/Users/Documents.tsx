@@ -364,7 +364,7 @@ const Documents = ({ documents, auth }: Props) => {
                                     <BarChart3 className="w-6 h-6 text-red-600" />
                                     Search Document
                                 </h2>
-                                <p className="mb-4 text-slate-600 dark:text-slate-300">Enter the barcode value provided with your document to confirm receipt.</p>
+                                <p className="mb-4 text-slate-600 dark:text-slate-300">Enter the barcode value provided with your document to receive it.</p>
                                 <form
                                     onSubmit={async (e) => {
                                         e.preventDefault()
