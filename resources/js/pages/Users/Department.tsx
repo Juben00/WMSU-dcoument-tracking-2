@@ -401,7 +401,7 @@ const Offices = ({ auth, users }: Props) => {
                     <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                         <DialogContent className="max-w-lg rounded-xl p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                             <DialogHeader>
-                                <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white">Edit User</DialogTitle>
+                                <DialogTitle className="text-3xl font-bold text-gray-900 dark:text-white">Edit User</DialogTitle>
                             </DialogHeader>
                             <form onSubmit={handleUpdateUser} className="space-y-5 mt-2">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -497,7 +497,7 @@ const Offices = ({ auth, users }: Props) => {
                                     />
                                     <InputError message={errors.email} />
                                 </div>
-                                <div className="space-y-1.5">
+                                {/* <div className="space-y-1.5">
                                     <Label htmlFor="edit_role" className="text-gray-700 dark:text-gray-200">Role</Label>
                                     <Select
                                         value={data.role}
@@ -517,7 +517,7 @@ const Offices = ({ auth, users }: Props) => {
                                         </SelectContent>
                                     </Select>
                                     <InputError message={errors.role} />
-                                </div>
+                                </div> */}
                                 <div className="flex justify-end gap-2 pt-2">
                                     <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)} className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200">
                                         Cancel

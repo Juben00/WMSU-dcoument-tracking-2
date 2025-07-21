@@ -263,7 +263,6 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartments, th
     const isForInfoDocument = () => document.document_type === 'for_info';
     const isNonForInfoDocument = () => document.document_type !== 'for_info';
     const canRespond = () => document.can_respond;
-    const cannotRespond = () => !document.can_respond;
     const isNotOwner = () => !isOwner();
     const isNotFinalRecipient = () => !isFinalRecipient();
     const isReturned = () => document.status === 'returned';
