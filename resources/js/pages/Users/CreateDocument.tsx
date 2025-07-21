@@ -101,6 +101,8 @@ const CreateDocument = ({ auth, departments }: Props) => {
                     title: 'Generation Failed',
                     text: 'Failed to generate order number. Please try again.',
                     confirmButtonColor: '#b91c1c',
+                }).then(() => {
+                    window.location.reload();
                 });
             }
         } catch (error) {
