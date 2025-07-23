@@ -286,16 +286,22 @@ const ViewDocument = ({ document, auth, users, otherDepartments, throughUsers, a
     };
 
     const canApproveOrReject = () => {
-        return canRespond() && isNonForInfoDocument() && isFinalRecipient() && !isReturned();
+        return canRespond() && isNonForInfoDocument() && isFinalRecipient() && !isReturned() && notApprovedAndRejected();
     };
+
+    console.log('can respond', canRespond());
+    console.log('is final recipient', !isFinalRecipient());
+    console.log('is not owner', !isNotOwner());
+    console.log('!is returned', !isReturned());
+    console.log('!pending', !isPending());
 
     // Removed canForwardToOffice and its usages
     const canForwardToOffice = () => {
-        return canRespond() && isNotFinalRecipient() && isNotOwner() && !isReturned() && !isPending() && notApprovedAndRejected();
+        return canRespond() && isNotOwner() && !isReturned() && !isPending();
     };
 
     const canForwardToOtherOffice = () => {
-        return canRespond() && isNotFinalRecipient() && isNotOwner() && !isReturned() && !isPending() && notApprovedAndRejected();
+        return canRespond() && isNotOwner() && !isReturned() && !isPending();
     };
 
     const canReturnDocument = () => {

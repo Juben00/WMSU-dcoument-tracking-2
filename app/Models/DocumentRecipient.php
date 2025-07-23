@@ -19,6 +19,7 @@ class DocumentRecipient extends Model
         'forwarded_by',
         'forwarded_to',
         'is_active',
+        'received_by', // Added to allow mass assignment
     ];
 
     protected $casts = [

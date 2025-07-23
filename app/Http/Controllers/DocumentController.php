@@ -61,7 +61,11 @@ class DocumentController extends Controller
         }
 
         // set the document status to in_review
-        $document->update(['status' => 'in_review']);
+        if ($document->status === 'approved') {
+            $document->update(['status' => 'approved']);
+        } else {
+            $document->update(['status' => 'in_review']);
+        }
 
         // find the id of the user who forwarded the document
         $forwardedById = Auth::id();
@@ -232,6 +236,7 @@ class DocumentController extends Controller
             'forwarded_by' => null,
             'status' => $request->status,
             'comments' => $request->comments,
+            'received_by' => ($request->status === 'approved' && $isFinalApprover) ? Auth::id() : null,
             'responded_at' => now(),
             'is_active' => false,
             'sequence' => $currentSequence + 1,
@@ -279,7 +284,7 @@ class DocumentController extends Controller
             $user = Auth::user();
             $dept = $user->department ? $user->department->name : 'No Department';
 
-        } elseif ($isFinalApprover && $request->status === 'returned') {
+        } elseif ($request->status === 'returned') {
             $document->update(['status' => 'returned']);
             $document->owner->notify(new InAppNotification('Your document was returned by the final approver.', ['document_id' => $document->id, 'document_name' => $document->subject]));
             $user = Auth::user();
@@ -386,7 +391,7 @@ class DocumentController extends Controller
             ->orderByDesc('sequence')
             ->first();
 
-        $documentData['can_respond'] = $currentRecipient && in_array($currentRecipient->status, ['pending', 'forwarded', 'received', ]);
+        $documentData['can_respond'] = $currentRecipient && in_array($currentRecipient->status, ['pending', 'forwarded', 'received', 'approved']);
         $documentData['can_respond_other_data'] = $currentRecipient;
         $documentData['recipient_status'] = $currentRecipient ? $currentRecipient->status : null;
 

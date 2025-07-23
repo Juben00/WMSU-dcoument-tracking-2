@@ -143,7 +143,7 @@ const Documents = ({ documents, auth }: Props) => {
         (doc) =>
             isInCurrentFiscalYear(doc.created_at) &&
             isDocumentReceivedByUser(doc) &&
-            doc.recipient_status === "received"
+            (doc.recipient_status === "received")
     );
 
     // Sent: documents where the user is the owner, but the latest recipient is NOT the current user/department, and not in received

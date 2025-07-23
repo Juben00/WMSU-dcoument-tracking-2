@@ -987,8 +987,10 @@ class UserController extends Controller
         if ($document->status === 'returned') {
             $document->status = 'returned';
             $document->save();
+        } else if ($document->status === 'approved') {
+            $document->status = 'approved';
+            $document->save();
         } else {
-            // update the document status to received
             $document->status = 'in_review';
             $document->save();
         }
