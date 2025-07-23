@@ -40,8 +40,6 @@ interface FormData {
     avatar: File | null;
     email: string;
     role: string;
-    password: string;
-    password_confirmation: string;
 }
 
 const AddNewAdmin = ({ setIsCreateDialogOpen, departments }: { setIsCreateDialogOpen: (isOpen: boolean) => void, departments: Department[] }) => {
@@ -56,8 +54,6 @@ const AddNewAdmin = ({ setIsCreateDialogOpen, departments }: { setIsCreateDialog
         avatar: null,
         email: '',
         role: 'admin',
-        password: 'password',
-        password_confirmation: 'password',
     });
 
     const handleCreateAdmin = (e: React.FormEvent) => {

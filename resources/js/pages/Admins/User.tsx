@@ -122,7 +122,7 @@ export default function Admins({ admins, departments, auth }: Props) {
                         <DialogTrigger asChild>
                             <Button>
                                 <Plus className="mr-2 h-4 w-4" />
-                                Create User
+                                Create Admin
                             </Button>
                         </DialogTrigger>
                         <AddNewAdmin setIsCreateDialogOpen={setIsCreateDialogOpen} departments={departments} />

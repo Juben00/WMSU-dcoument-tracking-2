@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Notifications\InAppNotification;
+use Illuminate\Support\Str;
+use App\Notifications\SendAdminAccountMail;
 
 class AdminController extends Controller
 {
@@ -44,13 +46,15 @@ class AdminController extends Controller
             'role' => ['required', 'string', 'in:admin,user'],
             'avatar' => ['nullable', 'image', 'max:2048'], // 2MB max
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
         $avatarPath = null;
         if ($request->hasFile('avatar')) {
             $avatarPath = $request->file('avatar')->store('avatars', 'public');
         }
+
+        // Generate a random password
+        $randomPassword = Str::random(12);
 
         $user = User::create([
             'first_name' => $request->first_name,
@@ -63,11 +67,13 @@ class AdminController extends Controller
             'role' => $request->role,
             'avatar' => $avatarPath,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'password' => Hash::make($randomPassword),
         ]);
 
-        // Notify the user about their account creation
+        // Notify the user about their account creation (in-app)
         $user->notify(new InAppNotification('Your admin account has been created.', ['user_id' => $user->id]));
+        // Send email with credentials
+        $user->notify(new SendAdminAccountMail($user->first_name . ' ' . $user->last_name, $user->email, $randomPassword));
 
         return redirect()->route('admins.index');
     }
