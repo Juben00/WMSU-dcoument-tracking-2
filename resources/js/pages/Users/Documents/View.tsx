@@ -21,6 +21,12 @@ interface DocumentFile {
 
 interface DocumentRecipient {
     id: number;
+    user?: {
+        id: number;
+        first_name: string;
+        last_name: string;
+        role: string;
+    };
     department: {
         id: number;
         name: string;
@@ -40,6 +46,12 @@ interface DocumentRecipient {
         };
     } | null;
     response_file?: DocumentFile;
+    received_by?: {
+        id: number;
+        first_name: string;
+        last_name: string;
+        role: string;
+    };
 }
 
 interface Document {
@@ -228,7 +240,7 @@ const formatActivityLogAction = (action: string) => {
     }
 };
 
-const ViewDocument = ({ document, auth, departments, users, otherDepartments, throughUsers, activityLogs = [] }: Props & { activityLogs?: ActivityLog[] }) => {
+const ViewDocument = ({ document, auth, users, otherDepartments, throughUsers, activityLogs = [] }: Props & { activityLogs?: ActivityLog[] }) => {
     const [isForwardModalOpen, setIsForwardModalOpen] = useState(false);
     const [isForwardOtherOfficeModalOpen, setIsForwardOtherOfficeModalOpen] = useState(false);
     const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
@@ -247,10 +259,6 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartments, th
         forward_to_id: null as number | null,
     });
 
-    console.log('document', document);
-    console.log('throughUsers', throughUsers);
-    console.log('otherDepartments', otherDepartments);
-
     // Check if current user is an active recipient
     // const currentRecipient = document.recipients.find(
     //     (r: DocumentRecipient) => r.user.id === auth.user.id
@@ -258,7 +266,7 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartments, th
 
     // Helper functions to determine user permissions and document states
     const isOwner = () => document.owner_id === auth.user.id;
-    const isFinalRecipient = () => document.final_recipient?.id === auth.user.department_id;
+    const isFinalRecipient = () => document.final_recipient?.id === auth.user.department_id && auth.user.role === 'admin';
     const isAdmin = () => auth.user.role === 'admin';
     const isForInfoDocument = () => document.document_type === 'for_info';
     const isNonForInfoDocument = () => document.document_type !== 'for_info';
@@ -282,16 +290,16 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartments, th
     };
 
     // Removed canForwardToOffice and its usages
-    // const canForwardToOffice = () => {
-    //     return cannotRespond() && isNotFinalRecipient() && isNotOwner() && !isReturned() && !isPending() && notApprovedAndRejected();
-    // };
+    const canForwardToOffice = () => {
+        return canRespond() && isNotFinalRecipient() && isNotOwner() && !isReturned() && !isPending() && notApprovedAndRejected();
+    };
 
     const canForwardToOtherOffice = () => {
-        return canRespond() && isNotFinalRecipient() && isAdmin() && isNotOwner() && !isReturned() && !isPending() && notApprovedAndRejected();
+        return canRespond() && isNotFinalRecipient() && isNotOwner() && !isReturned() && !isPending() && notApprovedAndRejected();
     };
 
     const canReturnDocument = () => {
-        return canRespond() && isAdmin() && isNotOwner() && isNonForInfoDocument() && !isReturned() && !isPending() && notApprovedAndRejected();
+        return canRespond() && isNotOwner() && isNonForInfoDocument() && !isReturned() && !isPending() && notApprovedAndRejected();
     };
 
     const canPublishPublicly = () => {
@@ -361,11 +369,11 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartments, th
     const approvalChain = (document as Document).approval_chain || document.recipients;
 
     // Find all through recipients for non-for_info documents
-    const throughRecipients = document.document_type !== 'for_info'
-        ? approvalChain.filter((recipient: DocumentRecipient) =>
-            !document.final_recipient || recipient.department.id !== document.final_recipient.id
-        )
-        : [];
+    // const throughRecipients = document.document_type !== 'for_info'
+    //     ? approvalChain.filter((recipient: DocumentRecipient) =>
+    //         !document.final_recipient || recipient.department.id !== document.final_recipient.id
+    //     )
+    //     : [];
 
     console.log('responseFiles', responseFiles);
 
@@ -782,14 +790,14 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartments, th
                                 )}
 
                                 {/* Forward to Office Button - REMOVED */}
-                                {/* {canForwardToOffice() && (
+                                {canForwardToOffice() && (
                                     <button
                                         onClick={() => setIsForwardModalOpen(true)}
                                         className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                                     >
-                                        Forward to Office
+                                        Forward within the office
                                     </button>
-                                )} */}
+                                )}
 
                                 {/* Forward to Other Office Button */}
                                 {canForwardToOtherOffice() && (
@@ -977,6 +985,10 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartments, th
                                                 (file: any) => file.document_recipient_id === recipient.id
                                             );
 
+                                            const recipientName = recipient.user ? `${recipient.user.first_name} ${recipient.user.last_name}` : recipient.department?.name;
+
+                                            console.log('recipient', recipient);
+
                                             return (
                                                 <div key={recipient.id} className="relative flex items-start gap-6">
                                                     <div className="z-10">
@@ -1010,11 +1022,12 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartments, th
                                                                         </div>
                                                                         <div className="flex items-center gap-3">
                                                                             <div className="w-8 h-8 bg-gradient-to-br from-red-400 to-red-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                                                                                {recipient.department.name.charAt(0)}
+                                                                                {recipientName?.charAt(0) || ''}
                                                                             </div>
                                                                             <div>
                                                                                 <div className="font-semibold text-gray-900 dark:text-gray-100">
-                                                                                    {recipient.department.name}
+                                                                                    {recipientName || 'No Department'}
+                                                                                    {recipient.received_by ? ` (Received by ${recipient.received_by.first_name} ${recipient.received_by.last_name})` : ''}
                                                                                 </div>
                                                                                 {/* Removed recipient.user?.role display as recipient.user does not exist */}
                                                                             </div>
@@ -1161,13 +1174,13 @@ const ViewDocument = ({ document, auth, departments, users, otherDepartments, th
                 documentId={document.id}
             />
             {/* ForwardModal removed */}
-            {/* <ForwardModal
+            <ForwardModal
                 isOpen={isForwardModalOpen}
                 onClose={() => setIsForwardModalOpen(false)}
                 processing={processing}
                 users={users || []}
                 documentId={document.id}
-            /> */}
+            />
             <ForwardOtherOfficeModal
                 isOpen={isForwardOtherOfficeModalOpen}
                 onClose={() => setIsForwardOtherOfficeModalOpen(false)}

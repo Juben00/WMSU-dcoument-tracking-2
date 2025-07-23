@@ -44,6 +44,9 @@ interface Document {
     order_number?: string
     files?: { id: number }[]
     recipient_status?: string // Added for barcode confirmation
+    sequence?: number // Added for sequence number
+    user_id?: number // Added for user_id
+    department_id?: number // Added for department_id
 }
 
 interface Props {
@@ -101,27 +104,50 @@ const Documents = ({ documents, auth }: Props) => {
         return docYear === currentYear
     }
 
-    // Helper function to determine if a document was originally sent by the current user
-    const isDocumentSentByUser = (doc: Document) => {
-        return doc.owner_id === auth.user.id && doc.status !== "draft" && doc.status !== "returned"
-    }
-
-    // Helper function to determine if a document was received by the current user
+    // Helper function to determine if the current user/department is the latest recipient (approval chain)
     const isDocumentReceivedByUser = (doc: Document) => {
-        // If the document was sent by the current user, only show it in "Received" if status is "returned"
-        if (doc.owner_id === auth.user.id) {
-            return doc.status === 'returned'
-        }
+        // Check if the latest recipient matches the current user or their department
+        const userId = auth.user.id;
+        const departmentId = (auth.user as any).department_id;
+        return (
+            (doc.user_id && doc.user_id === userId) ||
+            (doc.department_id && doc.department_id === departmentId)
+        );
+    };
 
-        // If the document was sent by someone else, show it in "Received" if status is "received"
-        // @ts-ignore
-        return doc.recipient_status === 'received' || doc.status === 'received'
-    }
+    // Helper function to determine if a document was sent by the current user (owner), but is NOT currently with them
+    const isDocumentSentByUser = (doc: Document) => {
+        const userId = auth.user.id;
+        const departmentId = (auth.user as any).department_id;
+        // User is the owner, but the latest recipient is NOT the current user/department
+        const isOwner = doc.owner_id === userId;
+        const isWithUser = (doc.user_id && doc.user_id === userId) || (doc.department_id && doc.department_id === departmentId);
+        return isOwner && !isWithUser && doc.status !== "draft";
+    };
 
-    // Filter documents by current fiscal year and only show received ones with status 'received'
-    const received = documents.filter((doc) => isInCurrentFiscalYear(doc.created_at) && isDocumentReceivedByUser(doc))
+    // Group by document_id and get the record with the max sequence
+    const getLatestDocumentRecords = (docs: Document[]) => {
+        const map = new Map<number, Document>();
+        docs.forEach(doc => {
+            if (!map.has(doc.id) || (doc as any).sequence > (map.get(doc.id) as any).sequence) {
+                map.set(doc.id, doc);
+            }
+        });
+        return Array.from(map.values());
+    };
 
-    const sent = documents.filter((doc) => isInCurrentFiscalYear(doc.created_at) && isDocumentSentByUser(doc))
+    const latestDocs = getLatestDocumentRecords(documents);
+
+    // Received: documents where the current user/department is the latest recipient AND the latest recipient's status is 'received'
+    const received = latestDocs.filter(
+        (doc) =>
+            isInCurrentFiscalYear(doc.created_at) &&
+            isDocumentReceivedByUser(doc) &&
+            doc.recipient_status === "received"
+    );
+
+    // Sent: documents where the user is the owner, but the latest recipient is NOT the current user/department, and not in received
+    const sent = latestDocs.filter((doc) => isInCurrentFiscalYear(doc.created_at) && isDocumentSentByUser(doc) && !received.some(r => r.id === doc.id));
 
     const published = documents.filter((doc) => doc.owner_id === auth.user.id && (doc as any).is_public)
 
@@ -372,7 +398,7 @@ const Documents = ({ documents, auth }: Props) => {
                                         try {
                                             console.log("Submitting barcode:", barcodeInput)
 
-                                            router.post('/users/documents/confirm-receipt', {
+                                            router.post(route('users.documents.confirm-receive'), {
                                                 barcode_value: barcodeInput
                                             }, {
                                                 onSuccess: (page) => {

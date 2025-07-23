@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class DocumentRecipient extends Model
 {
     protected $fillable = [
+        'user_id',
         'document_id',
         'department_id',
         'final_recipient_department_id',
@@ -24,6 +25,11 @@ class DocumentRecipient extends Model
         'responded_at' => 'datetime',
         'is_active' => 'boolean',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 
     public function document(): BelongsTo
     {
@@ -43,6 +49,11 @@ class DocumentRecipient extends Model
     public function forwardedTo(): BelongsTo
     {
         return $this->belongsTo(User::class, 'forwarded_to');
+    }
+
+    public function receivedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'received_by');
     }
 
     public function finalRecipient(): BelongsTo

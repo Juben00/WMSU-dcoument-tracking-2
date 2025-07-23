@@ -123,19 +123,28 @@ class UserController extends Controller
             ->with(['files:id,document_id'])
             ->get();
 
-        // Get documents where user is a recipient
+        // Get documents where user is a recipient and has received the document
         $receivedDocuments = Document::whereHas('recipients', function($query) {
-            $query->where('department_id', Auth::user()->department_id);
+            $query->where('received_by', Auth::id())
+                  ->where('status', 'received');
         })
         ->select('id', 'subject', 'document_type', 'status', 'created_at', 'owner_id', 'is_public', 'barcode_value', 'order_number')
         ->with(['recipients' => function($q) {
-            $q->where('department_id', Auth::user()->department_id)->select('id', 'document_id', 'department_id', 'status');
+            $q->where('received_by', Auth::id())
+              ->where('status', 'received')
+              ->select('id', 'document_id', 'department_id', 'status', 'received_by', 'sequence');
         }, 'files:id,document_id'])
         ->get();
 
-        // Get returned documents where user is the owner
+        // Get returned documents where user is the owner, but only if the owner is the current recipient and has received it
+        $ownerDepartmentId = Auth::user()->department_id;
         $returnedDocuments = Document::where('owner_id', Auth::id())
             ->where('status', 'returned')
+            ->whereHas('recipients', function($query) use ($ownerDepartmentId) {
+                $query->where('department_id', $ownerDepartmentId)
+                      ->where('status', 'received')
+                      ->whereRaw('sequence = (SELECT MAX(sequence) FROM document_recipients WHERE document_id = documents.id)');
+            })
             ->select('id', 'subject', 'document_type', 'status', 'created_at', 'owner_id', 'is_public', 'barcode_value', 'order_number')
             ->with(['files:id,document_id'])
             ->get();
@@ -143,22 +152,25 @@ class UserController extends Controller
         // Merge the collections and remove duplicates
         $documents = $ownedDocuments->concat($receivedDocuments)->concat($returnedDocuments)->unique('id');
 
-        // Attach recipient_status for the current user's department if applicable
+        // Attach recipient_status for the current user's department or owner's department if owner
         $departmentId = Auth::user()->department_id;
-        $documents = $documents->map(function($doc) use ($departmentId) {
-            // If the user is a recipient, get the recipient status for their department
-            if (isset($doc->recipients) && $doc->recipients->count() > 0) {
-                $recipient = $doc->recipients->first();
-                $doc->recipient_status = $recipient ? $recipient->status : null;
-            } else {
-                $doc->recipient_status = null;
-            }
-            // For owner, recipient_status is null
+        $ownerDepartmentId = Auth::user()->department_id;
+        $documents = $documents->map(function($doc) use ($departmentId, $ownerDepartmentId) {
+            // Always get the latest recipient (max sequence) for this document
+            $latestRecipient = DocumentRecipient::where('document_id', $doc->id)
+                ->orderByDesc('sequence')
+                ->first();
+            $doc->user_id = $latestRecipient ? $latestRecipient->user_id : null;
+            $doc->department_id = $latestRecipient ? $latestRecipient->department_id : null;
+            $doc->sequence = $latestRecipient ? $latestRecipient->sequence : null;
+            $doc->recipient_status = $latestRecipient ? $latestRecipient->status : null;
+            $doc->recipient_received_by = $latestRecipient ? $latestRecipient->received_by : null;
             return $doc;
         });
 
         return Inertia::render('Users/Documents', [
             'documents' => $documents,
+            'receivedDocuments' => $receivedDocuments,
             'auth' => [
                 'user' => Auth::user()
             ]
@@ -915,7 +927,7 @@ class UserController extends Controller
     }
 
     // Confirm document receipt via barcode
-    public function confirmReceipt(Request $request)
+    public function confirmReceive(Request $request)
     {
         $request->validate([
             'barcode_value' => 'required|string',
@@ -925,7 +937,7 @@ class UserController extends Controller
         $user = Auth::user();
         $departmentId = $user->department_id;
 
-        // Find the document by barcode
+        // 1. Find the document by barcode
         $document = Document::where('barcode_value', $barcode)->first();
         if (!$document) {
             throw ValidationException::withMessages([
@@ -933,24 +945,58 @@ class UserController extends Controller
             ]);
         }
 
-        // Find the recipient record for this department
-        $recipient = DocumentRecipient::where('document_id', $document->id)
-            ->where('department_id', $departmentId)
-            ->where('status', 'pending')
-            ->first();
-        if (!$recipient) {
+        // can only be received if the document is not yet received
+        if ($document->status === 'received') {
             throw ValidationException::withMessages([
-                'barcode_value' => ['Your department is not a recipient for this document.']
+                'barcode_value' => ['Document already received.']
             ]);
         }
 
-        // update the document status to received
-        $document->status = 'in_review';
-        $document->save();
+        // Find the max sequence for this document (across all recipients)
+        $maxSequence = DocumentRecipient::where('document_id', $document->id)->max('sequence');
+
+        // Find the recipient record for this department/user with the max sequence
+        $recipient = DocumentRecipient::where('document_id', $document->id)
+            ->where(function($q) use ($departmentId, $user) {
+                $q->where('department_id', $departmentId)
+                  ->orWhere('user_id', $user->id);
+            })
+            ->where('sequence', $maxSequence)
+            ->first();
+
+        // If no recipient record, user is not a recipient or not the current recipient
+        if (!$recipient) {
+            throw ValidationException::withMessages([
+                'barcode_value' => ['You are not the current recipient for this document. Only the latest recipient (max sequence) can receive it.']
+            ]);
+        }
+
+        // If already received, check if it was by this user or another user in the same department
+        if ($recipient->status === 'received') {
+            if ($recipient->received_by == $user->id) {
+                throw ValidationException::withMessages([
+                    'barcode_value' => ['You have already received this document.']
+                ]);
+            } else {
+                throw ValidationException::withMessages([
+                    'barcode_value' => ['This document has already been received by another user in your department.']
+                ]);
+            }
+        }
+
+        if ($document->status === 'returned') {
+            $document->status = 'returned';
+            $document->save();
+        } else {
+            // update the document status to received
+            $document->status = 'in_review';
+            $document->save();
+        }
 
         // Mark as received
         $recipient->status = 'received';
         $recipient->responded_at = now();
+        $recipient->received_by = $user->id;
         $recipient->save();
 
         // Log the action
