@@ -668,7 +668,7 @@ const ViewDocument = ({ document, auth, users, otherDepartments, throughUsers, a
                                                 Actions
                                             </h3>
                                             <div className="flex flex-wrap gap-3 justify-center">
-                                                {canMarkAsReceived() && (
+                                                {/* {canMarkAsReceived() && (
                                                     <button
                                                         onClick={async () => {
                                                             const result = await Swal.fire({
@@ -706,7 +706,7 @@ const ViewDocument = ({ document, auth, users, otherDepartments, throughUsers, a
                                                     >
                                                         Receive
                                                     </button>
-                                                )}
+                                                )} */}
                                                 {canApproveOrReject() && (
                                                     <>
                                                         <button

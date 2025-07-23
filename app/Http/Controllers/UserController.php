@@ -939,11 +939,21 @@ class UserController extends Controller
 
         // 1. Find the document by barcode
         $document = Document::where('barcode_value', $barcode)->first();
-        if (!$document) {
-            throw ValidationException::withMessages([
-                'barcode_value' => ['Invalid barcode. Document not found.']
-            ]);
-        }
+
+        // Debug logging for troubleshooting
+        Log::info('ConfirmReceive Debug', [
+            'user_id' => $user->id,
+            'department_id' => $departmentId,
+            'document_id' => $document ? $document->id : null,
+            'pending_recipient_exists' => $document ? DocumentRecipient::where('document_id', $document->id)
+                ->where('department_id', $departmentId)
+                ->where('status', 'pending')
+                ->exists() : null,
+            'pending_recipient_row' => $document ? DocumentRecipient::where('document_id', $document->id)
+                ->where('department_id', $departmentId)
+                ->where('status', 'pending')
+                ->first() : null,
+        ]);
 
         // can only be received if the document is not yet received
         if ($document->status === 'received') {
@@ -952,18 +962,42 @@ class UserController extends Controller
             ]);
         }
 
+        if ($document->document_type === 'for_info') {
+            // Allow any pending recipient for this department to receive
+            $recipient = DocumentRecipient::where('document_id', $document->id)
+                ->where('department_id', $departmentId)
+                ->where('status', 'pending')
+                ->first();
+            if (!$recipient) {
+                // Check if there is any received record for this user and department
+                $alreadyReceived = DocumentRecipient::where('document_id', $document->id)
+                    ->where('department_id', $departmentId)
+                    ->where('received_by', $user->id)
+                    ->where('status', 'received')
+                    ->exists();
+                if ($alreadyReceived) {
+                    throw ValidationException::withMessages([
+                        'barcode_value' => ['Your department has already received this document.']
+                    ]);
+                } else {
+                    throw ValidationException::withMessages([
+                        'barcode_value' => ['You are not a pending recipient for this document in your department.']
+                    ]);
+                }
+            }
+        } else {
         // Find the max sequence for this document (across all recipients)
-        $maxSequence = DocumentRecipient::where('document_id', $document->id)->max('sequence');
+            $maxSequence = DocumentRecipient::where('document_id', $document->id)->max('sequence');
 
-        // Find the recipient record for this department/user with the max sequence
-        $recipient = DocumentRecipient::where('document_id', $document->id)
-            ->where(function($q) use ($departmentId, $user) {
-                $q->where('department_id', $departmentId)
-                  ->orWhere('user_id', $user->id);
-            })
-            ->where('sequence', $maxSequence)
-            ->first();
-
+            // Find the recipient record for this department/user with the max sequence
+            $recipient = DocumentRecipient::where('document_id', $document->id)
+                ->where(function($q) use ($departmentId, $user) {
+                    $q->where('department_id', $departmentId)
+                    ->orWhere('user_id', $user->id);
+                })
+                ->where('sequence', $maxSequence)
+                ->first();
+            }
         // If no recipient record, user is not a recipient or not the current recipient
         if (!$recipient) {
             throw ValidationException::withMessages([
