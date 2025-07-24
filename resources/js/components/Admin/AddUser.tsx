@@ -42,7 +42,7 @@ interface FormData {
     role: string;
 }
 
-const AddNewAdmin = ({ setIsCreateDialogOpen, departments }: { setIsCreateDialogOpen: (isOpen: boolean) => void, departments: Department[] }) => {
+const AddNewUser = ({ setIsCreateDialogOpen, departments }: { setIsCreateDialogOpen: (isOpen: boolean) => void, departments: Department[] }) => {
     const { data, setData, post, processing, errors, reset } = useForm<FormData>({
         first_name: '',
         last_name: '',
@@ -53,7 +53,7 @@ const AddNewAdmin = ({ setIsCreateDialogOpen, departments }: { setIsCreateDialog
         department_id: null,
         avatar: null,
         email: '',
-        role: 'admin',
+        role: 'user',
     });
 
     const handleCreateAdmin = (e: React.FormEvent) => {
@@ -75,7 +75,7 @@ const AddNewAdmin = ({ setIsCreateDialogOpen, departments }: { setIsCreateDialog
     return (
         <DialogContent className="dark:bg-gray-900 dark:border-gray-700">
             <DialogHeader>
-                <DialogTitle className="dark:text-gray-100">Create New Admin</DialogTitle>
+                <DialogTitle className="dark:text-gray-100">Create New User</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleCreateAdmin} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -198,7 +198,7 @@ const AddNewAdmin = ({ setIsCreateDialogOpen, departments }: { setIsCreateDialog
                         Cancel
                     </Button>
                     <Button type="submit" disabled={processing} className="dark:bg-red-600 dark:hover:bg-red-700 dark:text-white">
-                        Create Admin
+                        Create User
                     </Button>
                 </div>
             </form>
@@ -206,4 +206,4 @@ const AddNewAdmin = ({ setIsCreateDialogOpen, departments }: { setIsCreateDialog
     );
 };
 
-export default AddNewAdmin;
+export default AddNewUser;

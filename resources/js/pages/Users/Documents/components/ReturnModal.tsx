@@ -43,7 +43,7 @@ const ReturnModal: React.FC<ReturnModalProps> = ({ isOpen, onClose, documentId }
     const [files, setFiles] = useState<FileWithPreview[]>([]);
     const { auth } = usePage<PageProps>().props;
 
-    const { post, processing, setData, reset } = useForm<FormData>({
+    const { post, processing, setData, reset, data } = useForm<FormData>({
         status: 'returned',
         comments: '',
         attachment_files: [],

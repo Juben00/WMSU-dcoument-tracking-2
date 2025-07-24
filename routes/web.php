@@ -68,7 +68,7 @@ Route::middleware(['auth', 'verified', 'require_password_change'])->group(functi
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
     Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
     Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
-    Route::get('/documents', [UserController::class, 'documents'])->name('users.documents');
+    Route::get('/document', [UserController::class, 'documents'])->name('users.documents');
     Route::get('/profile', [UserController::class, 'profile'])->name('users.profile');
     Route::patch('/profile', [UserController::class, 'updateProfile'])->name('profile.update');
     Route::put('/profile/password', [UserController::class, 'updatePassword'])->name('users.password.update');
@@ -81,7 +81,7 @@ Route::middleware(['auth', 'verified', 'require_password_change'])->group(functi
     Route::post('/users/documents/send', [UserController::class, 'sendDocument'])->name('users.documents.send');
 
     // Confirm document receipt via barcode
-    Route::post('/users/documents/confirm-receipt', [UserController::class, 'confirmReceipt'])->name('users.documents.confirm-receipt');
+    Route::post('/users/documents/confirm-receive', [UserController::class, 'confirmReceive'])->name('users.documents.confirm-receive');
 
     // Generate auto order number
     Route::post('/users/documents/generate-order-number', [UserController::class, 'generateOrderNumber'])->name('users.documents.generate-order-number');
