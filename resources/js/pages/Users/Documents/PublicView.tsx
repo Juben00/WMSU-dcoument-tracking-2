@@ -21,6 +21,28 @@ interface DocumentRecipient {
     comments?: string;
     responded_at?: string;
     sequence: number;
+    forwarded_by?: {
+        id: number;
+        first_name: string;
+        last_name: string;
+        role: string;
+        department?: {
+            id: number;
+            name: string;
+        };
+    } | null;
+    user?: {
+        id: number;
+        first_name: string;
+        last_name: string;
+        role: string;
+    };
+    received_by?: {
+        id: number;
+        first_name: string;
+        last_name: string;
+        role: string;
+    };
 }
 
 interface Document {
@@ -131,6 +153,8 @@ const PublicView: React.FC<Props> = ({ document }) => {
         const token = document.barcode_value || document.public_token;
         return `/documents/public/${token}`;
     };
+
+    console.log(document);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
@@ -384,7 +408,7 @@ const PublicView: React.FC<Props> = ({ document }) => {
                 </div>
 
                 {/* Approval Chain Timeline */}
-                {document.recipients.length > 0 && (
+                {/* {document.recipients.length > 0 && (
                     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200 dark:border-gray-700">
                         <div className="p-8">
                             <div className="flex items-center gap-2 mb-6">
@@ -394,43 +418,90 @@ const PublicView: React.FC<Props> = ({ document }) => {
                             <div className="relative ml-4">
                                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-gray-200 dark:bg-gray-600 rounded-full" style={{ zIndex: 0 }}></div>
                                 <div className="space-y-8">
-                                    {document.recipients.map((recipient, idx) => (
-                                        <div key={recipient.id} className="relative flex items-start gap-4">
-                                            <div className="z-10">
-                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${getStatusColor(recipient.status)} bg-white dark:bg-gray-800`}></div>
-                                            </div>
-                                            <div className="flex-1 bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
-                                                <div className="flex items-center justify-between">
-                                                    <p className="text-base font-medium text-gray-900 dark:text-gray-100">
-                                                        {recipient.department?.name || 'N/A'}
-                                                    </p>
-                                                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full border ${getStatusColor(recipient.status)}`}>
-                                                        {recipient.status.charAt(0).toUpperCase() + recipient.status.slice(1)}
-                                                    </span>
+                                    {document.recipients.map((recipient, idx) => {
+                                        const recipientName = recipient.user ? `${recipient.user.first_name} ${recipient.user.last_name}` : recipient.department?.name;
+                                        return (
+                                            <div key={recipient.id} className="relative flex items-start gap-4">
+                                                <div className="z-10">
+                                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${getStatusColor(recipient.status)} bg-white dark:bg-gray-800`}></div>
                                                 </div>
-                                                {recipient.comments && (
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{recipient.comments}</p>
-                                                )}
-                                                {recipient.responded_at && (
-                                                    <div className="text-xs text-gray-400 dark:text-gray-500 mt-2">
-                                                        Responded: {new Date(recipient.responded_at).toLocaleDateString('en-US', {
-                                                            day: '2-digit',
-                                                            month: '2-digit',
-                                                            year: 'numeric',
-                                                            hour: '2-digit',
-                                                            minute: '2-digit',
-                                                            hour12: true
-                                                        })}
+                                                <div className="flex-1 bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <div className="text-base font-medium text-gray-900 dark:text-gray-100">
+                                                            {recipient.forwarded_by ? (
+                                                                <div className="space-y-2">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="w-8 h-8 bg-gradient-to-br from-red-400 to-red-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                                                            {(recipient.forwarded_by?.first_name ? recipient.forwarded_by.first_name.charAt(0) : '?')}
+                                                                            {(recipient.forwarded_by?.last_name ? recipient.forwarded_by.last_name.charAt(0) : '')}
+                                                                        </div>
+                                                                        <div>
+                                                                            <div className="font-semibold text-gray-900 dark:text-gray-100">
+                                                                                {recipient.forwarded_by.first_name} {recipient.forwarded_by.last_name}
+                                                                            </div>
+                                                                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                                                                                {recipient.forwarded_by.department?.name || 'No Department'} • {recipient.forwarded_by.role ? recipient.forwarded_by.role.charAt(0).toUpperCase() + recipient.forwarded_by.role.slice(1) : 'Unknown'}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                                                                        <span>→</span>
+                                                                        <span>Forwarded to:</span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="w-8 h-8 bg-gradient-to-br from-red-400 to-red-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                                                            {recipientName && typeof recipientName === 'string' && recipientName.length > 0 ? recipientName.charAt(0) : '?'}
+                                                                        </div>
+                                                                        <div>
+                                                                            <div className="font-semibold text-gray-900 dark:text-gray-100">
+                                                                                {recipientName || 'No Department'}
+                                                                                {recipient.received_by ? ` (Received by ${recipient.received_by.first_name} ${recipient.received_by.last_name})` : ''}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-10 h-10 bg-gradient-to-br from-red-400 to-red-500 rounded-full flex items-center justify-center text-white font-semibold">
+                                                                        {recipient.department && recipient.department.name && recipient.department.name.length > 0 ? recipient.department.name.charAt(0) : '?'}
+                                                                    </div>
+                                                                    <div>
+                                                                        <div className="font-semibold text-gray-900 dark:text-gray-100">
+                                                                            {recipient.department.name}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full border ${getStatusColor(recipient.status)}`}>
+                                                            {recipient.status.charAt(0).toUpperCase() + recipient.status.slice(1)}
+                                                        </span>
                                                     </div>
-                                                )}
+                                                    {recipient.comments && (
+                                                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{recipient.comments}</p>
+                                                    )}
+                                                    {recipient.responded_at && (
+                                                        <div className="text-xs text-gray-400 dark:text-gray-500 mt-2 flex items-center gap-2">
+                                                            <Calendar className="w-4 h-4" />
+                                                            Responded: {new Date(recipient.responded_at).toLocaleDateString('en-US', {
+                                                                day: '2-digit',
+                                                                month: '2-digit',
+                                                                year: 'numeric',
+                                                                hour: '2-digit',
+                                                                minute: '2-digit',
+                                                                hour12: true
+                                                            })}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </div>
                     </div>
-                )}
+                )} */}
             </div>
         </div>
     );

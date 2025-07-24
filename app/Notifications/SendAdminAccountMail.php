@@ -42,9 +42,9 @@ class SendAdminAccountMail extends Notification
     public function toMail($notifiable)
     {
         return (new MailMessage)
-            ->subject('Your Admin Account Has Been Created')
+            ->subject('Your Account Has Been Created - WMSU DMTS')
             ->greeting('Hello ' . $this->name . ',')
-            ->line('Your admin account has been created for the WMSU Document Management and Tracking System.')
+            ->line('Your account has been created for the WMSU Document Management and Tracking System.')
             ->line('You can now log in using the following credentials:')
             ->line('Email: ' . $this->email)
             ->line('Password: ' . $this->password)
