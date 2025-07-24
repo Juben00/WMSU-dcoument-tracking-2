@@ -2,14 +2,11 @@
 
 namespace App\Notifications;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class SendAdminAccountMail extends Notification implements ShouldQueue
+class SendAdminAccountMail extends Notification
 {
-    use Queueable;
 
     protected $name;
     protected $email;
