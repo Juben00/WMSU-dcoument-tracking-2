@@ -21,7 +21,7 @@ class AdminController extends Controller
 {
     public function index()
     {
-        $users = User::where('role', '!=', 'superadmin')->get();
+        $users = User::where('role', '!=', 'superadmin')->with('department')->get();
         // get all departments where there is no existing admin
         $departments = Departments::whereDoesntHave('users', function($query) {
             $query->where('role', 'admin');
