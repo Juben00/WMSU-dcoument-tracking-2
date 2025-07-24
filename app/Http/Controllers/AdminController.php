@@ -21,15 +21,18 @@ class AdminController extends Controller
 {
     public function index()
     {
-        $admins = User::where('role', 'admin')->with('department')->get();
+        $users = User::where('role', '!=', 'superadmin')->get();
         // get all departments where there is no existing admin
         $departments = Departments::whereDoesntHave('users', function($query) {
             $query->where('role', 'admin');
         })->get();
 
+        $departmentsForUserCreation = Departments::all();
+
         return Inertia::render('Admins/User', [
-            'admins' => $admins,
-            'departments' => $departments
+            'users' => $users,
+            'departments' => $departments,
+            'departmentsForUserCreation' => $departmentsForUserCreation
         ]);
     }
 

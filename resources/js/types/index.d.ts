@@ -50,7 +50,7 @@ export interface User {
     [key: string]: unknown; // This allows for additional properties...
 }
 
-export interface Admin {
+export interface User {
     id: number;
     first_name: string;
     last_name: string;
@@ -63,6 +63,7 @@ export interface Admin {
     is_active: boolean;
     created_at: string;
     avatar: string | null;
+    role: string;
 }
 
 export interface Departments {
