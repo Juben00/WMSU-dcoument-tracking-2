@@ -20,6 +20,8 @@ use App\Notifications\InAppNotification;
 use App\Models\UserActivityLog;
 use App\Models\DocumentActivityLog;
 use Illuminate\Validation\ValidationException;
+use App\Notifications\SendAdminAccountMail;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -55,8 +57,9 @@ class UserController extends Controller
             'gender' => ['required', 'string', 'in:Male,Female'],
             'position' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
+
+        $randomPassword = Str::random(12);
 
         $user = User::create([
             'first_name' => $request->first_name,
@@ -68,11 +71,14 @@ class UserController extends Controller
             'department_id' => Auth::user()->department_id,
             'role' => "user",   // default role is user
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'password' => Hash::make($randomPassword),
         ]);
 
         // Notify the user about their account creation
         $user->notify(new InAppNotification('Your account has been created.', ['user_id' => $user->id]));
+
+        // send email to the user
+        $user->notify(new SendAdminAccountMail($user->first_name . ' ' . $user->last_name, $user->email, $randomPassword));
 
         // Log user creation
         UserActivityLog::create([
