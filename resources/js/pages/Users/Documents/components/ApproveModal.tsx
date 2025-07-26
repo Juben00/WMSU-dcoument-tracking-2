@@ -111,33 +111,42 @@ const ApproveModal: React.FC<ApproveModalProps> = ({ isOpen, onClose, documentId
         if (processing) {
             return;
         }
-
-        post(route('documents.respond', documentId), {
-            preserveScroll: true,
-            forceFormData: true,
-            onSuccess: () => {
-                onClose();
-                reset();
-                setComments('');
-                // Clean up preview URLs
-                files.forEach(fileWithPreview => {
-                    if (fileWithPreview.preview) {
-                        URL.revokeObjectURL(fileWithPreview.preview);
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'Do you want to approve this document?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#16a34a',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                post(route('documents.respond', documentId), {
+                    preserveScroll: true,
+                    forceFormData: true,
+                    onSuccess: () => {
+                        onClose();
+                        reset();
+                        setComments('');
+                        // Clean up preview URLs
+                        files.forEach(fileWithPreview => {
+                            if (fileWithPreview.preview) {
+                                URL.revokeObjectURL(fileWithPreview.preview);
+                            }
+                        });
+                        setFiles([]);
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Document approved successfully',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                    },
+                    onError: (errors: any) => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: errors.message || 'An error occurred while approving the document',
+                        });
                     }
-                });
-                setFiles([]);
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Document approved successfully',
-                    timer: 1500,
-                    showConfirmButton: false
-                });
-            },
-            onError: (errors: any) => {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: errors.message || 'An error occurred while approving the document',
                 });
             }
         });

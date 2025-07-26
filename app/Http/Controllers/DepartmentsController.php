@@ -9,6 +9,7 @@ use Inertia\Inertia;
 use App\Notifications\InAppNotification;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use App\Models\UserActivityLog;
 
 class DepartmentsController extends Controller
 {
@@ -52,7 +53,7 @@ class DepartmentsController extends Controller
         Departments::create($request->all());
 
         // Log department creation
-        \App\Models\UserActivityLog::create([
+        UserActivityLog::create([
             'user_id' => Auth::id(),
             'action' => 'department_created',
             'description' => 'Created department: ' . $request->name,
@@ -106,7 +107,7 @@ class DepartmentsController extends Controller
         $department->update($request->all());
 
         // Log department update
-        \App\Models\UserActivityLog::create([
+        UserActivityLog::create([
             'user_id' => Auth::id(),
             'action' => 'department_updated',
             'description' => 'Updated department: ' . $department->name,
@@ -141,7 +142,7 @@ class DepartmentsController extends Controller
             $department->delete();
 
             // Log department deletion
-            \App\Models\UserActivityLog::create([
+            UserActivityLog::create([
                 'user_id' => Auth::id(),
                 'action' => 'department_deleted',
                 'description' => 'Deleted department: ' . $department->name,

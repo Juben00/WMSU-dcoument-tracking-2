@@ -94,16 +94,6 @@ const CreateDocument = ({ auth, departments }: Props) => {
             if (response.ok) {
                 const result = await response.json();
                 setData('order_number', result.order_number);
-            } else {
-                console.error('Failed to generate order number');
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Generation Failed',
-                    text: 'Failed to generate order number. Please try again.',
-                    confirmButtonColor: '#b91c1c',
-                }).then(() => {
-                    window.location.reload();
-                });
             }
         } catch (error) {
             console.error('Error generating order number:', error);
@@ -113,6 +103,7 @@ const CreateDocument = ({ auth, departments }: Props) => {
                 text: 'Failed to generate order number. Please try again.',
                 confirmButtonColor: '#b91c1c',
             });
+            window.location.reload();
         } finally {
             setIsGeneratingOrderNumber(false);
         }

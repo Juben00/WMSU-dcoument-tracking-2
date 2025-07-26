@@ -227,13 +227,13 @@ class UserController extends Controller
 
     public function updatePassword(Request $request)
     {
-        $validated = $request->validate([
+        $request->validate([
             'current_password' => ['required', 'current_password'],
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
         $user = User::find(Auth::id());
-        $user->password = Hash::make($validated['password']);
+        $user->password = $request->password;
         $user->markPasswordAsChanged();
         $user->save();
 
@@ -494,9 +494,10 @@ class UserController extends Controller
         // Notify all initial recipients
         if ($validated['document_type'] === 'for_info') {
             foreach ($validated['recipient_ids'] as $recipientDeptId) {
-                $recipient = User::where('department_id', $recipientDeptId)->where('role', 'admin')->first();
-                if ($recipient) {
-                    $recipient->notify(new InAppNotification('A new document has been sent to your department.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+                // Notify all users in the department
+                $departmentUsers = User::where('department_id', $recipientDeptId)->get();
+                foreach ($departmentUsers as $user) {
+                    $user->notify(new InAppNotification("A new {$document->document_type} document '{$document->subject}' has been sent to your department by {$document->owner->first_name} {$document->owner->last_name}.", ['document_id' => $document->id, 'document_name' => $document->subject]));
                 }
             }
         } else {
@@ -505,16 +506,16 @@ class UserController extends Controller
             $throughDeptIds = $request->input('through_department_ids', []);
 
             if (!empty($throughDeptIds)) {
-                // If there are through departments, notify only the first through department's admin
-                $firstThroughDeptAdmin = User::where('department_id', $throughDeptIds[0])->where('role', 'admin')->first();
-                if ($firstThroughDeptAdmin) {
-                    $firstThroughDeptAdmin->notify(new InAppNotification('A new document has been sent to your department.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+                // If there are through departments, notify all users in the first through department
+                $firstThroughDeptUsers = User::where('department_id', $throughDeptIds[0])->get();
+                foreach ($firstThroughDeptUsers as $user) {
+                    $user->notify(new InAppNotification("A new {$document->document_type} document '{$document->subject}' has been sent through your department by {$document->owner->first_name} {$document->owner->last_name}.", ['document_id' => $document->id, 'document_name' => $document->subject]));
                 }
             } else {
-                // If no through departments, notify the main recipient department's admin
-                $recipient = User::where('department_id', $sendToDeptId)->where('role', 'admin')->first();
-                if ($recipient) {
-                    $recipient->notify(new InAppNotification('A new document has been sent to your department.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+                // If no through departments, notify all users in the main recipient department
+                $recipientUsers = User::where('department_id', $sendToDeptId)->get();
+                foreach ($recipientUsers as $user) {
+                    $user->notify(new InAppNotification("A new {$document->document_type} document '{$document->subject}' has been sent to your department by {$document->owner->first_name} {$document->owner->last_name}.", ['document_id' => $document->id, 'document_name' => $document->subject]));
                 }
             }
         }
@@ -592,9 +593,17 @@ class UserController extends Controller
         // Remove duplicates and sort by name
         $involvedDepartments = $involvedDepartments->unique('id')->sortBy('name')->values();
 
+        // Remove the current user's department from the involved departments
+        $currentUser = Auth::user();
+        if ($currentUser && $currentUser->department_id) {
+            $involvedDepartments = $involvedDepartments->filter(function ($dept) use ($currentUser) {
+                return $dept['id'] !== $currentUser->department_id;
+            })->values();
+        }
+
         return Inertia::render('Users/EditDocument', [
             'document' => $doc,
-            'involvedDepartments' => $involvedDepartments
+            'involvedDepartments' => $involvedDepartments,
         ]);
     }
 
@@ -713,6 +722,18 @@ class UserController extends Controller
             'action' => 'document_resent',
             'description' => 'Document resent by owner.',
         ]);
+
+        // Notify all users in the selected department
+        $selectedDepartmentUsers = User::where('department_id', $validated['selected_department_id'])->get();
+        foreach ($selectedDepartmentUsers as $user) {
+            $user->notify(new InAppNotification(
+                "A {$doc->document_type} document '{$doc->subject}' has been resent to your department by " . Auth::user()->first_name . ' ' . Auth::user()->last_name . ".",
+                [
+                    'document_id' => $doc->id,
+                    'document_name' => $doc->subject
+                ]
+            ));
+        }
 
         return redirect()->route('users.documents', $doc->id)->with('success', 'Document updated and resent successfully.');
     }
@@ -961,6 +982,12 @@ class UserController extends Controller
                 ->first() : null,
         ]);
 
+        if (!$document) {
+            throw ValidationException::withMessages([
+                'barcode_value' => ['Document not found.']
+            ]);
+        }
+
         // can only be received if the document is not yet received
         if ($document->status === 'received') {
             throw ValidationException::withMessages([
@@ -1007,7 +1034,7 @@ class UserController extends Controller
         // If no recipient record, user is not a recipient or not the current recipient
         if (!$recipient) {
             throw ValidationException::withMessages([
-                'barcode_value' => ['You are not the current recipient for this document. Only the latest recipient (max sequence) can receive it.']
+                'barcode_value' => ['You are not the current recipient for this document. Only the latest recipient can receive it.']
             ]);
         }
 

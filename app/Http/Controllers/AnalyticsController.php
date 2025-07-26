@@ -339,10 +339,10 @@ class AnalyticsController extends Controller
             'format' => 'required|in:json,csv,pdf',
         ]);
 
-        $dateFrom = $request->date_from;
-        $dateTo = $request->date_to;
-        $reportType = $request->report_type;
-        $format = $request->format;
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+        $reportType = $request->input('report_type');
+        $format = $request->input('format');
 
         $data = [];
 
