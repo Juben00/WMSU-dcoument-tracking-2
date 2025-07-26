@@ -126,37 +126,46 @@ const ForwardOtherOfficeModal: React.FC<ForwardModalProps> = ({
 
         // Set submitting state to prevent multiple clicks
         setIsSubmitting(true);
-
-        post(route('documents.forward', documentId), {
-            preserveScroll: true,
-            forceFormData: true,
-            onSuccess: () => {
-                onClose();
-                reset();
-                setSelectedUser('');
-                setComments('');
-                // Clean up preview URLs
-                files.forEach(fileWithPreview => {
-                    if (fileWithPreview.preview) {
-                        URL.revokeObjectURL(fileWithPreview.preview);
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'Do you want to forward this document to another office?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#16a34a',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                post(route('documents.forward', documentId), {
+                    preserveScroll: true,
+                    forceFormData: true,
+                    onSuccess: () => {
+                        onClose();
+                        reset();
+                        setSelectedUser('');
+                        setComments('');
+                        // Clean up preview URLs
+                        files.forEach(fileWithPreview => {
+                            if (fileWithPreview.preview) {
+                                URL.revokeObjectURL(fileWithPreview.preview);
+                            }
+                        });
+                        setFiles([]);
+                        setIsSubmitting(false);
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: 'Document forwarded successfully',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    },
+                    onError: (errors: any) => {
+                        setIsSubmitting(false);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: 'An error occurred while forwarding the document'
+                        });
                     }
-                });
-                setFiles([]);
-                setIsSubmitting(false);
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Success!',
-                    text: 'Document forwarded successfully',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-            },
-            onError: (errors: any) => {
-                setIsSubmitting(false);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error!',
-                    text: 'An error occurred while forwarding the document'
                 });
             }
         });

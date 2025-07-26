@@ -710,41 +710,13 @@ const ViewDocument = ({ document, auth, users, otherDepartments, throughUsers, a
                                                 {canApproveOrReject() && (
                                                     <>
                                                         <button
-                                                            onClick={async () => {
-                                                                const result = await Swal.fire({
-                                                                    title: 'Are you sure?',
-                                                                    text: 'Do you want to approve this document?',
-                                                                    icon: 'question',
-                                                                    showCancelButton: true,
-                                                                    confirmButtonColor: '#16a34a',
-                                                                    cancelButtonColor: '#d1d5db',
-                                                                    confirmButtonText: 'Yes',
-                                                                    cancelButtonText: 'No'
-                                                                });
-                                                                if (result.isConfirmed) {
-                                                                    setIsApproveModalOpen(true);
-                                                                }
-                                                            }}
+                                                            onClick={() => setIsApproveModalOpen(true)}
                                                             className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold shadow transition"
                                                         >
                                                             Approve
                                                         </button>
                                                         <button
-                                                            onClick={async () => {
-                                                                const result = await Swal.fire({
-                                                                    title: 'Are you sure?',
-                                                                    text: 'Do you want to reject this document?',
-                                                                    icon: 'warning',
-                                                                    showCancelButton: true,
-                                                                    confirmButtonColor: '#b91c1c',
-                                                                    cancelButtonColor: '#d1d5db',
-                                                                    confirmButtonText: 'Yes',
-                                                                    cancelButtonText: 'No'
-                                                                });
-                                                                if (result.isConfirmed) {
-                                                                    setIsRejectModalOpen(true);
-                                                                }
-                                                            }}
+                                                            onClick={() => setIsRejectModalOpen(true)}
                                                             className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold shadow transition"
                                                         >
                                                             Reject

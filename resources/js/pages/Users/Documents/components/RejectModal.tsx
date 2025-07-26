@@ -112,32 +112,42 @@ const RejectModal: React.FC<RejectModalProps> = ({ isOpen, onClose, documentId }
             return;
         }
 
-        post(route('documents.respond', documentId), {
-            preserveScroll: true,
-            forceFormData: true,
-            onSuccess: () => {
-                onClose();
-                reset();
-                setComments('');
-                // Clean up preview URLs
-                files.forEach(fileWithPreview => {
-                    if (fileWithPreview.preview) {
-                        URL.revokeObjectURL(fileWithPreview.preview);
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'Do you want to reject this document?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#16a34a',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                post(route('documents.respond', documentId), {
+                    preserveScroll: true,
+                    forceFormData: true,
+                    onSuccess: () => {
+                        onClose();
+                        reset();
+                        setComments('');
+                        // Clean up preview URLs
+                        files.forEach(fileWithPreview => {
+                            if (fileWithPreview.preview) {
+                                URL.revokeObjectURL(fileWithPreview.preview);
+                            }
+                        });
+                        setFiles([]);
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Document rejected successfully',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                    },
+                    onError: (errors: any) => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: errors.message || 'An error occurred while rejecting the document',
+                        });
                     }
-                });
-                setFiles([]);
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Document rejected successfully',
-                    timer: 1500,
-                    showConfirmButton: false
-                });
-            },
-            onError: (errors: any) => {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: errors.message || 'An error occurred while rejecting the document',
                 });
             }
         });

@@ -127,23 +127,21 @@ class DocumentController extends Controller
         $forwardedTo = $request->forward_type === 'user' ? User::with(relations: 'department')->find($request->forward_to_id) : Departments::find($request->forward_to_id);
         // Notify the new recipient and document owner
         if ($request->forward_type === 'user' && $forwardedTo) {
-            $forwardedTo->notify(new InAppNotification('A document has been forwarded to you.', [
+            $forwardedTo->notify(new InAppNotification("A {$document->document_type} document '{$document->subject}' has been forwarded to you by " . Auth::user()->first_name . ' ' . Auth::user()->last_name . ".", [
                 'document_id' => $document->id,
                 'document_name' => $document->subject
             ]));
         } elseif ($request->forward_type === 'department' && $forwardedTo) {
-            // Notify all admins in the department
-            $departmentAdmins = User::where('department_id', $forwardedTo->id)
-                ->where('role', 'admin')
-                ->get();
-            foreach ($departmentAdmins as $admin) {
-                $admin->notify(new InAppNotification('A document has been forwarded to your department.', [
+            // Notify all users in the department
+            $departmentUsers = User::where('department_id', $forwardedTo->id)->get();
+            foreach ($departmentUsers as $user) {
+                $user->notify(new InAppNotification("A {$document->document_type} document '{$document->subject}' has been forwarded to your department by " . Auth::user()->first_name . ' ' . Auth::user()->last_name . ".", [
                     'document_id' => $document->id,
                     'document_name' => $document->subject
                 ]));
             }
         }
-        $document->owner->notify(new InAppNotification('Your document has been forwarded.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+        $document->owner->notify(new InAppNotification("Your document '{$document->subject}' has been forwarded.", ['document_id' => $document->id, 'document_name' => $document->subject]));
 
         // After forwarding document
         if ($request->forward_type === 'user' && $forwardedTo) {
@@ -274,19 +272,19 @@ class DocumentController extends Controller
         // If the final approver responds, update document status accordingly
         if ($isFinalApprover && $request->status === 'approved' && $isAdmin) {
             $document->update(['status' => 'approved']);
-            $document->owner->notify(new InAppNotification('Your document was approved by the final approver.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+            $document->owner->notify(new InAppNotification("Your document '{$document->subject}' was approved by the final approver.", ['document_id' => $document->id, 'document_name' => $document->subject]));
             $user = Auth::user();
             $dept = $user->department ? $user->department->name : 'No Department';
 
         } elseif ($isFinalApprover && $request->status === 'rejected' && $isAdmin) {
             $document->update(['status' => 'rejected']);
-            $document->owner->notify(new InAppNotification('Your document was rejected by the final approver.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+            $document->owner->notify(new InAppNotification("Your document '{$document->subject}' was rejected by the final approver.", ['document_id' => $document->id, 'document_name' => $document->subject]));
             $user = Auth::user();
             $dept = $user->department ? $user->department->name : 'No Department';
 
         } elseif ($request->status === 'returned') {
             $document->update(['status' => 'returned']);
-            $document->owner->notify(new InAppNotification('Your document was returned by the final approver.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+            $document->owner->notify(new InAppNotification("Your document '{$document->subject}' was returned by the final approver.", ['document_id' => $document->id, 'document_name' => $document->subject]));
             $user = Auth::user();
             $dept = $user->department ? $user->department->name : 'No Department';
         }
@@ -524,7 +522,7 @@ class DocumentController extends Controller
         ]);
 
         // Notify the document owner
-        $document->owner->notify(new InAppNotification('Your document has been published publicly.', ['document_id' => $document->id, 'document_name' => $document->subject]));
+        $document->owner->notify(new InAppNotification("Your document '{$document->subject}' has been published publicly.", ['document_id' => $document->id, 'document_name' => $document->subject]));
 
         // Get user and department information for logging
         $user = Auth::user();

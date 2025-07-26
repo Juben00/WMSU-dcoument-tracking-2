@@ -3,12 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Admin } from '@/types';
+import { User } from '@/types';
 import { toast } from 'sonner';
 import InputError from '../input-error';
 
 interface EditAdminProps {
-    admin: Admin;
+    admin: User;
     departments: {
         id: number;
         name: string;
